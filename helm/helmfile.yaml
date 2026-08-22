@@ -1,6 +1,8 @@
 repositories:
   - name: nats
     url: https://nats-io.github.io/k8s/helm/charts/
+  - name: haproxytech
+    url: https://haproxytech.github.io/helm-charts
 
 releases:
   # Phase 3 — NATS cluster: docs/nats-cluster/design.md §5. Operator/SYS-account/
@@ -26,3 +28,31 @@ releases:
     chart: ./charts/keycloak-app
     values:
       - values-keycloak-aks.yaml.gotmpl
+
+  # Phase 5 — HAProxy Unified Gateway: docs/haproxy-unified-gateway/design.md
+  # §4, §6. Upstream chart install: controller Deployment, Service (pinned to
+  # the AKS static public IP), and the crdjob/gwapijob post-install hooks that
+  # install HUG's own CRDs plus the Kubernetes Gateway API CRDs.
+  - name: hug
+    namespace: haproxy-unified-gateway
+    createNamespace: true      # helmfile creates the namespace; keep the
+                                 # chart's own namespace.create false (unset)
+                                 # — same rule as the chart README's warning
+                                 # against combining both, just via helmfile
+    chart: haproxytech/haproxy-unified-gateway
+    version: 1.2.0
+    values:
+      - values-hug-aks.yaml
+
+  # Phase 5 — GatewayClass + Gateway only: docs/haproxy-unified-gateway/design.md
+  # §7. api-route and keycloak-route live with their own backend Service's
+  # chart (rest-api-app, keycloak-app), not here.
+  - name: hug-app
+    namespace: haproxy-unified-gateway
+    createNamespace: false     # namespace already created by the hug release above;
+                                 # gatewayclass.yaml is cluster-scoped, gateway.yaml
+                                 # targets haproxy-unified-gateway
+    chart: ./charts/hug-app
+    needs:
+      - haproxy-unified-gateway/hug   # wait for hug's gwapijob hook to install the
+                                        # Gateway API CRDs before creating instances of them
