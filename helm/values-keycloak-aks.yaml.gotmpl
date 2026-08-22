@@ -1,0 +1,16 @@
+# the .gotmpl extension makes Helmfile render this values file as a Go template
+# before handing it to Helm, which is what makes readFile available to pull in
+# azure-postgres-ca.pem — a plain .yaml values file cannot do this
+serviceAccount:
+  name: keycloak
+  azureClientId: "REPLACE_ME_KEYCLOAK_IDENTITY_CLIENT_ID"   # keycloak_identity_client_id Terraform output, docs/keycloak-operator/design.md §4.1
+keyVault:
+  name: "REPLACE_ME_KEY_VAULT_NAME"     # key_vault_name Terraform output
+  tenantId: "REPLACE_ME_AZURE_TENANT_ID"
+postgres:
+  host: "REPLACE_ME_POSTGRES_FQDN"      # postgres_fqdn Terraform output
+  caBundle: |
+{{ readFile "azure-postgres-ca.pem" | indent 4 }}
+keycloak:
+  instances: 2
+  hostname: auth.natssaas.example.com

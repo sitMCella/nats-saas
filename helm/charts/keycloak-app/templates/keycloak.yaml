@@ -1,0 +1,62 @@
+apiVersion: k8s.keycloak.org/v2beta1
+kind: Keycloak
+metadata:
+  name: keycloak
+  namespace: {{ .Values.namespace }}
+spec:
+  instances: {{ .Values.keycloak.instances }}   # matches docs/nats-tenant-queue-api/design.md's
+                                                   # open-questions recommended default of 2
+  db:
+    vendor: postgres
+    host: {{ .Values.postgres.host | quote }}          # Terraform output from docs/terraform-infra/design.md
+    port: {{ .Values.postgres.port }}
+    database: {{ .Values.postgres.database | quote }}
+    usernameSecret:
+      name: keycloak-db-credentials  # synced by the SecretProviderClass
+      key: username
+    passwordSecret:
+      name: keycloak-db-credentials
+      key: password
+  additionalOptions:
+    - name: db-tls-mode
+      value: verify-server
+    - name: db-tls-trust-store-file
+      value: /opt/keycloak/certs/azure-postgres-ca/ca.pem
+    - name: http-relative-path
+      value: /auth   # must match the "/auth" PathPrefix the keycloak-route
+                       # HTTPRoute below matches exactly (no rewrite filter)
+  http:
+    httpEnabled: true         # POC: HTTP only, no TLS — deliberate scope decision,
+                                # revisit alongside every other layer together
+  hostname:
+    hostname: {{ .Values.keycloak.hostname | quote }}   # matches the HTTPRoute hostname
+    strict: true
+  proxy:
+    headers: xforwarded    # Keycloak sits behind HUG's reverse proxy; trusts
+                             # X-Forwarded-* so issued URLs/redirects use the
+                             # external hostname, not the pod's own address
+  ingress:
+    enabled: false    # HUG's HTTPRoute owns routing; no in-cluster Ingress
+                        # controller runs in this system
+  unsupported:
+    podTemplate:
+      spec:
+        serviceAccountName: {{ .Values.serviceAccount.name }}
+        containers:
+          - volumeMounts:
+              - name: azure-postgres-ca
+                mountPath: /opt/keycloak/certs/azure-postgres-ca
+                readOnly: true
+              - name: keycloak-db-secrets
+                mountPath: /mnt/secrets-store
+                readOnly: true
+        volumes:
+          - name: azure-postgres-ca
+            secret:
+              secretName: azure-postgres-ca
+          - name: keycloak-db-secrets
+            csi:
+              driver: secrets-store.csi.k8s.io
+              readOnly: true
+              volumeAttributes:
+                secretProviderClass: keycloak-db
