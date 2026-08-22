@@ -1,0 +1,1062 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+  <meta name="document-kind" content="design">
+  <meta name="source-path" content="docs/haproxy-unified-gateway/design.md">
+  <meta name="source-sha256" content="ace4fb1690ef8cdf6870653c3480f5a64432ce35cb12791990b425a34c13cdf5">
+  <meta name="generator" content="blueprint/html-doc@1">
+  <title>Deploying HAProxy Unified Gateway (HUG) on AKS via Helm</title>
+  <style>:root {
+  color-scheme: light;
+  --paper: #f7f9fb;
+  --surface: #ffffff;
+  --surface-soft: #edf2f5;
+  --ink: #172630;
+  --muted: #526773;
+  --line: #ccd8df;
+  --line-strong: #8fa5b3;
+  --accent: #385e75;
+  --accent-soft: #dbe5ec;
+  --focus: #176b93;
+  --risk: #6b4f28;
+  --risk-soft: #f3ecdf;
+  --radius: 12px;
+  --shadow: 0 16px 42px rgb(31 54 68 / 10%);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--paper); }
+a { color: var(--accent); text-underline-offset: 0.16em; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible, summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 10;
+  left: 1rem;
+  top: 1rem;
+  padding: .65rem .9rem;
+  background: var(--ink);
+  color: white;
+  transform: translateY(-180%);
+}
+.skip-link:focus { transform: translateY(0); }
+
+.document-header {
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(145deg, #e5edf2 0%, #f7f9fb 70%);
+}
+.document-header__inner,
+.page-shell,
+.document-footer {
+  width: min(1180px, calc(100% - 2rem));
+  margin-inline: auto;
+}
+.document-header__inner { padding: 3.8rem 0 3rem; }
+.eyebrow {
+  margin: 0 0 .8rem;
+  color: var(--accent);
+  font-size: .78rem;
+  font-weight: 750;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.document-title {
+  max-width: 900px;
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.25rem, 5vw, 4.6rem);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -.035em;
+}
+.metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem 1.25rem;
+  margin: 1.6rem 0 0;
+  color: var(--muted);
+  font-size: .88rem;
+}
+.metadata dt { font-weight: 700; color: var(--ink); }
+.metadata dd { margin: 0; overflow-wrap: anywhere; }
+.metadata__item { display: grid; grid-template-columns: auto 1fr; gap: .35rem; }
+
+.page-shell {
+  display: grid;
+  grid-template-columns: minmax(190px, 250px) minmax(0, 1fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+  padding-block: 3rem 5rem;
+}
+.toc {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  padding: 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgb(255 255 255 / 78%);
+}
+.toc-title { margin: 0 0 .75rem; font: 750 .78rem/1.2 Inter, sans-serif; letter-spacing: .09em; text-transform: uppercase; }
+.toc ol { list-style: none; padding: 0; margin: 0; }
+.toc li + li { margin-top: .34rem; }
+.toc li[data-level="3"] { padding-left: .8rem; font-size: .88rem; }
+.toc a { display: block; color: var(--muted); text-decoration: none; line-height: 1.35; }
+.toc a:hover { color: var(--ink); }
+
+.document-content {
+  min-width: 0;
+  padding: clamp(1.4rem, 4vw, 3.8rem);
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) + 4px);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.source-block { min-width: 0; }
+.source-block > :first-child { margin-top: 0; }
+.source-block > :last-child { margin-bottom: 0; }
+.source-block + .source-block { margin-top: 1rem; }
+.source-block:has(> h1), .source-block:has(> h2) { margin-top: 3.7rem; }
+.source-block:first-child { margin-top: 0; }
+h1, h2, h3, h4 { color: var(--ink); line-height: 1.2; scroll-margin-top: 1.5rem; }
+.document-content h1 { font: 500 clamp(2rem, 5vw, 3.2rem)/1.08 Georgia, serif; letter-spacing: -.025em; }
+.document-content h2 { padding-top: .4rem; font: 500 clamp(1.7rem, 3vw, 2.3rem)/1.15 Georgia, serif; letter-spacing: -.018em; }
+.document-content h3 { font-size: 1.12rem; }
+.document-content h4 { font-size: 1rem; }
+p, ul, ol, blockquote, pre, table, figure { margin-block: 1rem; }
+blockquote {
+  margin-inline: 0;
+  padding: .8rem 1rem;
+  border-left: 4px solid var(--line-strong);
+  background: var(--surface-soft);
+  color: #314854;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+.role-requirements, .role-acceptance-criteria, .role-invariants,
+.role-decisions, .role-risks, .role-open-questions {
+  margin-top: 1.25rem;
+  padding: 1rem 1.2rem;
+  border-left: 4px solid var(--line-strong);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--surface-soft);
+}
+.role-risks, .role-open-questions { border-left-color: var(--risk); background: var(--risk-soft); }
+code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+code { padding: .12em .32em; border-radius: 4px; background: var(--surface-soft); font-size: .9em; overflow-wrap: anywhere; }
+pre {
+  max-width: 100%;
+  overflow: auto;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #132630;
+  color: #edf4f7;
+  line-height: 1.48;
+}
+pre code { padding: 0; background: transparent; color: inherit; }
+.table-wrap { max-width: 100%; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+th, td { padding: .68rem .75rem; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { background: var(--surface-soft); font-weight: 720; }
+tbody tr:nth-child(even) { background: #f9fbfc; }
+.diagram {
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fbfcfd;
+}
+.diagram img { display: block; width: 100%; height: auto; max-height: 650px; object-fit: contain; }
+.diagram figcaption { margin-top: .75rem; color: var(--muted); font-size: .86rem; }
+.diagram details { margin-top: .8rem; }
+.diagram summary { cursor: pointer; color: var(--accent); font-weight: 650; }
+.diagram details pre { max-height: 18rem; }
+.document-footer { padding: 0 0 3rem; color: var(--muted); font-size: .82rem; }
+
+@media (max-width: 760px) {
+  .document-header__inner { padding: 2.7rem 0 2.2rem; }
+  .page-shell { grid-template-columns: 1fr; gap: 1.2rem; padding-top: 1.25rem; }
+  .toc { position: static; max-height: none; }
+  .document-content { padding: 1.25rem; border-radius: var(--radius); }
+  .source-block:has(> h1), .source-block:has(> h2) { margin-top: 2.7rem; }
+}
+
+@media print {
+  :root { background: white; font-size: 10.5pt; }
+  @page { size: auto; margin: 16mm; }
+  .skip-link, .toc { display: none; }
+  .document-header { background: white; }
+  .document-header__inner, .page-shell, .document-footer { width: 100%; }
+  .document-header__inner { padding: 0 0 12mm; }
+  .document-title { font-size: 28pt; }
+  .page-shell { display: block; padding: 0; }
+  .document-content { padding: 0; border: 0; box-shadow: none; }
+  h1, h2, h3, h4 { break-after: avoid-page; }
+  table, figure, pre, blockquote { break-inside: avoid; }
+  thead { display: table-header-group; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .document-footer { padding: 10mm 0 0; }
+}
+</style>
+</head>
+<body>
+  <a class="skip-link" href="#document-content">Skip to document</a>
+  <header class="document-header">
+    <div class="document-header__inner">
+      <p class="eyebrow">Technical design</p>
+      <p class="document-title">Deploying HAProxy Unified Gateway (HUG) on AKS via Helm</p>
+      <dl class="metadata">
+        <div class="metadata__item"><dt>Status</dt><dd>Implementation guide — companion to `docs/nats-tenant-queue-api/design.md` (section 3/4, where HUG is the Gateway API implementation fronting Keycloak and the REST API) and `docs/terraform-infra/design.md` (which provisions the AKS cluster, its Standard Load Balancer, and its static public IP). **This is a POC configuration: the `Gateway` uses a plain HTTP listener on port 80, no TLS.**</dd></div>
+        <div class="metadata__item"><dt>Source</dt><dd>docs/haproxy-unified-gateway/design.md</dd></div>
+        <div class="metadata__item"><dt>SHA-256</dt><dd><code>ace4fb1690ef8cdf6870653c3480f5a64432ce35cb12791990b425a34c13cdf5</code></dd></div>
+      </dl>
+    </div>
+  </header>
+  <div class="page-shell">
+    <nav class="toc" aria-label="Document contents"><p class="toc-title">Contents</p><ol><li data-level="2"><a href="#1-purpose-and-scope">1. Purpose and scope</a></li><li data-level="2"><a href="#2-prerequisites">2. Prerequisites</a></li><li data-level="2"><a href="#3-architecture-on-aks">3. Architecture on AKS</a></li><li data-level="2"><a href="#4-declare-the-release-with-helmfile">4. Declare the release with Helmfile</a></li><li data-level="2"><a href="#5-values-yaml-overrides-for-aks">5. values.yaml overrides for AKS</a></li><li data-level="2"><a href="#6-install-the-chart">6. Install the chart</a></li><li data-level="2"><a href="#7-gateway-api-objects-a-second-local-helm-chart-via-helmfile">7. Gateway API objects — a second local Helm chart, via Helmfile</a></li><li data-level="2"><a href="#8-scaling-and-availability">8. Scaling and availability</a></li><li data-level="2"><a href="#9-tls-not-used-poc-scope">9. TLS (not used — POC scope)</a></li><li data-level="2"><a href="#10-monitoring">10. Monitoring</a></li><li data-level="2"><a href="#11-upgrade-and-rollback">11. Upgrade and rollback</a></li><li data-level="2"><a href="#12-uninstall">12. Uninstall</a></li><li data-level="2"><a href="#13-troubleshooting">13. Troubleshooting</a></li><li data-level="2"><a href="#14-references">14. References</a></li></ol></nav>
+    <main id="document-content" class="document-content" data-source-block-count="66">
+<section id="deploying-haproxy-unified-gateway-hug-on-aks-via-helm"
+class="source-block" data-source-block="1"
+data-source-sha256="eb6eb6fc6f726e18f4e4f0bbedb75d2ee8950be33974ca7824e362465edc336f">
+<h1>Deploying HAProxy Unified Gateway (HUG) on AKS via Helm</h1>
+</section>
+<div class="source-block" data-source-block="2"
+data-source-sha256="4883848b3a6fe83f9c4d6bb989e9fdd05e9daf2bcfbb5acbdefed37d2b5efeda">
+<blockquote>
+<p><strong>Status:</strong> Implementation guide — companion to
+<code>docs/nats-tenant-queue-api/design.md</code> (section 3/4, where
+HUG is the Gateway API implementation fronting Keycloak and the REST
+API) and <code>docs/terraform-infra/design.md</code> (which provisions
+the AKS cluster, its Standard Load Balancer, and its static public IP).
+<strong>This is a POC configuration: the <code>Gateway</code> uses a
+plain HTTP listener on port 80, no TLS.</strong></p>
+</blockquote>
+</div>
+<section id="1-purpose-and-scope" class="source-block"
+data-source-block="3"
+data-source-sha256="db3a8d501ceec1109dd89bbc3ba1ac8dc2c00ab333e64ec529a5345b309fb0f9">
+<h2>1. Purpose and scope</h2>
+</section>
+<div class="source-block" data-source-block="4"
+data-source-sha256="853e2da2bae4f135b14701d26334f0ca7c9ab914f345bbec2745d91f39728e71">
+<p><code>docs/nats-tenant-queue-api/design.md</code> assumes HUG is
+already running in the cluster and exposing
+<code>Gateway</code>/<code>HTTPRoute</code> resources for Keycloak's
+<code>/auth/*</code> paths and the REST API's <code>/v1/*</code> paths.
+This document is the missing implementation step: it covers installing
+HAProxy Unified Gateway (HUG) into the AKS cluster from its official
+Helm chart (<code>haproxytech/haproxy-unified-gateway</code>, <a
+href="https://artifacthub.io/packages/helm/haproxytech/haproxy-unified-gateway">Artifact
+Hub</a>, <a
+href="https://github.com/haproxytech/helm-charts/tree/main/haproxy-unified-gateway">source</a>),
+wiring its <code>Service</code> to the static public IP that
+<code>docs/terraform-infra/design.md</code> provisions, and creating the
+<code>GatewayClass</code>, <code>Gateway</code>, <code>HTTPRoute</code>,
+and <code>ReferenceGrant</code> objects the parent design's routing
+depends on — packaged as a second, custom local Helm chart installed via
+Helmfile (section 7), not one-off <code>kubectl apply -f</code>
+calls.</p>
+</div>
+<div class="source-block" data-source-block="5"
+data-source-sha256="946d9ecaf9b260f9811d94d8901a42f04a7568b6eb822ceade57985d7f4ea3fe">
+<p>In scope: Helm repo setup, the chart's <code>values.yaml</code>
+overrides for an AKS deployment, the resulting Helmfile-driven
+install/upgrade workflow, the Gateway API objects
+(<code>GatewayClass</code>, <code>Gateway</code>,
+<code>HTTPRoute</code>, <code>ReferenceGrant</code>) layered on top as
+this document's own local Helm chart, and the Azure-specific Service
+annotations needed to bind HUG's data-plane Service to a pre-existing
+static public IP. Out of scope: provisioning the AKS cluster itself
+(<code>docs/terraform-infra/design.md</code>), TLS termination (this
+POC's <code>Gateway</code> listener is plain HTTP on port 80 — no
+certificate, no TLS setup; see section 9), and deploying Keycloak, the
+REST API, or NATS (their own Helm releases / Deployments, unaffected by
+this document).</p>
+</div>
+<section id="2-prerequisites" class="source-block" data-source-block="6"
+data-source-sha256="146a8db925637858b6347ea35a83548ea40f03f0dfae60012ee67a9eb621a992">
+<h2>2. Prerequisites</h2>
+</section>
+<div class="source-block" data-source-block="7"
+data-source-sha256="3715506de3cc5ee329b67f7654cff2546cb1676f107655bfed7bcd8bf5f6ff4f">
+<ul>
+<li>An AKS cluster, Kubernetes <strong>1.34+</strong> (chart's
+<code>Chart.yaml</code> requirement), with <code>kubectl</code> context
+pointed at it. <code>docs/terraform-infra/design.md</code> provisions
+this with the Standard Load Balancer SKU and a static Standard public IP
+address in the platform Resource Group; its actual version comes from
+that document's <code>aks_kubernetes_version</code> input variable, not
+fixed here.</li>
+<li>Helm <strong>3.7+</strong> (chart requires 3.6+, chart repo
+recommends 3.7+).</li>
+<li><a rel="noopener noreferrer" href="https://github.com/helmfile/helmfile">Helmfile</a>
+<strong>0.150+</strong> (needs <code>releases[].createNamespace</code>
+support), with the <code>helm-diff</code> plugin installed
+(<code>helm plugin install https://github.com/databus23/helm-diff</code>)
+— <code>helmfile</code> shells out to <code>helm</code> and uses this
+plugin for <code>helmfile diff</code>.</li>
+<li>Cluster-admin <code>kubectl</code> access: the chart's install
+creates <code>ClusterRole</code>/<code>ClusterRoleBinding</code> objects
+and, via post-install Helm hook Jobs, installs CustomResourceDefinitions
+cluster-wide; the local <code>hug-app</code> chart (section 7) also
+creates a cluster-scoped <code>GatewayClass</code>, so the same elevated
+access applies to that release too.</li>
+<li>The Azure public IP resource, its name, and the Resource Group it
+lives in (from <code>docs/terraform-infra/design.md</code>'s Terraform
+outputs), needed to pin HUG's <code>Service</code> to that stable IP
+rather than letting Azure allocate a fresh one.</li>
+<li>Chart version pinned in this document: <strong>1.2.0</strong>
+(<code>appVersion: 1.0.7</code>, HAProxy Unified Gateway built on
+HAProxy 3.2 LTS). Re-check
+<code>helm search repo haproxytech/haproxy-unified-gateway --versions</code>
+before following these steps against a newer release, since defaults can
+change between chart versions (<code>loadBalancerClass</code>, for
+example, only exists from <code>1.2.0</code> on).</li>
+</ul>
+</div>
+<section id="3-architecture-on-aks" class="source-block"
+data-source-block="8"
+data-source-sha256="373bc803e50ff5e9272041f55bb26f650b9391841fab5aa8a1be8918b4aec302">
+<h2>3. Architecture on AKS</h2>
+</section>
+<figure class="diagram source-block" data-source-sha256="4b82a85630fc292a771cb92751bcb1010bcbcd62a0c9b47a4f9118171ad6fba2" data-source-block="9"><img alt="Diagram 1 showing Internet, Static public IP\nplatform Resource Group\nfrom docs/terraform-infra/design.md, Azure Standard Load Balancer\nAKS-managed node resource group, AKS cluster, Service: haproxy-unified-gateway\ntype LoadBalancer\nports auto-added per Gateway listener, namespace: haproxy-unified-gateway, HUG controller+data-plane " src="data:image/svg+xml;base64,PHN2ZyBpZD0ibXktc3ZnIiB3aWR0aD0iMTAwJSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgY2xhc3M9ImZsb3djaGFydCIgc3R5bGU9Im1heC13aWR0aDogMTg4MS40M3B4OyBiYWNrZ3JvdW5kLWNvbG9yOiB0cmFuc3BhcmVudDsiIHZpZXdCb3g9IjAgMCAxODgxLjQzMzU5Mzc1IDEyMjguNDAwMDI0NDE0MDYyNSIgcm9sZT0iZ3JhcGhpY3MtZG9jdW1lbnQgZG9jdW1lbnQiIGFyaWEtcm9sZWRlc2NyaXB0aW9uPSJmbG93Y2hhcnQtdjIiPjxzdHlsZT4jbXktc3Zne2ZvbnQtZmFtaWx5OkludGVyLHVpLXNhbnMtc2VyaWYsc3lzdGVtLXVpLHNhbnMtc2VyaWY7Zm9udC1zaXplOjE2cHg7ZmlsbDojMTcyNjMwO31Aa2V5ZnJhbWVzIGVkZ2UtYW5pbWF0aW9uLWZyYW1le2Zyb217c3Ryb2tlLWRhc2hvZmZzZXQ6MDt9fUBrZXlmcmFtZXMgZGFzaHt0b3tzdHJva2UtZGFzaG9mZnNldDowO319I215LXN2ZyAuZWRnZS1hbmltYXRpb24tc2xvd3tzdHJva2UtZGFzaGFycmF5OjksNSFpbXBvcnRhbnQ7c3Ryb2tlLWRhc2hvZmZzZXQ6OTAwO2FuaW1hdGlvbjpkYXNoIDUwcyBsaW5lYXIgaW5maW5pdGU7c3Ryb2tlLWxpbmVjYXA6cm91bmQ7fSNteS1zdmcgLmVkZ2UtYW5pbWF0aW9uLWZhc3R7c3Ryb2tlLWRhc2hhcnJheTo5LDUhaW1wb3J0YW50O3N0cm9rZS1kYXNob2Zmc2V0OjkwMDthbmltYXRpb246ZGFzaCAyMHMgbGluZWFyIGluZmluaXRlO3N0cm9rZS1saW5lY2FwOnJvdW5kO30jbXktc3ZnIC5lcnJvci1pY29ue2ZpbGw6I2Y3ZjlmYjt9I215LXN2ZyAuZXJyb3ItdGV4dHtmaWxsOiMwODA2MDQ7c3Ryb2tlOiMwODA2MDQ7fSNteS1zdmcgLmVkZ2UtdGhpY2tuZXNzLW5vcm1hbHtzdHJva2Utd2lkdGg6MXB4O30jbXktc3ZnIC5lZGdlLXRoaWNrbmVzcy10aGlja3tzdHJva2Utd2lkdGg6My41cHg7fSNteS1zdmcgLmVkZ2UtcGF0dGVybi1zb2xpZHtzdHJva2UtZGFzaGFycmF5OjA7fSNteS1zdmcgLmVkZ2UtdGhpY2tuZXNzLWludmlzaWJsZXtzdHJva2Utd2lkdGg6MDtmaWxsOm5vbmU7fSNteS1zdmcgLmVkZ2UtcGF0dGVybi1kYXNoZWR7c3Ryb2tlLWRhc2hhcnJheTozO30jbXktc3ZnIC5lZGdlLXBhdHRlcm4tZG90dGVke3N0cm9rZS1kYXNoYXJyYXk6Mjt9I215LXN2ZyAubWFya2Vye2ZpbGw6IzUyNmE3OTtzdHJva2U6IzUyNmE3OTt9I215LXN2ZyAubWFya2VyLmNyb3Nze3N0cm9rZTojNTI2YTc5O30jbXktc3ZnIHN2Z3tmb250LWZhbWlseTpJbnRlcix1aS1zYW5zLXNlcmlmLHN5c3RlbS11aSxzYW5zLXNlcmlmO2ZvbnQtc2l6ZToxNnB4O30jbXktc3ZnIHB7bWFyZ2luOjA7fSNteS1zdmcgLmxhYmVse2ZvbnQtZmFtaWx5OkludGVyLHVpLXNhbnMtc2VyaWYsc3lzdGVtLXVpLHNhbnMtc2VyaWY7Y29sb3I6IzE3MjYzMDt9I215LXN2ZyAuY2x1c3Rlci1sYWJlbCB0ZXh0e2ZpbGw6IzA4MDYwNDt9I215LXN2ZyAuY2x1c3Rlci1sYWJlbCBzcGFue2NvbG9yOiMwODA2MDQ7fSNteS1zdmcgLmNsdXN0ZXItbGFiZWwgc3BhbiBwe2JhY2tncm91bmQtY29sb3I6dHJhbnNwYXJlbnQ7fSNteS1zdmcgLmxhYmVsIHRleHQsI215LXN2ZyBzcGFue2ZpbGw6IzE3MjYzMDtjb2xvcjojMTcyNjMwO30jbXktc3ZnIC5ub2RlIHJlY3QsI215LXN2ZyAubm9kZSBjaXJjbGUsI215LXN2ZyAubm9kZSBlbGxpcHNlLCNteS1zdmcgLm5vZGUgcG9seWdvbiwjbXktc3ZnIC5ub2RlIHBhdGh7ZmlsbDojZGJlNWVjO3N0cm9rZTojNjA3OThhO3N0cm9rZS13aWR0aDoxcHg7fSNteS1zdmcgLnJvdWdoLW5vZGUgLmxhYmVsIHRleHQsI215LXN2ZyAubm9kZSAubGFiZWwgdGV4dCwjbXktc3ZnIC5pbWFnZS1zaGFwZSAubGFiZWwsI215LXN2ZyAuaWNvbi1zaGFwZSAubGFiZWx7dGV4dC1hbmNob3I6bWlkZGxlO30jbXktc3ZnIC5ub2RlIC5rYXRleCBwYXRoe2ZpbGw6IzAwMDtzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MXB4O30jbXktc3ZnIC5yb3VnaC1ub2RlIC5sYWJlbCwjbXktc3ZnIC5ub2RlIC5sYWJlbCwjbXktc3ZnIC5pbWFnZS1zaGFwZSAubGFiZWwsI215LXN2ZyAuaWNvbi1zaGFwZSAubGFiZWx7dGV4dC1hbGlnbjpjZW50ZXI7fSNteS1zdmcgLm5vZGUuY2xpY2thYmxle2N1cnNvcjpwb2ludGVyO30jbXktc3ZnIC5yb290IC5hbmNob3IgcGF0aHtmaWxsOiM1MjZhNzkhaW1wb3J0YW50O3N0cm9rZS13aWR0aDowO3N0cm9rZTojNTI2YTc5O30jbXktc3ZnIC5hcnJvd2hlYWRQYXRoe2ZpbGw6IzA4MDYwNDt9I215LXN2ZyAuZWRnZVBhdGggLnBhdGh7c3Ryb2tlOiM1MjZhNzk7c3Ryb2tlLXdpZHRoOjFweDt9I215LXN2ZyAuZmxvd2NoYXJ0LWxpbmt7c3Ryb2tlOiM1MjZhNzk7ZmlsbDpub25lO30jbXktc3ZnIC5lZGdlTGFiZWx7YmFja2dyb3VuZC1jb2xvcjojZWRmMmY1O3RleHQtYWxpZ246Y2VudGVyO30jbXktc3ZnIC5lZGdlTGFiZWwgcHtiYWNrZ3JvdW5kLWNvbG9yOiNlZGYyZjU7fSNteS1zdmcgLmVkZ2VMYWJlbCByZWN0e29wYWNpdHk6MC41O2JhY2tncm91bmQtY29sb3I6I2VkZjJmNTtmaWxsOiNlZGYyZjU7fSNteS1zdmcgLmxhYmVsQmtne2JhY2tncm91bmQtY29sb3I6cmdiYSgyMzcsIDI0MiwgMjQ1LCAwLjUpO30jbXktc3ZnIC5jbHVzdGVyIHJlY3R7ZmlsbDojZjdmOWZiO3N0cm9rZTpoc2woMjEwLCAwJSwgODcuNjQ3MDU4ODIzNSUpO3N0cm9rZS13aWR0aDoxcHg7fSNteS1zdmcgLmNsdXN0ZXIgdGV4dHtmaWxsOiMwODA2MDQ7fSNteS1zdmcgLmNsdXN0ZXIgc3Bhbntjb2xvcjojMDgwNjA0O30jbXktc3ZnIGRpdi5tZXJtYWlkVG9vbHRpcHtwb3NpdGlvbjphYnNvbHV0ZTt0ZXh0LWFsaWduOmNlbnRlcjttYXgtd2lkdGg6MjAwcHg7cGFkZGluZzoycHg7Zm9udC1mYW1pbHk6SW50ZXIsdWktc2Fucy1zZXJpZixzeXN0ZW0tdWksc2Fucy1zZXJpZjtmb250LXNpemU6MTJweDtiYWNrZ3JvdW5kOiNmN2Y5ZmI7Ym9yZGVyOjFweCBzb2xpZCBoc2woMjEwLCAwJSwgODcuNjQ3MDU4ODIzNSUpO2JvcmRlci1yYWRpdXM6MnB4O3BvaW50ZXItZXZlbnRzOm5vbmU7ei1pbmRleDoxMDA7fSNteS1zdmcgLmZsb3djaGFydFRpdGxlVGV4dHt0ZXh0LWFuY2hvcjptaWRkbGU7Zm9udC1zaXplOjE4cHg7ZmlsbDojMTcyNjMwO30jbXktc3ZnIHJlY3QudGV4dHtmaWxsOm5vbmU7c3Ryb2tlLXdpZHRoOjA7fSNteS1zdmcgLmljb24tc2hhcGUsI215LXN2ZyAuaW1hZ2Utc2hhcGV7YmFja2dyb3VuZC1jb2xvcjojZWRmMmY1O3RleHQtYWxpZ246Y2VudGVyO30jbXktc3ZnIC5pY29uLXNoYXBlIHAsI215LXN2ZyAuaW1hZ2Utc2hhcGUgcHtiYWNrZ3JvdW5kLWNvbG9yOiNlZGYyZjU7cGFkZGluZzoycHg7fSNteS1zdmcgLmljb24tc2hhcGUgLmxhYmVsIHJlY3QsI215LXN2ZyAuaW1hZ2Utc2hhcGUgLmxhYmVsIHJlY3R7b3BhY2l0eTowLjU7YmFja2dyb3VuZC1jb2xvcjojZWRmMmY1O2ZpbGw6I2VkZjJmNTt9I215LXN2ZyAubGFiZWwtaWNvbntkaXNwbGF5OmlubGluZS1ibG9jaztoZWlnaHQ6MWVtO292ZXJmbG93OnZpc2libGU7dmVydGljYWwtYWxpZ246LTAuMTI1ZW07fSNteS1zdmcgLm5vZGUgLmxhYmVsLWljb24gcGF0aHtmaWxsOmN1cnJlbnRDb2xvcjtzdHJva2U6cmV2ZXJ0O3N0cm9rZS13aWR0aDpyZXZlcnQ7fSNteS1zdmcgLm5vZGUgLm5lby1ub2Rle3N0cm9rZTojNjA3OThhO30jbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLm5vZGUgcmVjdCwjbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLmNsdXN0ZXIgcmVjdCwjbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLm5vZGUgcG9seWdvbntzdHJva2U6dXJsKCNteS1zdmctZ3JhZGllbnQpO2ZpbHRlcjpkcm9wLXNoYWRvdyggMXB4IDJweCAycHggcmdiYSgxODUsMTg1LDE4NSwxKSk7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0uc3dpbWxhbmUuY2x1c3RlciByZWN0e2ZpbHRlcjpub25lO30jbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLm5vZGUgcGF0aHtzdHJva2U6dXJsKCNteS1zdmctZ3JhZGllbnQpO3N0cm9rZS13aWR0aDoxcHg7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0ubm9kZSAub3V0ZXItcGF0aHtmaWx0ZXI6ZHJvcC1zaGFkb3coIDFweCAycHggMnB4IHJnYmEoMTg1LDE4NSwxODUsMSkpO30jbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLm5vZGUgLm5lby1saW5lIHBhdGh7c3Ryb2tlOiM2MDc5OGE7ZmlsdGVyOm5vbmU7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0ubm9kZSBjaXJjbGV7c3Ryb2tlOnVybCgjbXktc3ZnLWdyYWRpZW50KTtmaWx0ZXI6ZHJvcC1zaGFkb3coIDFweCAycHggMnB4IHJnYmEoMTg1LDE4NSwxODUsMSkpO30jbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLm5vZGUgY2lyY2xlIC5zdGF0ZS1zdGFydHtmaWxsOiMwMDAwMDA7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0uaWNvbi1zaGFwZSAuaWNvbntmaWxsOnVybCgjbXktc3ZnLWdyYWRpZW50KTtmaWx0ZXI6ZHJvcC1zaGFkb3coIDFweCAycHggMnB4IHJnYmEoMTg1LDE4NSwxODUsMSkpO30jbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLmljb24tc2hhcGUgLmljb24tbmVvIHBhdGh7c3Ryb2tlOnVybCgjbXktc3ZnLWdyYWRpZW50KTtmaWx0ZXI6ZHJvcC1zaGFkb3coIDFweCAycHggMnB4IHJnYmEoMTg1LDE4NSwxODUsMSkpO30jbXktc3ZnIDpyb290ey0tbWVybWFpZC1mb250LWZhbWlseToidHJlYnVjaGV0IG1zIix2ZXJkYW5hLGFyaWFsLHNhbnMtc2VyaWY7fTwvc3R5bGU+PGc+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCIgY2xhc3M9Im1hcmtlciBmbG93Y2hhcnQtdjIiIHZpZXdCb3g9IjAgMCAxMCAxMCIgcmVmWD0iNSIgcmVmWT0iNSIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iOCIgbWFya2VySGVpZ2h0PSI4IiBvcmllbnQ9ImF1dG8iPjxwYXRoIGQ9Ik0gMCAwIEwgMTAgNSBMIDAgMTAgeiIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMTsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50U3RhcnQiIGNsYXNzPSJtYXJrZXIgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTAgMTAiIHJlZlg9IjQuNSIgcmVmWT0iNSIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iOCIgbWFya2VySGVpZ2h0PSI4IiBvcmllbnQ9ImF1dG8iPjxwYXRoIGQ9Ik0gMCA1IEwgMTAgMTAgTCAxMCAwIHoiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDE7IHN0cm9rZS1kYXNoYXJyYXk6IDEsIDA7Ii8+PC9tYXJrZXI+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZC1tYXJnaW4iIGNsYXNzPSJtYXJrZXIgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTEuNSAxNCIgcmVmWD0iMTEuNSIgcmVmWT0iNyIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iMTAuNSIgbWFya2VySGVpZ2h0PSIxNCIgb3JpZW50PSJhdXRvIj48cGF0aCBkPSJNIDAgMCBMIDExLjUgNyBMIDAgMTQgeiIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMDsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50U3RhcnQtbWFyZ2luIiBjbGFzcz0ibWFya2VyIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDExLjUgMTQiIHJlZlg9IjEiIHJlZlk9IjciIG1hcmtlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgbWFya2VyV2lkdGg9IjExLjUiIG1hcmtlckhlaWdodD0iMTQiIG9yaWVudD0iYXV0byI+PHBvbHlnb24gcG9pbnRzPSIwLDcgMTEuNSwxNCAxMS41LDAiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDA7IHN0cm9rZS1kYXNoYXJyYXk6IDEsIDA7Ii8+PC9tYXJrZXI+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1jaXJjbGVFbmQiIGNsYXNzPSJtYXJrZXIgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTAgMTAiIHJlZlg9IjExIiByZWZZPSI1IiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSIxMSIgbWFya2VySGVpZ2h0PSIxMSIgb3JpZW50PSJhdXRvIj48Y2lyY2xlIGN4PSI1IiBjeT0iNSIgcj0iNSIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMTsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLWNpcmNsZVN0YXJ0IiBjbGFzcz0ibWFya2VyIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDEwIDEwIiByZWZYPSItMSIgcmVmWT0iNSIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iMTEiIG1hcmtlckhlaWdodD0iMTEiIG9yaWVudD0iYXV0byI+PGNpcmNsZSBjeD0iNSIgY3k9IjUiIHI9IjUiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDE7IHN0cm9rZS1kYXNoYXJyYXk6IDEsIDA7Ii8+PC9tYXJrZXI+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1jaXJjbGVFbmQtbWFyZ2luIiBjbGFzcz0ibWFya2VyIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDEwIDEwIiByZWZZPSI1IiByZWZYPSIxMi4yNSIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iMTQiIG1hcmtlckhlaWdodD0iMTQiIG9yaWVudD0iYXV0byI+PGNpcmNsZSBjeD0iNSIgY3k9IjUiIHI9IjUiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDA7IHN0cm9rZS1kYXNoYXJyYXk6IDEsIDA7Ii8+PC9tYXJrZXI+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1jaXJjbGVTdGFydC1tYXJnaW4iIGNsYXNzPSJtYXJrZXIgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTAgMTAiIHJlZlg9Ii0yIiByZWZZPSI1IiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSIxNCIgbWFya2VySGVpZ2h0PSIxNCIgb3JpZW50PSJhdXRvIj48Y2lyY2xlIGN4PSI1IiBjeT0iNSIgcj0iNSIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMDsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLWNyb3NzRW5kIiBjbGFzcz0ibWFya2VyIGNyb3NzIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDExIDExIiByZWZYPSIxMiIgcmVmWT0iNS4yIiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSIxMSIgbWFya2VySGVpZ2h0PSIxMSIgb3JpZW50PSJhdXRvIj48cGF0aCBkPSJNIDEsMSBsIDksOSBNIDEwLDEgbCAtOSw5IiBjbGFzcz0iYXJyb3dNYXJrZXJQYXRoIiBzdHlsZT0ic3Ryb2tlLXdpZHRoOiAyOyBzdHJva2UtZGFzaGFycmF5OiAxLCAwOyIvPjwvbWFya2VyPjxtYXJrZXIgaWQ9Im15LXN2Z19mbG93Y2hhcnQtdjItY3Jvc3NTdGFydCIgY2xhc3M9Im1hcmtlciBjcm9zcyBmbG93Y2hhcnQtdjIiIHZpZXdCb3g9IjAgMCAxMSAxMSIgcmVmWD0iLTEiIHJlZlk9IjUuMiIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iMTEiIG1hcmtlckhlaWdodD0iMTEiIG9yaWVudD0iYXV0byI+PHBhdGggZD0iTSAxLDEgbCA5LDkgTSAxMCwxIGwgLTksOSIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMjsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLWNyb3NzRW5kLW1hcmdpbiIgY2xhc3M9Im1hcmtlciBjcm9zcyBmbG93Y2hhcnQtdjIiIHZpZXdCb3g9IjAgMCAxNSAxNSIgcmVmWD0iMTcuNyIgcmVmWT0iNy41IiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSIxMiIgbWFya2VySGVpZ2h0PSIxMiIgb3JpZW50PSJhdXRvIj48cGF0aCBkPSJNIDEsMSBMIDE0LDE0IE0gMSwxNCBMIDE0LDEiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDIuNTsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLWNyb3NzU3RhcnQtbWFyZ2luIiBjbGFzcz0ibWFya2VyIGNyb3NzIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDE1IDE1IiByZWZYPSItMy41IiByZWZZPSI3LjUiIG1hcmtlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgbWFya2VyV2lkdGg9IjEyIiBtYXJrZXJIZWlnaHQ9IjEyIiBvcmllbnQ9ImF1dG8iPjxwYXRoIGQ9Ik0gMSwxIEwgMTQsMTQgTSAxLDE0IEwgMTQsMSIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMi41OyBzdHJva2UtZGFzaGFycmF5OiAxLCAwOyIvPjwvbWFya2VyPjxnIGNsYXNzPSJyb290Ij48ZyBjbGFzcz0iY2x1c3RlcnMiPjxnIGNsYXNzPSJjbHVzdGVyIiBpZD0ibXktc3ZnLUFLUyIgZGF0YS1sb29rPSJjbGFzc2ljIj48cmVjdCBzdHlsZT0iIiB4PSI4IiB5PSIyOTYuNDAwMDAxNTI1ODc4OSIgd2lkdGg9IjE4NjUuNDMzNTkzNzUiIGhlaWdodD0iOTI0Ii8+PGcgY2xhc3M9ImNsdXN0ZXItbGFiZWwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDg5OC44NDE3OTY4NzUsIDI5Ni40MDAwMDE1MjU4Nzg5KSI+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5BS1M8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gY2x1c3RlcjwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImNsdXN0ZXIiIGlkPSJteS1zdmctTlMiIGRhdGEtbG9vaz0iY2xhc3NpYyI+PHJlY3Qgc3R5bGU9IiIgeD0iMjgiIHk9IjQ3Mi4yMDAwMDQ1Nzc2MzY3IiB3aWR0aD0iMTMwNC4wMzUxNTYyNSIgaGVpZ2h0PSI1MDkuNTk5OTk4NDc0MTIxMSIvPjxnIGNsYXNzPSJjbHVzdGVyLWxhYmVsIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg1NDMuMDI1MzkwNjI1LCA0NzIuMjAwMDA0NTc3NjM2NykiPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+bmFtZXNwYWNlOjwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBoYXByb3h5LXVuaWZpZWQtZ2F0ZXdheTwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PC9nPjxnIGNsYXNzPSJlZGdlUGF0aHMiPjxwYXRoIGQ9Ik05NzMuNDA2LDU2TDk3My40MDYsNjJDOTczLjQwNiw2OCw5NzMuNDA2LDgwLDk3My40MDYsOTEuMzMzQzk3My40MDYsMTAyLjY2Nyw5NzMuNDA2LDExMy4zMzMsOTczLjQwNiwxMTguNjY3TDk3My40MDYsMTI0IiBpZD0ibXktc3ZnLUxfSU5URVJORVRfUElQXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfSU5URVJORVRfUElQXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk9UY3pMalF3TmpJMUxDSjVJam8xTm4wc2V5SjRJam81TnpNdU5EQTJNalVzSW5raU9qa3lmU3g3SW5naU9qazNNeTQwTURZeU5Td2llU0k2TVRJNGZWMD0iIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik05NzMuNDA2LDI0Ni40TDk3My40MDYsMjUwLjU2N0M5NzMuNDA2LDI1NC43MzMsOTczLjQwNiwyNjMuMDY3LDk3My40MDYsMjcxLjRDOTczLjQwNiwyNzkuNzMzLDk3My40MDYsMjg4LjA2Nyw5NzMuNDA2LDI5NS43MzNDOTczLjQwNiwzMDMuNCw5NzMuNDA2LDMxMC40LDk3My40MDYsMzEzLjlMOTczLjQwNiwzMTcuNCIgaWQ9Im15LXN2Zy1MX1BJUF9MQl8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX1BJUF9MQl8wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZPVGN6TGpRd05qSTFMQ0o1SWpveU5EWXVOREF3TURBeE5USTFPRGM0T1gwc2V5SjRJam81TnpNdU5EQTJNalVzSW5raU9qSTNNUzQwTURBd01ERTFNalU0TnpnNWZTeDdJbmdpT2prM015NDBNRFl5TlN3aWVTSTZNamsyTGpRd01EQXdNVFV5TlRnM09EbDlMSHNpZUNJNk9UY3pMalF3TmpJMUxDSjVJam96TWpFdU5EQXdNREF4TlRJMU9EYzRPWDFkIiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNOTczLjQwNiw0MjIuMkw5NzMuNDA2LDQyNi4zNjdDOTczLjQwNiw0MzAuNTMzLDk3My40MDYsNDM4Ljg2Nyw5NzMuNDA2LDQ0Ny4yQzk3My40MDYsNDU1LjUzMyw5NzMuNDA2LDQ2My44NjcsOTczLjQwNiw0NzEuNTMzQzk3My40MDYsNDc5LjIsOTczLjQwNiw0ODYuMiw5NzMuNDA2LDQ4OS43TDk3My40MDYsNDkzLjIiIGlkPSJteS1zdmctTF9MQl9TVkNfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9MQl9TVkNfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2T1RjekxqUXdOakkxTENKNUlqbzBNakl1TWpBd01EQTBOVGMzTmpNMk4zMHNleUo0SWpvNU56TXVOREEyTWpVc0lua2lPalEwTnk0eU1EQXdNRFExTnpjMk16WTNmU3g3SW5naU9qazNNeTQwTURZeU5Td2llU0k2TkRjeUxqSXdNREF3TkRVM056WXpOamQ5TEhzaWVDSTZPVGN6TGpRd05qSTFMQ0o1SWpvME9UY3VNakF3TURBME5UYzNOak0yTjMxZCIgZGF0YS1sb29rPSJjbGFzc2ljIiBtYXJrZXItZW5kPSJ1cmwoI215LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRFbmQpIi8+PHBhdGggZD0iTTg2NS44NjEsNjE1LjZMODU4LjI5Miw2MTkuNzY3Qzg1MC43MjMsNjIzLjkzMyw4MzUuNTg0LDYzMi4yNjcsODI4LjAxNSw2NDEuNEM4MjAuNDQ1LDY1MC41MzMsODIwLjQ0NSw2NjAuNDY3LDgyMC40NDUsNjY1LjQzM0w4MjAuNDQ1LDY3MC40IiBpZD0ibXktc3ZnLUxfU1ZDX1BPREFfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9TVkNfUE9EQV8wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZPRFkxTGpnMk1USTJOelF3TXpJeE1URXNJbmtpT2pZeE5TNDJNREF3TURZeE1ETTFNVFUyZlN4N0luZ2lPamd5TUM0ME5EVXpNVEkxTENKNUlqbzJOREF1TmpBd01EQTJNVEF6TlRFMU5uMHNleUo0SWpvNE1qQXVORFExTXpFeU5Td2llU0k2TmpjMExqUXdNREF3TlRNME1EVTNOako5WFE9PSIgZGF0YS1sb29rPSJjbGFzc2ljIiBtYXJrZXItZW5kPSJ1cmwoI215LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRFbmQpIi8+PHBhdGggZD0iTTEwODAuOTUxLDYxNS42TDEwODguNTIxLDYxOS43NjdDMTA5Ni4wOSw2MjMuOTMzLDExMTEuMjI5LDYzMi4yNjcsMTExOC43OTgsNjQxLjRDMTEyNi4zNjcsNjUwLjUzMywxMTI2LjM2Nyw2NjAuNDY3LDExMjYuMzY3LDY2NS40MzNMMTEyNi4zNjcsNjcwLjQiIGlkPSJteS1zdmctTF9TVkNfUE9EQl8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX1NWQ19QT0RCXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk1UQTRNQzQ1TlRFeU16STFPVFkzT0Rrc0lua2lPall4TlM0Mk1EQXdNRFl4TURNMU1UVTJmU3g3SW5naU9qRXhNall1TXpZM01UZzNOU3dpZVNJNk5qUXdMall3TURBd05qRXdNelV4TlRaOUxIc2llQ0k2TVRFeU5pNHpOamN4T0RjMUxDSjVJam8yTnpRdU5EQXdNREExTXpRd05UYzJNbjFkIiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNNjkyLjQ4NCw3MzIuNDcxTDY0OC4zMjIsNzQxLjE5MkM2MDQuMTU5LDc0OS45MTQsNTE1LjgzMyw3NjcuMzU3LDUwOC42NzYsNzg3LjE1OUM1MDEuNTIsODA2Ljk2Miw1NzUuNTMxLDgyOS4xMjMsNjEyLjUzNyw4NDAuMjA0TDY0OS41NDMsODUxLjI4NSIgaWQ9Im15LXN2Zy1MX1BPREFfSFVHQ09ORl8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1kb3R0ZWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9QT0RBX0hVR0NPTkZfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TmpreUxqUTRORE0zTlN3aWVTSTZOek15TGpRM01EWXhNREE1TXpFek56WjlMSHNpZUNJNk5ESTNMalV3TnpneE1qVXNJbmtpT2pjNE5DNDRNREF3TURNd05URTNOVGM0ZlN4N0luZ2lPalkxTXk0ek56VXNJbmtpT2pnMU1pNDBNekkyTXpZNE16STNNVFEzZlYwPSIgZGF0YS1sb29rPSJjbGFzc2ljIiBtYXJrZXItZW5kPSJ1cmwoI215LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRFbmQpIi8+PHBhdGggZD0iTTEwNDIuNDMyLDc0MEwxMDIzLjMyNSw3NDcuNDY3QzEwMDQuMjE4LDc1NC45MzMsOTY2LjAwMyw3NjkuODY3LDkzMi4xNTEsNzg3LjM1OEM4OTguMjk5LDgwNC44NSw4NjguODEsODI0LjkwMSw4NTQuMDY1LDgzNC45MjZMODM5LjMyLDg0NC45NTEiIGlkPSJteS1zdmctTF9QT0RCX0hVR0NPTkZfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tZG90dGVkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfUE9EQl9IVUdDT05GXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk1UQTBNaTQwTXpJeE1EUXdNemt3TWpRMkxDSjVJam8zTkRBdU1EQXdNREF6T0RFME5qazNNMzBzZXlKNElqbzVNamN1TnpnNU1EWXlOU3dpZVNJNk56ZzBMamd3TURBd016QTFNVGMxTnpoOUxIc2llQ0k2T0RNMkxqQXhNalE1TnpjMU5UYzNNRFVzSW5raU9qZzBOeTR5TURBd01EUTFOemMyTXpZM2ZWMD0iIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik0xNTY0LjE3Miw3NDguOEwxNTY0LjE3Miw3NTQuOEMxNTY0LjE3Miw3NjAuOCwxNTY0LjE3Miw3NzIuOCwxNTY0LjE2Myw3ODguNTMzQzE1NjQuMTU0LDgwNC4yNjcsMTU2NC4xMzUsODIzLjczMywxNTY0LjEyNiw4MzMuNDY3TDE1NjQuMTE3LDg0My4yIiBpZD0ibXktc3ZnLUxfR1dDX0dXXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfR1dDX0dXXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk1UVTJOQzR4TnpFNE56VXNJbmtpT2pjME9DNDRNREF3TURNd05URTNOVGM0ZlN4N0luZ2lPakUxTmpRdU1UY3hPRGMxTENKNUlqbzNPRFF1T0RBd01EQXpNRFV4TnpVM09IMHNleUo0SWpveE5UWTBMakV4TXpJNE1USTBPRFUyTnl3aWVTSTZPRFEzTGpJd01EQXdORFUzTnpZek5qZDlYUT09IiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNMTQ5OS40MDMsOTMwLjRMMTQ4Ni4wODUsOTM4Ljk2N0MxNDcyLjc2Nyw5NDcuNTMzLDE0NDYuMTMyLDk2NC42NjcsMTQzMi44MTQsOTc3LjRDMTQxOS40OTYsOTkwLjEzMywxNDE5LjQ5Niw5OTguNDY3LDE0MTkuNDk2LDEwMDYuMTMzQzE0MTkuNDk2LDEwMTMuOCwxNDE5LjQ5NiwxMDIwLjgsMTQxOS40OTYsMTAyNC4zTDE0MTkuNDk2LDEwMjcuOCIgaWQ9Im15LXN2Zy1MX0dXX1JUQVBJXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfR1dfUlRBUElfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TVRRNU9TNDBNREkzTVRVM05EVTNPVEkyTENKNUlqbzVNekF1TkRBd01EQXhOVEkxT0RjNE9YMHNleUo0SWpveE5ERTVMalE1TmpBNU16YzFMQ0o1SWpvNU9ERXVPREF3TURBek1EVXhOelUzT0gwc2V5SjRJam94TkRFNUxqUTVOakE1TXpjMUxDSjVJam94TURBMkxqZ3dNREF3TXpBMU1UYzFOemg5TEhzaWVDSTZNVFF4T1M0ME9UWXdPVE0zTlN3aWVTSTZNVEF6TVM0NE1EQXdNRE13TlRFM05UYzRmVjA9IiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNMTYyOC43NDYsOTMwLjRMMTY0Mi4wNjMsOTM4Ljk2N0MxNjU1LjM4MSw5NDcuNTMzLDE2ODIuMDE3LDk2NC42NjcsMTY5NS4zMzUsOTc3LjRDMTcwOC42NTIsOTkwLjEzMywxNzA4LjY1Miw5OTguNDY3LDE3MDguNjUyLDEwMDYuMTMzQzE3MDguNjUyLDEwMTMuOCwxNzA4LjY1MiwxMDIwLjgsMTcwOC42NTIsMTAyNC4zTDE3MDguNjUyLDEwMjcuOCIgaWQ9Im15LXN2Zy1MX0dXX1JUS0NfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9HV19SVEtDXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk1UWXlPQzQzTkRVM01qRTNOVFF5TURjMExDSjVJam81TXpBdU5EQXdNREF4TlRJMU9EYzRPWDBzZXlKNElqb3hOekE0TGpZMU1qTTBNemMxTENKNUlqbzVPREV1T0RBd01EQXpNRFV4TnpVM09IMHNleUo0SWpveE56QTRMalkxTWpNME16YzFMQ0o1SWpveE1EQTJMamd3TURBd016QTFNVGMxTnpoOUxIc2llQ0k2TVRjd09DNDJOVEl6TkRNM05Td2llU0k2TVRBek1TNDRNREF3TURNd05URTNOVGM0ZlYwPSIgZGF0YS1sb29rPSJjbGFzc2ljIiBtYXJrZXItZW5kPSJ1cmwoI215LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRFbmQpIi8+PHBhdGggZD0iTTkwNC4zOCw3NDBMOTIzLjQ4OCw3NDcuNDY3Qzk0Mi41OTUsNzU0LjkzMyw5ODAuODA5LDc2OS44NjcsMTA3MC4xMTYsNzkwLjcyOEMxMTU5LjQyMyw4MTEuNTg5LDEyOTkuODIzLDgzOC4zNzksMTM3MC4wMjMsODUxLjc3NEwxNDQwLjIyMyw4NjUuMTY4IiBpZD0ibXktc3ZnLUxfUE9EQV9HV18wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1kb3R0ZWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9QT0RBX0dXXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk9UQTBMak00TURNNU5UazJNRGszTlRNc0lua2lPamMwTUM0d01EQXdNRE00TVRRMk9UY3pmU3g3SW5naU9qRXdNVGt1TURJek5ETTNOU3dpZVNJNk56ZzBMamd3TURBd016QTFNVGMxTnpoOUxIc2llQ0k2TVRRME5DNHhOVEl6TkRNM05Td2llU0k2T0RZMUxqa3hOemsyTURneE1EZzFOREo5WFE9PSIgZGF0YS1sb29rPSJjbGFzc2ljIiBtYXJrZXItZW5kPSJ1cmwoI215LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRFbmQpIi8+PHBhdGggZD0iTTExNjYuMzgsNzQwTDExNzUuNDg4LDc0Ny40NjdDMTE4NC41OTcsNzU0LjkzMywxMjAyLjgxNCw3NjkuODY3LDEyNDguNDcyLDc4OC40MTRDMTI5NC4xMjksODA2Ljk2MSwxMzY3LjIyNyw4MjkuMTIyLDE0MDMuNzc2LDg0MC4yMDJMMTQ0MC4zMjQsODUxLjI4MyIgaWQ9Im15LXN2Zy1MX1BPREJfR1dfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tZG90dGVkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfUE9EQl9HV18wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZNVEUyTmk0ek56azRNekl6TXpBek1ESTVMQ0o1SWpvM05EQXVNREF3TURBek9ERTBOamszTTMwc2V5SjRJam94TWpJeExqQXpNVEkxTENKNUlqbzNPRFF1T0RBd01EQXpNRFV4TnpVM09IMHNleUo0SWpveE5EUTBMakUxTWpNME16YzFMQ0o1SWpvNE5USXVORFF6TkRBMU9UWXdNREV5TTMxZCIgZGF0YS1sb29rPSJjbGFzc2ljIiBtYXJrZXItZW5kPSJ1cmwoI215LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRFbmQpIi8+PHBhdGggZD0iTTE0MTkuNDk2LDEwOTcuNEwxNDE5LjQ5NiwxMTAxLjU2N0MxNDE5LjQ5NiwxMTA1LjczMywxNDE5LjQ5NiwxMTE0LjA2NywxNDE5LjQ5NiwxMTIxLjczM0MxNDE5LjQ5NiwxMTI5LjQsMTQxOS40OTYsMTEzNi40LDE0MTkuNDk2LDExMzkuOUwxNDE5LjQ5NiwxMTQzLjQiIGlkPSJteS1zdmctTF9SVEFQSV9BUElTVkNfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9SVEFQSV9BUElTVkNfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TVRReE9TNDBPVFl3T1RNM05Td2llU0k2TVRBNU55NDBNREF3TURFMU1qVTROemw5TEhzaWVDSTZNVFF4T1M0ME9UWXdPVE0zTlN3aWVTSTZNVEV5TWk0ME1EQXdNREUxTWpVNE56bDlMSHNpZUNJNk1UUXhPUzQwT1RZd09UTTNOU3dpZVNJNk1URTBOeTQwTURBd01ERTFNalU0TnpsOVhRPT0iIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik0xNzA4LjY1MiwxMDk3LjRMMTcwOC42NTIsMTEwMS41NjdDMTcwOC42NTIsMTEwNS43MzMsMTcwOC42NTIsMTExNC4wNjcsMTcwOC42NTIsMTEyMS43MzNDMTcwOC42NTIsMTEyOS40LDE3MDguNjUyLDExMzYuNCwxNzA4LjY1MiwxMTM5LjlMMTcwOC42NTIsMTE0My40IiBpZD0ibXktc3ZnLUxfUlRLQ19LQ1NWQ18wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX1JUS0NfS0NTVkNfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TVRjd09DNDJOVEl6TkRNM05Td2llU0k2TVRBNU55NDBNREF3TURFMU1qVTROemw5TEhzaWVDSTZNVGN3T0M0Mk5USXpORE0zTlN3aWVTSTZNVEV5TWk0ME1EQXdNREUxTWpVNE56bDlMSHNpZUNJNk1UY3dPQzQyTlRJek5ETTNOU3dpZVNJNk1URTBOeTQwTURBd01ERTFNalU0TnpsOVhRPT0iIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVscyI+PGcgY2xhc3M9ImVkZ2VMYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoOTczLjQwNjI1LCA5MikiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9JTlRFUk5FVF9QSVBfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTEwKSI+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSIiIHg9Ii0yMi41MzkwNjI1IiB5PSItMSIgd2lkdGg9IjQ1LjA3ODEyNSIgaGVpZ2h0PSIyMiIvPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPkhUVFA8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9QSVBfTEJfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgMCkiPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSIvPjwvdGV4dD48L2c+PC9nPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9MQl9TVkNfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgMCkiPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSIvPjwvdGV4dD48L2c+PC9nPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9TVkNfUE9EQV8wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAwKSI+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIi8+PC90ZXh0PjwvZz48L2c+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX1NWQ19QT0RCXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIDApIj48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiLz48L3RleHQ+PC9nPjwvZz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVsIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg0NDQuMzQyMDEsIDc4MS40NzU0NykiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9QT0RBX0hVR0NPTkZfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTEwKSI+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSIiIHg9Ii0zMi4xODc1IiB5PSItMSIgd2lkdGg9IjY0LjM3NSIgaGVpZ2h0PSIyMiIvPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPndhdGNoZXM8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDkzMy40MjY0MSwgNzgyLjU5NzA1KSI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX1BPREJfSFVHQ09ORl8wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMTApIj48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9IiIgeD0iLTMyLjE4NzUiIHk9Ii0xIiB3aWR0aD0iNjQuMzc1IiBoZWlnaHQ9IjIyIi8+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+d2F0Y2hlczwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX0dXQ19HV18wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAwKSI+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIi8+PC90ZXh0PjwvZz48L2c+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX0dXX1JUQVBJXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIDApIj48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiLz48L3RleHQ+PC9nPjwvZz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVsIj48ZyBjbGFzcz0ibGFiZWwiIGRhdGEtaWQ9IkxfR1dfUlRLQ18wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAwKSI+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIi8+PC90ZXh0PjwvZz48L2c+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTE3MS4xMzU3MSwgODEzLjgyNDIzKSI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX1BPREFfR1dfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTEwKSI+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSIiIHg9Ii0zOS4wNDY4NzUiIHk9Ii0xIiB3aWR0aD0iNzguMDkzNzUiIGhlaWdodD0iMjIiLz48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5yZWNvbmNpbGVzPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVsIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMjk4Ljc3ODEsIDgwOC4zNzA0NCkiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9QT0RCX0dXXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xMCkiPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0iIiB4PSItMzkuMDQ2ODc1IiB5PSItMSIgd2lkdGg9Ijc4LjA5Mzc1IiBoZWlnaHQ9IjIyIi8+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+cmVjb25jaWxlczwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX1JUQVBJX0FQSVNWQ18wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAwKSI+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIi8+PC90ZXh0PjwvZz48L2c+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX1JUS0NfS0NTVkNfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgMCkiPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSIvPjwvdGV4dD48L2c+PC9nPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZXMiPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LUlOVEVSTkVULTAiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoOTczLjQwNjI1LCAzMikiPjxyZWN0IGNsYXNzPSJiYXNpYyBsYWJlbC1jb250YWluZXIiIHN0eWxlPSIiIHg9Ii01OC4yNSIgeT0iLTI0IiB3aWR0aD0iMTE2LjUiIGhlaWdodD0iNDgiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC05KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+SW50ZXJuZXQ8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LVBJUC0xIiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDk3My40MDYyNSwgMTg3LjIwMDAwMDc2MjkzOTQ1KSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTEyNS45NTMxMjUiIHk9Ii01OS4yMDAwMDA3NjI5Mzk0NSIgd2lkdGg9IjI1MS45MDYyNSIgaGVpZ2h0PSIxMTguNDAwMDAxNTI1ODc4OSIvPjxnIGNsYXNzPSJsYWJlbCIgc3R5bGU9IiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTQ0LjIwMDAwMDc2MjkzOTQ1KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+U3RhdGljPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IHB1YmxpYzwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBJUDwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIxZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPnBsYXRmb3JtPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IFJlc291cmNlPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEdyb3VwPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjIuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5mcm9tPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjMuMmVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5kb2NzL3RlcnJhZm9ybS1pbmZyYS9kZXNpZzwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSI0LjMwMDAwMDAwMDAwMDAwMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5uLm1kPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1MQi0zIiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDk3My40MDYyNSwgMzcxLjgwMDAwMzA1MTc1NzgpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItMTA1Ljk5MjE4NzUiIHk9Ii01MC40MDAwMDE1MjU4Nzg5MDYiIHdpZHRoPSIyMTEuOTg0Mzc1IiBoZWlnaHQ9IjEwMC44MDAwMDMwNTE3NTc4MSIvPjxnIGNsYXNzPSJsYWJlbCIgc3R5bGU9IiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTM1LjQwMDAwMTUyNTg3ODkwNikiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPkF6dXJlPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IFN0YW5kYXJkPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IExvYWQ8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5CYWxhbmNlcjwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIyLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+QUtTLW1hbmFnZWQ8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gbm9kZTwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIzLjJlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+cmVzb3VyY2U8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gZ3JvdXA8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LVNWQy01IiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDk3My40MDYyNSwgNTU2LjQwMDAwNTM0MDU3NjIpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItMTIwLjkzNzUiIHk9Ii01OS4yMDAwMDA3NjI5Mzk0NSIgd2lkdGg9IjI0MS44NzUiIGhlaWdodD0iMTE4LjQwMDAwMTUyNTg3ODkiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC00NC4yMDAwMDA3NjI5Mzk0NSkiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPlNlcnZpY2U6PC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+aGFwcm94eS11bmlmaWVkLWdhdGV3YXk8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMi4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPnR5cGU8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gTG9hZEJhbGFuY2VyPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjMuMmVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5wb3J0czwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBhdXRvLWFkZGVkPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IHBlcjwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSI0LjMwMDAwMDAwMDAwMDAwMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5HYXRld2F5PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGxpc3RlbmVyPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1QT0RBLTciIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoODIwLjQ0NTMxMjUsIDcwNy4yMDAwMDQ1Nzc2MzY3KSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTEyNy45NjA5Mzc1IiB5PSItMzIuNzk5OTk5MjM3MDYwNTUiIHdpZHRoPSIyNTUuOTIxODc1IiBoZWlnaHQ9IjY1LjU5OTk5ODQ3NDEyMTEiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xNy43OTk5OTkyMzcwNjA1NDcpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5IVUc8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gY29udHJvbGxlcitkYXRhLXBsYW5lPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+cG9kPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEE8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LVBPREItOSIgZGF0YS1sb29rPSJjbGFzc2ljIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMTI2LjM2NzE4NzUsIDcwNy4yMDAwMDQ1Nzc2MzY3KSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTEyNy45NjA5Mzc1IiB5PSItMzIuNzk5OTk5MjM3MDYwNTUiIHdpZHRoPSIyNTUuOTIxODc1IiBoZWlnaHQ9IjY1LjU5OTk5ODQ3NDEyMTEiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xNy43OTk5OTkyMzcwNjA1NDcpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5IVUc8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gY29udHJvbGxlcitkYXRhLXBsYW5lPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+cG9kPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEI8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LUNSREpPQi0xMCIgZGF0YS1sb29rPSJjbGFzc2ljIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxODIuOTM3NSwgODg4LjgwMDAwMzA1MTc1NzgpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItMTE5LjkzNzUiIHk9Ii02OCIgd2lkdGg9IjIzOS44NzUiIGhlaWdodD0iMTM2Ii8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtNTMpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5jcmRqb2I8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gSm9iPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+cG9zdC1pbnN0YWxsL3ByZS11cGdyYWRlPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjIuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5ob29rPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjMuMmVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5pbnN0YWxsczwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSI0LjMwMDAwMDAwMDAwMDAwMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5IdWdDb25mL0dsb2JhbC9EZWZhdWx0czwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSI1LjRlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+Q1JEczwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9Im5vZGUgZGVmYXVsdCIgaWQ9Im15LXN2Zy1mbG93Y2hhcnQtR1dBUElKT0ItMTEiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDc4LjEyNSwgODg4LjgwMDAwMzA1MTc1NzgpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItMTI1LjI1IiB5PSItNTAuNDAwMDAxNTI1ODc4OTA2IiB3aWR0aD0iMjUwLjUiIGhlaWdodD0iMTAwLjgwMDAwMzA1MTc1NzgxIi8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMzUuNDAwMDAxNTI1ODc4OTA2KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+Z3dhcGlqb2I8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gSm9iPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+cG9zdC1pbnN0YWxsL3ByZS11cGdyYWRlPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjIuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5ob29rPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjMuMmVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5pbnN0YWxsczwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBHYXRld2F5PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEFQSTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBDUkRzPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1IVUdDT05GLTEyIiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDc3NC44MjgxMjUsIDg4OC44MDAwMDMwNTE3NTc4KSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTEyMS40NTMxMjUiIHk9Ii00MS41OTk5OTg0NzQxMjEwOTQiIHdpZHRoPSIyNDIuOTA2MjUiIGhlaWdodD0iODMuMTk5OTk2OTQ4MjQyMTkiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0yNi41OTk5OTg0NzQxMjEwOTQpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5IdWdDb25mPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IENSPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+bG9nZ2luZzwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiArPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEdsb2JhbC9EZWZhdWx0czwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIyLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+cmVmczwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9Im5vZGUgZGVmYXVsdCIgaWQ9Im15LXN2Zy1mbG93Y2hhcnQtR1dDLTE3IiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE1NjQuMTcxODc1LCA3MDcuMjAwMDA0NTc3NjM2NykiPjxyZWN0IGNsYXNzPSJiYXNpYyBsYWJlbC1jb250YWluZXIiIHN0eWxlPSIiIHg9Ii0xMTQuMjk2ODc1IiB5PSItNDEuNTk5OTk4NDc0MTIxMDk0IiB3aWR0aD0iMjI4LjU5Mzc1IiBoZWlnaHQ9IjgzLjE5OTk5Njk0ODI0MjE5Ii8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMjYuNTk5OTk4NDc0MTIxMDk0KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+R2F0ZXdheUNsYXNzOjwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBoYXByb3h5PC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+Y29udHJvbGxlck5hbWU8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMi4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPmdhdGUuaGFwcm94eS5vcmcvaHVnPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1HVy0xOCIgZGF0YS1sb29rPSJjbGFzc2ljIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNTY0LjA3NDIxODc1LCA4ODguODAwMDAzMDUxNzU3OCkiPjxyZWN0IGNsYXNzPSJiYXNpYyBsYWJlbC1jb250YWluZXIiIHN0eWxlPSIiIHg9Ii0xMTkuOTIxODc1IiB5PSItNDEuNTk5OTk4NDc0MTIxMDk0IiB3aWR0aD0iMjM5Ljg0Mzc1IiBoZWlnaHQ9IjgzLjE5OTk5Njk0ODI0MjE5Ii8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMjYuNTk5OTk4NDc0MTIxMDk0KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+R2F0ZXdheTo8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gaHVnLWdhdGV3YXk8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5IVFRQPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGxpc3RlbmVyPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IDo4MDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiAtPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IFBPQyw8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMi4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPm5vPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IFRMUzwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9Im5vZGUgZGVmYXVsdCIgaWQ9Im15LXN2Zy1mbG93Y2hhcnQtUlRBUEktMTkiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTQxOS40OTYwOTM3NSwgMTA2NC42MDAwMDIyODg4MTg0KSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTEwOS4zNzUiIHk9Ii0zMi43OTk5OTkyMzcwNjA1NSIgd2lkdGg9IjIxOC43NSIgaGVpZ2h0PSI2NS41OTk5OTg0NzQxMjExIi8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMTcuNzk5OTk5MjM3MDYwNTQ3KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+SFRUUFJvdXRlOjwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBhcGktcm91dGU8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4vdjEvKjwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9Im5vZGUgZGVmYXVsdCIgaWQ9Im15LXN2Zy1mbG93Y2hhcnQtUlRLQy0yMCIgZGF0YS1sb29rPSJjbGFzc2ljIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNzA4LjY1MjM0Mzc1LCAxMDY0LjYwMDAwMjI4ODgxODQpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItMTI5Ljc4MTI1IiB5PSItMzIuNzk5OTk5MjM3MDYwNTUiIHdpZHRoPSIyNTkuNTYyNSIgaGVpZ2h0PSI2NS41OTk5OTg0NzQxMjExIi8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMTcuNzk5OTk5MjM3MDYwNTQ3KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+SFRUUFJvdXRlOjwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBrZXljbG9hay1yb3V0ZTwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIxZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPi9hdXRoLyo8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LUFQSVNWQy0zMiIgZGF0YS1sb29rPSJjbGFzc2ljIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNDE5LjQ5NjA5Mzc1LCAxMTcxLjQwMDAwMTUyNTg3OSkiPjxyZWN0IGNsYXNzPSJiYXNpYyBsYWJlbC1jb250YWluZXIiIHN0eWxlPSIiIHg9Ii04OS41MzEyNSIgeT0iLTI0IiB3aWR0aD0iMTc5LjA2MjUiIGhlaWdodD0iNDgiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC05KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+U2VydmljZTo8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gcmVzdC1hcGk8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LUtDU1ZDLTM0IiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE3MDguNjUyMzQzNzUsIDExNzEuNDAwMDAxNTI1ODc5KSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTEyMi4yNzM0Mzc1IiB5PSItMjQiIHdpZHRoPSIyNDQuNTQ2ODc1IiBoZWlnaHQ9IjQ4Ii8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtOSkiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPlNlcnZpY2U6PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGtleWNsb2FrLXNlcnZpY2U8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjwvZz48L2c+PC9nPjxkZWZzPjxmaWx0ZXIgaWQ9Im15LXN2Zy1kcm9wLXNoYWRvdyIgaGVpZ2h0PSIxMzAlIiB3aWR0aD0iMTMwJSI+PGZlRHJvcFNoYWRvdyBkeD0iNCIgZHk9IjQiIHN0ZERldmlhdGlvbj0iMCIgZmxvb2Qtb3BhY2l0eT0iMC4wNiIgZmxvb2QtY29sb3I9IiMwMDAwMDAiLz48L2ZpbHRlcj48L2RlZnM+PGRlZnM+PGZpbHRlciBpZD0ibXktc3ZnLWRyb3Atc2hhZG93LXNtYWxsIiBoZWlnaHQ9IjE1MCUiIHdpZHRoPSIxNTAlIj48ZmVEcm9wU2hhZG93IGR4PSIyIiBkeT0iMiIgc3RkRGV2aWF0aW9uPSIwIiBmbG9vZC1vcGFjaXR5PSIwLjA2IiBmbG9vZC1jb2xvcj0iIzAwMDAwMCIvPjwvZmlsdGVyPjwvZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9Im15LXN2Zy1ncmFkaWVudCIgZ3JhZGllbnRVbml0cz0ib2JqZWN0Qm91bmRpbmdCb3giIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjNjA3OThhIiBzdG9wLW9wYWNpdHk9IjEiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9ImhzbCgyMDIuNSwgMCUsIDg0LjUwOTgwMzkyMTYlKSIgc3RvcC1vcGFjaXR5PSIxIi8+PC9saW5lYXJHcmFkaWVudD48L3N2Zz4="><figcaption>Diagram 1</figcaption><details><summary>View Mermaid source</summary><pre><code class="language-mermaid">flowchart TB
+    INTERNET[Internet] -- HTTP --&gt; PIP[Static public IP\nplatform Resource Group\nfrom docs/terraform-infra/design.md]
+    PIP --&gt; LB[Azure Standard Load Balancer\nAKS-managed node resource group]
+
+    subgraph AKS[AKS cluster]
+        LB --&gt; SVC[Service: haproxy-unified-gateway\ntype LoadBalancer\nports auto-added per Gateway listener]
+
+        subgraph NS[namespace: haproxy-unified-gateway]
+            SVC --&gt; PODA[HUG controller+data-plane pod A]
+            SVC --&gt; PODB[HUG controller+data-plane pod B]
+            CRDJOB[crdjob Job\npost-install/pre-upgrade hook\ninstalls HugConf/Global/Defaults CRDs]
+            GWAPIJOB[gwapijob Job\npost-install/pre-upgrade hook\ninstalls Gateway API CRDs]
+            HUGCONF[HugConf CR\nlogging + Global/Defaults refs]
+            PODA -. watches .-&gt; HUGCONF
+            PODB -. watches .-&gt; HUGCONF
+        end
+
+        GWC[GatewayClass: haproxy\ncontrollerName gate.haproxy.org/hug]
+        GW[Gateway: hug-gateway\nHTTP listener :80 - POC, no TLS]
+        RTAPI[HTTPRoute: api-route\n/v1/*]
+        RTKC[HTTPRoute: keycloak-route\n/auth/*]
+        GWC --&gt; GW
+        GW --&gt; RTAPI
+        GW --&gt; RTKC
+        PODA -. reconciles .-&gt; GW
+        PODB -. reconciles .-&gt; GW
+        RTAPI --&gt; APISVC[Service: rest-api]
+        RTKC --&gt; KCSVC[Service: keycloak-service]
+    end</code></pre></details></figure>
+<div class="source-block" data-source-block="10"
+data-source-sha256="e22be3a59f7927eb954a0f8e7d862ed51426f7abd100b8263d8765eb63ba6ef2">
+<p>Every listener defined on the <code>Gateway</code> resource causes
+the controller to add a matching port to the chart-managed
+<code>Service</code> at reconcile time (see section 6); the chart itself
+does not hardcode <code>http</code>/<code>https</code> Service ports.
+<code>GatewayClass</code> is not created by the upstream chart — it is a
+cluster-scoped object this document creates via its own local Helm
+chart, <code>charts/hug-app</code> (section 7), referencing the
+controller's default <code>controllerName</code>
+(<code>gate.haproxy.org/hug</code>).</p>
+</div>
+<section id="4-declare-the-release-with-helmfile" class="source-block"
+data-source-block="11"
+data-source-sha256="8676f089b6243894adcebdf6aef1588ba6de9ecd9d0766dea6aa4ef695ac5f78">
+<h2>4. Declare the release with Helmfile</h2>
+</section>
+<div class="source-block" data-source-block="12"
+data-source-sha256="d6d59f15e8c3614f0d5726d21ebb028b67503bc6b7209a76cf9a44c7a235c500">
+<p>Instead of <code>helm repo add</code> + <code>helm install</code> run
+by hand, this document drives the chart through <a
+href="https://github.com/helmfile/helmfile">Helmfile</a>. Save as
+<code>helmfile.yaml</code> (same directory as
+<code>values-hug-aks.yaml</code> from section 5):</p>
+</div>
+<div class="source-block" data-source-block="13"
+data-source-sha256="fb88cbbdfb09c754d35c0947a0d71130ac1cd60f22c6ac9afa2c270c4deeb470">
+<pre class="yaml"><code># helmfile.yaml
+repositories:
+  - name: haproxytech
+    url: https://haproxytech.github.io/helm-charts
+
+releases:
+  - name: hug
+    namespace: haproxy-unified-gateway
+    createNamespace: true      # helmfile creates the namespace; keep the
+                                # chart&#39;s own namespace.create false (unset)
+                                # — same rule as the chart README&#39;s warning
+                                # against combining both, just via helmfile
+    chart: haproxytech/haproxy-unified-gateway
+    version: 1.2.0
+    values:
+      - values-hug-aks.yaml</code></pre>
+</div>
+<div class="source-block" data-source-block="14"
+data-source-sha256="e8ba849c6a139d8988a1dfa71a04068d274bdbf7e60a9f416c38e4744f49502a">
+<p>Pull the repo index and confirm the pinned version resolves:</p>
+</div>
+<div class="source-block" data-source-block="15"
+data-source-sha256="6bf0c1a6caaf2d35528aaac012c246aa1ba6f0fd7f1a7e0dce99e9ae92ad32da">
+<pre class="console"><code>helmfile repos
+helm search repo haproxytech/haproxy-unified-gateway --versions</code></pre>
+</div>
+<section id="5-values-yaml-overrides-for-aks" class="source-block"
+data-source-block="16"
+data-source-sha256="bd3dc5f56f132148e7657cd8d7c41cf78495d1511c31471f18049e88ec74b502">
+<h2>5. <code>values.yaml</code> overrides for AKS</h2>
+</section>
+<div class="source-block" data-source-block="17"
+data-source-sha256="25f308f3a961859cd669a6a53ba9b3a9e8d7cd04e6a547e09a7e1e970c675b9d">
+<p>Every key below is a real key from the chart's
+<code>values.yaml</code> (<a
+href="https://github.com/haproxytech/helm-charts/blob/main/haproxy-unified-gateway/values.yaml">source</a>);
+nothing here is invented. Save this as
+<code>values-hug-aks.yaml</code>:</p>
+</div>
+<div class="source-block" data-source-block="18"
+data-source-sha256="f7866f53ebe967d791b2c2a031349bf36453b01e6cbe5440b64ef643fc526161">
+<pre class="yaml"><code># values-hug-aks.yaml
+controller:
+  kind: Deployment
+  replicaCount: 2          # 1 pod = one restart is a full outage; see section 8
+
+  image:
+    repository: docker.io/haproxytech/haproxy-unified-gateway
+    tag: &quot;&quot;                 # empty = chart&#39;s pinned appVersion (1.0.7)
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      memory: 2048Mi
+      cpu: 500m              # add a CPU request explicitly: HPA (section 8)
+    limits:                  # needs one to compute CPU utilization
+      memory: 2560Mi
+
+  service:
+    enabled: true
+    type: LoadBalancer
+    annotations:
+      # Pin the Service to the static public IP that
+      # docs/terraform-infra/design.md provisions in the platform
+      # Resource Group, instead of letting AKS allocate a fresh
+      # dynamic IP on every LoadBalancer recreation.
+      service.beta.kubernetes.io/azure-pip-name: &quot;pip-natssaas-hug-prod&quot;
+      service.beta.kubernetes.io/azure-load-balancer-resource-group: &quot;rg-natssaas-platform-prod&quot;
+    # loadBalancerSourceRanges: []   # set to restrict source CIDRs if needed
+
+  podDisruptionBudget:
+    enabled: true             # defaults to minAvailable: 1 when unset
+
+  autoscaling:
+    enabled: false            # see section 8 before enabling
+
+  strategy:
+    type: RollingUpdate
+
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: haproxy-unified-gateway
+
+  # Defaults (kube-rbac metrics auth, RuntimeDefault seccomp, unprivileged
+  # container, ServiceMonitor/PodMonitor disabled) are left as chart
+  # defaults; see section 10 to turn on Prometheus scraping.
+
+hugconf:
+  logging:
+    defaultLevel: Info
+
+# Both hooks stay enabled: crdjob installs HUG&#39;s own CRDs (HugConf, Global,
+# Defaults) and gwapijob installs the upstream Gateway API CRDs the chart
+# needs (GatewayClass, Gateway, HTTPRoute, ReferenceGrant). Leaving
+# gwapijob.version at the chart&#39;s default keeps HTTPRoute-only routing
+# (all this system needs, per docs/nats-tenant-queue-api/design.md); bump
+# it only if a later feature needs a newer Gateway API resource.
+crdjob:
+  enabled: true
+gwapijob:
+  enabled: true</code></pre>
+</div>
+<div class="source-block" data-source-block="19"
+data-source-sha256="022971dd4ae984211807dd33219bfa2da3d12949fff7ef4d007881acd8c2f534">
+<p>Two Azure-specific notes on the <code>service.annotations</code>
+block:</p>
+</div>
+<div class="source-block" data-source-block="20"
+data-source-sha256="a2a47798cdbacf7338b186dc6921d4cb6e5179e9da4b096850e3c1f538eb872d">
+<ul>
+<li><code>azure-pip-name</code> is the current, recommended way to pin a
+<code>LoadBalancer</code> Service to a pre-existing Azure public IP; it
+avoids the throttling and eventual-consistency issues Microsoft
+documents for the older, deprecated <code>loadBalancerIP</code> field
+(which the chart also exposes as
+<code>controller.service.loadBalancerIP</code>, but this document uses
+the annotation instead). Source: <a
+href="https://learn.microsoft.com/en-us/azure/aks/static-ip">Microsoft
+Learn — Use a static IP with a load balancer in AKS</a>.</li>
+<li><code>azure-load-balancer-resource-group</code> is required whenever
+the public IP lives outside AKS's own auto-generated node Resource Group
+(<code>MC_...</code>) — exactly the case here, since
+<code>docs/terraform-infra/design.md</code> places the IP in the
+platform Resource Group alongside the AKS cluster resource, not in the
+node Resource Group Azure creates automatically.</li>
+<li>If this Gateway should not be internet-facing (an internal-only
+environment), add
+<code>service.beta.kubernetes.io/azure-load-balancer-internal: "true"</code>
+and
+<code>service.beta.kubernetes.io/azure-load-balancer-internal-subnet: "&lt;subnet-name&gt;"</code>
+instead of the public-IP annotations above;
+<code>docs/nats-tenant-queue-api/design.md</code>'s system context
+assumes a public-facing Gateway, so this document does not use
+them.</li>
+</ul>
+</div>
+<section id="6-install-the-chart" class="source-block"
+data-source-block="21"
+data-source-sha256="e496eeeee88c80f84c030d29b48ced757bcf6046a269f6096760286865998fc4">
+<h2>6. Install the chart</h2>
+</section>
+<div class="source-block" data-source-block="22"
+data-source-sha256="b4874fedbdfae201eb414c0c43cdbba743de9c9c8742fc018359733ad1bb3a3b">
+<pre class="console"><code>helmfile diff      # preview against helmfile.yaml from section 4
+helmfile apply      # sync: installs on first run, upgrades on later runs</code></pre>
+</div>
+<div class="source-block" data-source-block="23"
+data-source-sha256="e063d90a483a900a05c72ffab5853a40e2adbe4af9a87af46a49cf6b0629fba6">
+<p><code>helmfile apply</code> runs <code>helm upgrade --install</code>
+under the hood for the <code>hug</code> release, which triggers, in
+order: the
+<code>ServiceAccount</code>/<code>ClusterRole</code>/<code>ClusterRoleBinding</code>,
+the <code>Deployment</code> (or <code>DaemonSet</code>), the
+<code>Service</code>, the <code>HugConf</code> custom resource, and two
+Helm post-install hook <code>Job</code>s — <code>crdjob</code> (runs
+<code>hug --job-check-crd</code>, installing/updating HUG's own CRDs)
+and <code>gwapijob</code> (runs
+<code>hug --job-gwapi=&lt;version&gt;</code>, installing the Kubernetes
+Gateway API CRDs). Both Jobs are one-shot, TTL-cleaned after 60 seconds
+by default, and re-run on every <code>helm upgrade</code> (hook:
+<code>post-install,pre-upgrade</code>) so CRDs stay current across chart
+upgrades without a separate manual step.</p>
+</div>
+<div class="source-block" data-source-block="24"
+data-source-sha256="e2b83fd79ff7359ca6afb51ee1dd8d4c355e7b7bdd6841c7a04af64376bed7dc">
+<p>Verify:</p>
+</div>
+<div class="source-block" data-source-block="25"
+data-source-sha256="36477b2d9d37a0160053f4f618cfbc6af4229b7a2d2a1c5ca00dd1504fba7521">
+<pre class="console"><code>kubectl get pods -n haproxy-unified-gateway -l &quot;app.kubernetes.io/name=haproxy-unified-gateway,app.kubernetes.io/instance=hug&quot;
+kubectl get jobs -n haproxy-unified-gateway
+kubectl get crds | grep -E &#39;gateway.networking.k8s.io|gate.v3.haproxy.org&#39;
+kubectl get hugconf -n haproxy-unified-gateway
+kubectl get svc hug-haproxy-unified-gateway -n haproxy-unified-gateway -w</code></pre>
+</div>
+<div class="source-block" data-source-block="26"
+data-source-sha256="d52218fba7ba486f9889b9bc6ae57659313382f1d6f6087b667e8fd0480b0544">
+<p>The <code>Service</code> starts with only its <code>stat</code>
+(31024) and <code>controller-metrics</code> (31060) ports;
+<code>http</code>/<code>https</code> ports are added automatically by
+the controller, one per listener, once a <code>Gateway</code> resource
+exists (section 7) — this is chart behavior documented directly in the
+chart's own <code>NOTES.txt</code> output after install, not a delay to
+work around. Watching <code>kubectl get svc ... -w</code> shows the
+Azure Load Balancer's <code>EXTERNAL-IP</code> settle to the pinned
+static IP within a few minutes.</p>
+</div>
+<section
+id="7-gateway-api-objects-a-second-local-helm-chart-via-helmfile"
+class="source-block" data-source-block="27"
+data-source-sha256="442ec3b2657a209b7cef513dc87b5a4ce9a191e419cc0886b48181278929d289">
+<h2>7. Gateway API objects — a second local Helm chart, via
+Helmfile</h2>
+</section>
+<div class="source-block" data-source-block="28"
+data-source-sha256="741f1ab5dbb73670bfbe7a2d6fca1b7f797ee5f6413273b7e24045d974939787">
+<p>The chart does not create a <code>GatewayClass</code> — that is a
+cluster operator responsibility, per the Gateway API's own role split
+between infrastructure objects (<code>GatewayClass</code>,
+<code>Gateway</code>) and route-owner objects (<code>HTTPRoute</code>),
+which <code>docs/nats-tenant-queue-api/design.md</code> (section 4,
+Decisions) already calls out as the reason HUG was chosen over
+Application Gateway. This document packages the
+<code>GatewayClass</code> and <code>Gateway</code> it owns as one local
+Helm chart, <code>charts/hug-app</code>, deployed as a second Helmfile
+release alongside the upstream <code>hug</code> release from section 4 —
+the same reasoning <code>docs/keycloak-operator/design.md</code> section
+6 gives for packaging its own app-layer resources as
+<code>charts/keycloak-app</code>: one <code>helmfile diff</code>
+previews every object together before anything changes,
+<code>helm history</code>/<code>helm rollback</code> give this release a
+revision trail no standalone <code>kubectl apply -f</code> ever had, and
+there is one lifecycle to reason about instead of two
+independently-applied files.</p>
+</div>
+<div class="source-block" data-source-block="29"
+data-source-sha256="2d21d523dce7f6ae31b1054d74dee73eb2bf9397e23d159c68883cd1108f1b2d">
+<p><strong>Update:</strong> <code>api-route</code> (the
+<code>HTTPRoute</code> sending <code>/v1/*</code> to the REST API's
+Service) and its <code>allow-hug-to-api</code>
+<code>ReferenceGrant</code> used to live in this chart, in an earlier
+revision of this document. They have moved to
+<code>docs/rest-api-workload/design.md</code>, the document that
+specifies the REST API's own Deployment and Service, for the same reason
+<code>keycloak-route</code> moved to
+<code>docs/keycloak-operator/design.md</code> (see the note below): a
+route shares its backend Service's chart lifecycle, not the Gateway's.
+Once the REST API's Service and route both live in the
+<code>nats-saas-api</code> namespace, no <code>ReferenceGrant</code> is
+needed for that route at all (same-namespace backend reference), so
+<code>allow-hug-to-api</code> was dropped rather than moved. This chart
+now owns only <code>GatewayClass</code> and <code>Gateway</code>.</p>
+</div>
+<div class="source-block" data-source-block="30"
+data-source-sha256="0210a7483928af1807b2db195de7a8980b5af6f09e804f03b5786f559316e6c9">
+<p>Chart layout:</p>
+</div>
+<div class="source-block" data-source-block="31"
+data-source-sha256="a51316a0e51784851ddbc969567e943ddb20509cb3064ca39feb8bc6a3c59250">
+<pre><code>charts/hug-app/
+  Chart.yaml
+  values.yaml
+  templates/
+    gatewayclass.yaml
+    gateway.yaml</code></pre>
+</div>
+<div class="source-block" data-source-block="32"
+data-source-sha256="5fa08b4f0992cd7a88df5a73e6f3416fb82e3a2d1d8bddd52c317a8e83332a69">
+<pre class="yaml"><code># charts/hug-app/Chart.yaml
+apiVersion: v2
+name: hug-app
+description: GatewayClass, Gateway, HTTPRoute (api-route), and ReferenceGrant for this system&#39;s HUG-fronted routing
+type: application
+version: 0.1.0</code></pre>
+</div>
+<div class="source-block" data-source-block="33"
+data-source-sha256="82dca6f7af2e9b0e631af57dcb99b548cbc354e42b5ef30d882272e1c886512f">
+<pre class="yaml"><code># charts/hug-app/values.yaml — chart defaults; already match this document&#39;s single
+# AKS environment, so no separate values-hug-app-aks.yaml is needed for this POC —
+# add one only if a second environment needs a different hostname/backend
+gatewayClass:
+  name: haproxy
+  controllerName: gate.haproxy.org/hug   # chart default; matches
+                                          # controller.extraArgs &quot;--controller-name&quot;
+                                          # if that flag is ever overridden
+
+gateway:
+  name: hug-gateway
+  namespace: haproxy-unified-gateway
+  listenerName: http                     # POC: plain HTTP, no TLS — see section 9
+  port: 80</code></pre>
+</div>
+<div class="source-block" data-source-block="34"
+data-source-sha256="8340a622bb971773bcccb42c12dcea44849df6562d9bef1137cae9bb9c501e10">
+<pre class="yaml"><code># charts/hug-app/templates/gatewayclass.yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: {{ .Values.gatewayClass.name }}
+spec:
+  controllerName: {{ .Values.gatewayClass.controllerName }}</code></pre>
+</div>
+<div class="source-block" data-source-block="35"
+data-source-sha256="fa1cb776b2fc6d0f5994782a9f28e863cdecebc07d4cd6d3b7ec155f61ab4b4f">
+<pre class="yaml"><code># charts/hug-app/templates/gateway.yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ .Values.gateway.name }}
+  namespace: {{ .Values.gateway.namespace }}
+spec:
+  gatewayClassName: {{ .Values.gatewayClass.name }}
+  listeners:
+    - name: {{ .Values.gateway.listenerName }}
+      protocol: HTTP
+      port: {{ .Values.gateway.port }}
+      allowedRoutes:
+        namespaces:
+          from: All                  # Keycloak&#39;s and the API&#39;s HTTPRoutes
+                                      # live in their own namespaces</code></pre>
+</div>
+<div class="source-block" data-source-block="36"
+data-source-sha256="27fb75426ac2cba539a0730bfe704162b8c372b348e2c4e18a07bec7fcd7bf59">
+<p>Neither <code>keycloak-route</code> nor <code>api-route</code> is
+part of this chart, on purpose: each targets a different Service owned
+by a different chart, and each shares that Service's release lifecycle,
+not this one. <code>keycloak-route</code> targets Keycloak's own
+Service, so <code>docs/keycloak-operator/design.md</code> section 9
+packages it as a template in its own Helm chart
+(<code>charts/keycloak-app</code>, deployed via that document's own
+Helmfile release) and applies it there, alongside the
+<code>Keycloak</code> CR itself. <code>api-route</code> targets the REST
+API's own Service, so <code>docs/rest-api-workload/design.md</code>
+packages it the same way, in <code>charts/rest-api-app</code>. This
+document neither templates nor applies
+<code>httproute-keycloak.yaml</code> or <code>httproute-api.yaml</code>.
+<code>keycloak-service</code>/<code>8080</code> (the backend
+<code>keycloak-route</code> targets) is the Service name and port the
+official Keycloak Operator actually generates for a
+<code>Keycloak</code> CR named <code>keycloak</code>
+(<code>&lt;CR name&gt;-service</code>, HTTP-only per that document's POC
+scope) — see <code>docs/keycloak-operator/design.md</code> sections 8-9.
+<code>rest-api</code>/<code>8080</code> (the backend
+<code>api-route</code> targets) is the Service
+<code>docs/rest-api-workload/design.md</code> creates directly, in the
+same <code>nats-saas-api</code> namespace as the route itself, which is
+why that route needs no <code>ReferenceGrant</code>: a
+<code>ReferenceGrant</code> is only required when a route's backend
+reference crosses a namespace boundary, and here it does not.</p>
+</div>
+<div class="source-block" data-source-block="37"
+data-source-sha256="52add70aa9f5679abaaeb6f069188ea7f3bb31f9773487ac4d795fbcdfbe7e79">
+<p><strong>Declare the release with Helmfile</strong>, extending the
+same <code>helmfile.yaml</code> from section 4 with a second entry:</p>
+</div>
+<div class="source-block" data-source-block="38"
+data-source-sha256="94291f168e4a92c6fabdce30fe592175788534fdf807d0fedbce15c00d9d7fb5">
+<pre class="yaml"><code># helmfile.yaml — extends section 4&#39;s releases list
+releases:
+  - name: hug
+    namespace: haproxy-unified-gateway
+    createNamespace: true
+    chart: haproxytech/haproxy-unified-gateway
+    version: 1.2.0
+    values:
+      - values-hug-aks.yaml
+
+  - name: hug-app
+    namespace: haproxy-unified-gateway
+    createNamespace: false     # namespace already created by the hug release above;
+                                 # gatewayclass.yaml is cluster-scoped, gateway.yaml
+                                 # targets haproxy-unified-gateway
+    chart: ./charts/hug-app
+    needs:
+      - haproxy-unified-gateway/hug   # wait for hug&#39;s gwapijob hook to install the
+                                        # Gateway API CRDs before creating instances of them</code></pre>
+</div>
+<div class="source-block" data-source-block="39"
+data-source-sha256="779b3a1b8a2bfb8e302d36afec35a5e541a9578c9ee3392d216ec2d75ea71856">
+<p><code>needs</code> makes Helmfile install/upgrade <code>hug</code> to
+completion — including its post-install hook Jobs (section 6) — before
+starting <code>hug-app</code>; without it, <code>hug-app</code>'s
+<code>GatewayClass</code>/<code>Gateway</code> could apply against a
+cluster that does not yet have the Gateway API CRDs
+<code>gwapijob</code> installs, and fail.</p>
+</div>
+<div class="source-block" data-source-block="40"
+data-source-sha256="99ed90ea5fe4a7cbb64ac6e748b15c5eb5c634de404cb0456067794ecacebf48">
+<p>Apply both releases and confirm the <code>Gateway</code> reports
+<code>Programmed: True</code>:</p>
+</div>
+<div class="source-block" data-source-block="41"
+data-source-sha256="4c41d8f8e4bb6cb3aef6374cace5f627817ef69cd84e3cc62233a7f5be4df772">
+<pre class="console"><code>helmfile diff       # previews both hug and hug-app against helmfile.yaml above
+helmfile apply       # sync: installs hug-app after hug&#39;s hooks complete; upgrades on later runs
+kubectl get gateway hug-gateway -n haproxy-unified-gateway -o yaml
+kubectl get svc hug-haproxy-unified-gateway -n haproxy-unified-gateway   # http-80 port now present</code></pre>
+</div>
+<div class="source-block" data-source-block="42"
+data-source-sha256="79a548cfa8b1e48cb6240c49bf0ff56a5deaf5525f56557f3e53a53a0333233f">
+<p><code>keycloak-route</code> and <code>api-route</code> are each
+applied separately: <code>keycloak-route</code> from
+<code>docs/keycloak-operator/design.md</code> section 9's
+<code>helmfile apply</code> for its own <code>keycloak-app</code>
+release, and <code>api-route</code> from
+<code>docs/rest-api-workload/design.md</code>'s
+<code>helmfile apply</code> for its own <code>rest-api-app</code>
+release — run those documents' steps for either route to show up. Once
+all three releases are applied:</p>
+</div>
+<div class="source-block" data-source-block="43"
+data-source-sha256="c2ffe50bdb2ef9af5891f39fb6fa80c4f79acda6e750a81943c530764e0216b7">
+<pre class="console"><code>kubectl get httproute -A   # api-route and keycloak-route</code></pre>
+</div>
+<section id="8-scaling-and-availability" class="source-block"
+data-source-block="44"
+data-source-sha256="eb99db8f19b373134787df37b9bd08f40752a375b7954a29b051c7752edd9ca5">
+<h2>8. Scaling and availability</h2>
+</section>
+<div class="source-block" data-source-block="45"
+data-source-sha256="c1c63bb78c03c2520f42eac39fa992fe1af9acbdbf1ef901469fcbd40d881377">
+<ul>
+<li><code>controller.replicaCount: 2</code> (or higher) plus
+<code>controller.podDisruptionBudget.enabled: true</code> (defaults to
+<code>minAvailable: 1</code>) is the minimum for HUG itself not to be a
+single point of failure —
+<code>docs/nats-tenant-queue-api/design.md</code>'s failure-behavior
+section (7) already flags a single-replica HUG deployment as turning a
+pod restart into a full outage; this document's default
+(<code>replicaCount: 2</code>) closes that specific open question for
+HUG's own availability, though it does not address the
+cluster/region-level single point of failure the parent design still
+carries.</li>
+<li><code>controller.autoscaling.enabled: true</code> (HPA) requires a
+CPU <strong>request</strong>, not just a memory request, under
+<code>controller.resources.requests.cpu</code> — the chart's default
+<code>values.yaml</code> only sets a memory request, and the chart's own
+inline comment warns HPA cannot compute utilization and silently stays
+at <code>&lt;unknown&gt;</code> without one. The
+<code>values-hug-aks.yaml</code> above already sets
+<code>cpu: 500m</code> for this reason.</li>
+<li><code>controller.keda.enabled: true</code> is a mutually-exclusive
+alternative to HPA (KEDA disables HPA automatically if both are set);
+only relevant if scaling should react to HAProxy/Prometheus-derived
+metrics rather than CPU. Not used in this document's baseline.</li>
+<li><code>controller.kind: DaemonSet</code> with
+<code>controller.daemonset.useHostNetwork: true</code> is the chart's
+other supported topology (one HUG pod per node, binding host ports
+80/443 directly, bypassing the Service/Load Balancer NodePort hop). Not
+used here: <code>Deployment</code> + <code>LoadBalancer</code> Service
+matches <code>docs/terraform-infra/design.md</code>'s assumption that a
+Kubernetes <code>LoadBalancer</code> Service is what attaches to the
+Standard Load Balancer's static public IP, and keeps HUG pod count
+independent of node count.</li>
+</ul>
+</div>
+<section id="9-tls-not-used-poc-scope" class="source-block"
+data-source-block="46"
+data-source-sha256="160b90cea02124f09200fa6060be0d4552dcf043126e863911574f214ecad298">
+<h2>9. TLS (not used — POC scope)</h2>
+</section>
+<div class="source-block" data-source-block="47"
+data-source-sha256="91cbcb70c47b595270efcbd3c8afdf9e1cd0d7f60c35f473a32fcbf6a76500d7">
+<p>This POC's <code>Gateway</code> (section 7) runs a single
+<code>http</code>/80 listener with no <code>tls</code> block and no
+<code>certificateRefs</code> — a deliberate scope decision, not an open
+item. <code>docs/nats-tenant-queue-api/design.md</code> establishes that
+HUG terminates TLS in the target architecture, but that is out of scope
+for this POC; traffic to <code>hug-gateway</code> is plain HTTP end to
+end from the internet-facing static public IP.</p>
+</div>
+<div class="source-block" data-source-block="48"
+data-source-sha256="1751849471da64bd6c53f703e0dcacf00958b1e76b875e3f91f46fd932c11e16">
+<p>Before this goes past POC, revisit this section and add back an
+<code>https</code>/443 listener with <code>tls.mode: Terminate</code>
+and a <code>certificateRefs</code> Secret. The two realistic options at
+that point: run <a rel="noopener noreferrer" href="https://cert-manager.io/">cert-manager</a>
+in-cluster with an ACME issuer and let it manage the TLS Secret
+automatically, or provision the certificate externally (e.g. from an
+existing CA) and load it into the Secret manually or via the Azure Key
+Vault CSI driver the parent design already uses for NATS
+credentials.</p>
+</div>
+<section id="10-monitoring" class="source-block" data-source-block="49"
+data-source-sha256="9e1c396266df8e254643b4d94de4122d13f61a754c12095578c3d3ac2772f6df">
+<h2>10. Monitoring</h2>
+</section>
+<div class="source-block" data-source-block="50"
+data-source-sha256="acf7ed718378f70a3e789e9d34ee67ead65b85de7b2a91a59b2709b2033c2d39">
+<p>Enable Prometheus scraping (requires Prometheus Operator already
+running in the cluster) by adding to
+<code>values-hug-aks.yaml</code>:</p>
+</div>
+<div class="source-block" data-source-block="51"
+data-source-sha256="2624ae2bf7951e04a8effcf5e10f84dad19c4a5519369a2b6adb43671091ab9b">
+<pre class="yaml"><code>controller:
+  serviceMonitor:
+    enabled: true
+    extraLabels:
+      release: prometheus     # match the Prometheus Operator&#39;s own release label</code></pre>
+</div>
+<div class="source-block" data-source-block="52"
+data-source-sha256="8707ec7f4055753dc89c362aedb79ecbbff52edc629763d5da8a5b1002a0de40">
+<p>The chart's default <code>controller.metricsAuth: kube-rbac</code>
+and the default <code>serviceMonitor.endpoints</code> (already
+pre-configured for HTTPS + bearer token on the <code>metrics</code>
+port, plain HTTP on <code>stat</code>) work together out of the box; the
+only extra step is granting Prometheus's ServiceAccount access to the
+<code>/metrics</code> nonResourceURL via a
+<code>ClusterRole</code>/<code>ClusterRoleBinding</code>, exactly as
+documented in the chart's own README. Two endpoints are scraped:
+<code>stat</code> (port 31024, native <code>haproxy_*</code> metrics —
+connections, request rate, backend health, latency) and
+<code>metrics</code> (port 31060, controller-level <code>hug_*</code>
+metrics — config generation, reload counts, cert/map operations).</p>
+</div>
+<section id="11-upgrade-and-rollback" class="source-block"
+data-source-block="53"
+data-source-sha256="0bca4762f920919877a0d302b1e8191d4a99118c57dfd8e57bfabe25ad5c51d3">
+<h2>11. Upgrade and rollback</h2>
+</section>
+<div class="source-block" data-source-block="54"
+data-source-sha256="b15c782349070734a02dc8c6e4e627ab498017f426911f407231c953f3b76e0a">
+<p>Bump <code>version:</code> in <code>helmfile.yaml</code> (section 4),
+then:</p>
+</div>
+<div class="source-block" data-source-block="55"
+data-source-sha256="02cbc7f8b8017615888cc442a30f265ff99dd658e0dac8436d1481b4abecb833">
+<pre class="console"><code>helmfile diff
+helmfile apply
+
+helm history hug -n haproxy-unified-gateway
+helm rollback hug &lt;REVISION&gt; -n haproxy-unified-gateway</code></pre>
+</div>
+<div class="source-block" data-source-block="56"
+data-source-sha256="924bf45ef745f8ef3a21febbe1ddbda79016c2488131c4bafc3ba30af05c8ca5">
+<p>Rollback stays a raw <code>helm rollback</code> — helmfile has no
+revision-rollback verb of its own, it only re-applies whatever
+<code>helmfile.yaml</code> + values currently declare. After a manual
+<code>helm rollback</code>, revert <code>version:</code> in
+<code>helmfile.yaml</code> to match, so the next
+<code>helmfile apply</code> does not immediately re-upgrade over the
+rollback.</p>
+</div>
+<div class="source-block" data-source-block="57"
+data-source-sha256="bca9165bd0ab32aacb9c9aea2bbb6008b373290ce3f476fef90329d65ef5ebd1">
+<p><code>crdjob</code> and <code>gwapijob</code> re-run on every
+<code>helm upgrade</code> (their hook annotation includes
+<code>pre-upgrade</code>), so CRDs stay in sync automatically;
+<code>helm rollback</code> does not re-run them in reverse, so a
+rollback that needs older CRD schemas back is not a fully automated path
+— verify CRD state manually after any rollback that crosses a
+CRD-changing chart version.</p>
+</div>
+<div class="source-block" data-source-block="58"
+data-source-sha256="82c6d69daa89c34d729fcd1dc0d909bcbb3e3c742d5225d19ff3b654e4429116">
+<p>One AKS-specific upgrade caveat:
+<code>controller.service.loadBalancerClass</code> is immutable on an
+existing <code>LoadBalancer</code> Service — a Kubernetes-level
+restriction, not a chart one — so if a future change ever needs it, the
+Service has to be deleted and recreated (briefly dropping the static IP
+binding) rather than updated in place via <code>helm upgrade</code>.
+<code>values-hug-aks.yaml</code> above does not set it, since AKS has
+exactly one default <code>LoadBalancer</code> implementation and there
+is no competing controller in this cluster to disambiguate.</p>
+</div>
+<section id="12-uninstall" class="source-block" data-source-block="59"
+data-source-sha256="3855dfad6648d95e9f195f95026e5ea5182103ee1cd01f412151f3c6314b2361">
+<h2>12. Uninstall</h2>
+</section>
+<div class="source-block" data-source-block="60"
+data-source-sha256="2ebfca38c18c47401b4470cce4515c635115c07926e6ea4b22e5844ab4114384">
+<pre class="console"><code>helmfile destroy</code></pre>
+</div>
+<div class="source-block" data-source-block="61"
+data-source-sha256="34357169da40119324ff123b48d0a78cb6a377807ba4f97665c8cfbf8d98a19e">
+<p><code>helmfile destroy</code> now tears down both releases declared
+in <code>helmfile.yaml</code> (section 7) — <code>hug-app</code> (its
+<code>GatewayClass</code> and <code>Gateway</code>) and <code>hug</code>
+itself — with no separate <code>kubectl delete -f</code> step left.
+Neither <code>keycloak-route</code> nor <code>api-route</code> is
+deleted here — they are owned and torn down by
+<code>docs/keycloak-operator/design.md</code> section 12's
+<code>helmfile destroy</code> for the <code>keycloak-app</code> release
+and <code>docs/rest-api-workload/design.md</code>'s
+<code>helmfile destroy</code> for the <code>rest-api-app</code> release,
+respectively.</p>
+</div>
+<div class="source-block" data-source-block="62"
+data-source-sha256="2f1fa449daaad9e4d73b04ec5a23bd5900faef318b9ea9f4d8950c3916dca934">
+<p><code>helmfile destroy</code> runs <code>helm uninstall</code> for
+each release; it does not remove the CRDs the <code>hug</code> release's
+hook Jobs installed (standard Helm behavior for any CRD installed via a
+Job rather than the chart's own <code>crds/</code> directory) or the
+Azure static public IP itself, which
+<code>docs/terraform-infra/design.md</code>'s Terraform state owns, not
+this Helm release.</p>
+</div>
+<section id="13-troubleshooting" class="source-block"
+data-source-block="63"
+data-source-sha256="3aba4e2f1e9689f1af71e19fed38412b22f6e96dcc8c3d3bdc8ce5415f5cffc3">
+<h2>13. Troubleshooting</h2>
+</section>
+<div class="source-block" data-source-block="64"
+data-source-sha256="a73c35de73169bbcf05f1a20916a31a1cf723a1b267fca9acb99e5e87034554e">
+<ul>
+<li><strong><code>Service</code> stuck with no
+<code>EXTERNAL-IP</code></strong>: check
+<code>kubectl describe svc hug-haproxy-unified-gateway -n haproxy-unified-gateway</code>
+for AKS cloud-controller events; a mismatched
+<code>azure-pip-name</code> (typo, wrong Resource Group in
+<code>azure-load-balancer-resource-group</code>) is the most common
+cause, since the cloud controller cannot attach to a public IP it cannot
+find or does not have permission to reach.</li>
+<li><strong><code>Gateway</code> not <code>Programmed</code></strong>:
+for this POC's plain HTTP listener, usually a <code>GatewayClass</code>
+whose <code>controllerName</code> does not match the running
+controller's <code>--controller-name</code> flag (default
+<code>gate.haproxy.org/hug</code>) — TLS Secret mismatches (section 9)
+do not apply here since no <code>tls</code> block is configured.</li>
+<li><strong><code>HTTPRoute</code>
+<code>ResolvedRefs: False</code></strong>: almost always a missing
+<code>ReferenceGrant</code> when the route, its <code>Gateway</code>,
+and its backend <code>Service</code> span more than one namespace
+(section 7), or a backend Service/port that does not exist.</li>
+<li><strong><code>crdjob</code>/<code>gwapijob</code> Job
+failed</strong>:
+<code>kubectl logs job/&lt;name&gt; -n haproxy-unified-gateway</code>; a
+<code>backoffLimit: 0</code> means Helm's install/upgrade fails
+immediately on the first failure rather than retrying, so check RBAC
+(the Job's own <code>ServiceAccount</code> needs CRD-write permission,
+granted by <code>controller-crdjob-rbac.yaml</code> in the chart) if it
+fails on a cluster with restrictive admission policies.</li>
+<li><strong><code>hug-app</code> release fails to apply</strong>: its
+<code>needs: [haproxy-unified-gateway/hug]</code> (section 7) only waits
+for the <code>hug</code> release's Helm hooks to run, not for them to
+succeed — if <code>gwapijob</code> itself failed (previous bullet), the
+Gateway API CRDs <code>hug-app</code>'s templates instantiate were never
+installed, and <code>helmfile apply</code> fails on <code>hug-app</code>
+with a missing-CRD error; fix <code>gwapijob</code> first, then re-run
+<code>helmfile apply</code>.</li>
+</ul>
+</div>
+<section id="14-references" class="source-block" data-source-block="65"
+data-source-sha256="73ff63de6bd58000d9542ebdaa849cdf6e639ba04997f644dc57ca8898233708">
+<h2>14. References</h2>
+</section>
+<div class="source-block" data-source-block="66"
+data-source-sha256="794d252e3b8035caf01f4b822ca25ca158d094f7c2f33339ea44b4eda768a5ed">
+<ul>
+<li><a
+href="https://artifacthub.io/packages/helm/haproxytech/haproxy-unified-gateway">HAProxy
+Unified Gateway Helm chart — Artifact Hub</a></li>
+<li><a
+href="https://github.com/haproxytech/helm-charts/tree/main/haproxy-unified-gateway">helm-charts/haproxy-unified-gateway
+— source, values.yaml, README</a></li>
+<li><a
+href="https://github.com/haproxytech/haproxy-unified-gateway/">haproxytech/haproxy-unified-gateway
+— controller source</a></li>
+<li><a
+href="https://www.haproxy.com/blog/announcing-haproxy-unified-gateway-1-0">Announcing
+HAProxy Unified Gateway 1.0 — HAProxy Technologies blog</a></li>
+<li><a rel="noopener noreferrer" href="https://gateway-api.sigs.k8s.io/">Kubernetes Gateway API
+specification</a></li>
+<li><a rel="noopener noreferrer" href="https://github.com/helmfile/helmfile">Helmfile</a> —
+declarative <code>helm</code> release management; this document's
+<code>charts/hug-app</code> (section 7) is a second release in the same
+<code>helmfile.yaml</code>, installed the same way as the upstream
+<code>hug</code> chart (section 4)</li>
+<li><a rel="noopener noreferrer" href="https://learn.microsoft.com/en-us/azure/aks/static-ip">Use
+a static IP with a load balancer in AKS — Microsoft Learn</a></li>
+<li><code>docs/nats-tenant-queue-api/design.md</code> — parent system
+design referencing HUG</li>
+<li><code>docs/terraform-infra/design.md</code> — AKS cluster, Standard
+Load Balancer, and static public IP this document builds on</li>
+<li><code>docs/rest-api-workload/design.md</code> — owns
+<code>api-route</code> and the <code>rest-api</code> Service it targets,
+moved out of this document's <code>hug-app</code> chart</li>
+</ul>
+</div>
+
+    </main>
+  </div>
+  <footer class="document-footer">Generated from docs/haproxy-unified-gateway/design.md by blueprint/html-doc@1. Edit the Markdown source, then regenerate.</footer>
+</body>
+</html>

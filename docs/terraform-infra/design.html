@@ -1,0 +1,1955 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+  <meta name="document-kind" content="design">
+  <meta name="source-path" content="docs/terraform-infra/design.md">
+  <meta name="source-sha256" content="dc6d0212cdff215afbacf6b8e6931014200e291d0c089e1c91dce43e212ad47a">
+  <meta name="generator" content="blueprint/html-doc@1">
+  <title>Terraform project for the nats-saas Azure infrastructure</title>
+  <style>:root {
+  color-scheme: light;
+  --paper: #f7f9fb;
+  --surface: #ffffff;
+  --surface-soft: #edf2f5;
+  --ink: #172630;
+  --muted: #526773;
+  --line: #ccd8df;
+  --line-strong: #8fa5b3;
+  --accent: #385e75;
+  --accent-soft: #dbe5ec;
+  --focus: #176b93;
+  --risk: #6b4f28;
+  --risk-soft: #f3ecdf;
+  --radius: 12px;
+  --shadow: 0 16px 42px rgb(31 54 68 / 10%);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--paper); }
+a { color: var(--accent); text-underline-offset: 0.16em; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible, summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 10;
+  left: 1rem;
+  top: 1rem;
+  padding: .65rem .9rem;
+  background: var(--ink);
+  color: white;
+  transform: translateY(-180%);
+}
+.skip-link:focus { transform: translateY(0); }
+
+.document-header {
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(145deg, #e5edf2 0%, #f7f9fb 70%);
+}
+.document-header__inner,
+.page-shell,
+.document-footer {
+  width: min(1180px, calc(100% - 2rem));
+  margin-inline: auto;
+}
+.document-header__inner { padding: 3.8rem 0 3rem; }
+.eyebrow {
+  margin: 0 0 .8rem;
+  color: var(--accent);
+  font-size: .78rem;
+  font-weight: 750;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.document-title {
+  max-width: 900px;
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.25rem, 5vw, 4.6rem);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -.035em;
+}
+.metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem 1.25rem;
+  margin: 1.6rem 0 0;
+  color: var(--muted);
+  font-size: .88rem;
+}
+.metadata dt { font-weight: 700; color: var(--ink); }
+.metadata dd { margin: 0; overflow-wrap: anywhere; }
+.metadata__item { display: grid; grid-template-columns: auto 1fr; gap: .35rem; }
+
+.page-shell {
+  display: grid;
+  grid-template-columns: minmax(190px, 250px) minmax(0, 1fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+  padding-block: 3rem 5rem;
+}
+.toc {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  padding: 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgb(255 255 255 / 78%);
+}
+.toc-title { margin: 0 0 .75rem; font: 750 .78rem/1.2 Inter, sans-serif; letter-spacing: .09em; text-transform: uppercase; }
+.toc ol { list-style: none; padding: 0; margin: 0; }
+.toc li + li { margin-top: .34rem; }
+.toc li[data-level="3"] { padding-left: .8rem; font-size: .88rem; }
+.toc a { display: block; color: var(--muted); text-decoration: none; line-height: 1.35; }
+.toc a:hover { color: var(--ink); }
+
+.document-content {
+  min-width: 0;
+  padding: clamp(1.4rem, 4vw, 3.8rem);
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) + 4px);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.source-block { min-width: 0; }
+.source-block > :first-child { margin-top: 0; }
+.source-block > :last-child { margin-bottom: 0; }
+.source-block + .source-block { margin-top: 1rem; }
+.source-block:has(> h1), .source-block:has(> h2) { margin-top: 3.7rem; }
+.source-block:first-child { margin-top: 0; }
+h1, h2, h3, h4 { color: var(--ink); line-height: 1.2; scroll-margin-top: 1.5rem; }
+.document-content h1 { font: 500 clamp(2rem, 5vw, 3.2rem)/1.08 Georgia, serif; letter-spacing: -.025em; }
+.document-content h2 { padding-top: .4rem; font: 500 clamp(1.7rem, 3vw, 2.3rem)/1.15 Georgia, serif; letter-spacing: -.018em; }
+.document-content h3 { font-size: 1.12rem; }
+.document-content h4 { font-size: 1rem; }
+p, ul, ol, blockquote, pre, table, figure { margin-block: 1rem; }
+blockquote {
+  margin-inline: 0;
+  padding: .8rem 1rem;
+  border-left: 4px solid var(--line-strong);
+  background: var(--surface-soft);
+  color: #314854;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+.role-requirements, .role-acceptance-criteria, .role-invariants,
+.role-decisions, .role-risks, .role-open-questions {
+  margin-top: 1.25rem;
+  padding: 1rem 1.2rem;
+  border-left: 4px solid var(--line-strong);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--surface-soft);
+}
+.role-risks, .role-open-questions { border-left-color: var(--risk); background: var(--risk-soft); }
+code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+code { padding: .12em .32em; border-radius: 4px; background: var(--surface-soft); font-size: .9em; overflow-wrap: anywhere; }
+pre {
+  max-width: 100%;
+  overflow: auto;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #132630;
+  color: #edf4f7;
+  line-height: 1.48;
+}
+pre code { padding: 0; background: transparent; color: inherit; }
+.table-wrap { max-width: 100%; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+th, td { padding: .68rem .75rem; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { background: var(--surface-soft); font-weight: 720; }
+tbody tr:nth-child(even) { background: #f9fbfc; }
+.diagram {
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fbfcfd;
+}
+.diagram img { display: block; width: 100%; height: auto; max-height: 650px; object-fit: contain; }
+.diagram figcaption { margin-top: .75rem; color: var(--muted); font-size: .86rem; }
+.diagram details { margin-top: .8rem; }
+.diagram summary { cursor: pointer; color: var(--accent); font-weight: 650; }
+.diagram details pre { max-height: 18rem; }
+.document-footer { padding: 0 0 3rem; color: var(--muted); font-size: .82rem; }
+
+@media (max-width: 760px) {
+  .document-header__inner { padding: 2.7rem 0 2.2rem; }
+  .page-shell { grid-template-columns: 1fr; gap: 1.2rem; padding-top: 1.25rem; }
+  .toc { position: static; max-height: none; }
+  .document-content { padding: 1.25rem; border-radius: var(--radius); }
+  .source-block:has(> h1), .source-block:has(> h2) { margin-top: 2.7rem; }
+}
+
+@media print {
+  :root { background: white; font-size: 10.5pt; }
+  @page { size: auto; margin: 16mm; }
+  .skip-link, .toc { display: none; }
+  .document-header { background: white; }
+  .document-header__inner, .page-shell, .document-footer { width: 100%; }
+  .document-header__inner { padding: 0 0 12mm; }
+  .document-title { font-size: 28pt; }
+  .page-shell { display: block; padding: 0; }
+  .document-content { padding: 0; border: 0; box-shadow: none; }
+  h1, h2, h3, h4 { break-after: avoid-page; }
+  table, figure, pre, blockquote { break-inside: avoid; }
+  thead { display: table-header-group; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .document-footer { padding: 10mm 0 0; }
+}
+</style>
+</head>
+<body>
+  <a class="skip-link" href="#document-content">Skip to document</a>
+  <header class="document-header">
+    <div class="document-header__inner">
+      <p class="eyebrow">Technical design</p>
+      <p class="document-title">Terraform project for the nats-saas Azure infrastructure</p>
+      <dl class="metadata">
+        <div class="metadata__item"><dt>Status</dt><dd>Proposed for review</dd></div>
+        <div class="metadata__item"><dt>Source</dt><dd>docs/terraform-infra/design.md</dd></div>
+        <div class="metadata__item"><dt>SHA-256</dt><dd><code>dc6d0212cdff215afbacf6b8e6931014200e291d0c089e1c91dce43e212ad47a</code></dd></div>
+      </dl>
+    </div>
+  </header>
+  <div class="page-shell">
+    <nav class="toc" aria-label="Document contents"><p class="toc-title">Contents</p><ol><li data-level="2"><a href="#1-executive-summary">1. Executive summary</a></li><li data-level="2"><a href="#2-context-and-scope">2. Context and scope</a></li><li data-level="2"><a href="#3-system-context">3. System context</a></li><li data-level="2"><a href="#4-proposed-design">4. Proposed design</a></li><li data-level="3"><a href="#how-it-works">How it works</a></li><li data-level="3"><a href="#components-and-responsibilities">Components and responsibilities</a></li><li data-level="3"><a href="#decisions">Decisions</a></li><li data-level="2"><a href="#5-invariants-and-requirements">5. Invariants and requirements</a></li><li data-level="3"><a href="#invariants">Invariants</a></li><li data-level="3"><a href="#requirements">Requirements</a></li><li data-level="2"><a href="#6-interfaces-and-data">6. Interfaces and data</a></li><li data-level="3"><a href="#naming-and-identity">Naming and identity</a></li><li data-level="3"><a href="#example-terraform-configuration-azurerm">Example Terraform configuration (azurerm)</a></li><li data-level="2"><a href="#7-failure-behavior-and-lifecycle">7. Failure behavior and lifecycle</a></li><li data-level="2"><a href="#8-security-privacy-and-operations">8. Security, privacy, and operations</a></li><li data-level="2"><a href="#9-acceptance-criteria">9. Acceptance criteria</a></li><li data-level="2"><a href="#10-test-approach">10. Test approach</a></li><li data-level="2"><a href="#11-risks-and-tradeoffs">11. Risks and tradeoffs</a></li><li data-level="2"><a href="#12-open-questions">12. Open questions</a></li><li data-level="2"><a href="#13-out-of-scope">13. Out of scope</a></li></ol></nav>
+    <main id="document-content" class="document-content" data-source-block-count="70">
+<section id="terraform-project-for-the-nats-saas-azure-infrastructure"
+class="source-block" data-source-block="1"
+data-source-sha256="90e7897b23ee67c9c87679bca8dbe846296771315bbc25963484845dc30af286">
+<h1>Terraform project for the nats-saas Azure infrastructure</h1>
+</section>
+<div class="source-block" data-source-block="2"
+data-source-sha256="f3cfda141bb0d969e973d91600064c759ac4c936fa82e9f2c3f6bb2a60fbb270">
+<blockquote>
+<p><strong>Status:</strong> Proposed for review</p>
+</blockquote>
+</div>
+<section id="1-executive-summary" class="source-block role-summary"
+data-source-block="3"
+data-source-sha256="369eedb81a8602aa50ed832662b898c91ab782d2b66611d11a6b18d8001d4703">
+<h2>1. Executive summary</h2>
+</section>
+<div class="source-block" data-source-block="4"
+data-source-sha256="e2ab64d95b958a8b915148fe315863e0f60db25babf65651c92554cb3a7a096f">
+<p>Today there is no infrastructure at all for the system described in
+<code>docs/nats-tenant-queue-api/design.md</code>: no Resource Group, no
+network, no Kubernetes cluster, no database, no secret store. Someone
+would otherwise have to click these five pieces together by hand in the
+Azure Portal, which is slow, unrepeatable, and leaves no record of what
+was actually configured. This design describes a Terraform project that
+provisions, in order, three Resource Groups (one for the network, one
+for the AKS cluster and Key Vault, one for PostgreSQL), an Azure Virtual
+Network, an AKS cluster with a public, internet-facing Standard Load
+Balancer, an Azure Database for PostgreSQL Flexible Server, an Azure Key
+Vault, and an Azure Container Registry (ACR) that stores the container
+image for the middleware application described in
+<code>docs/nats-auth-middleware/design.md</code>, wired together the way
+the application design already assumes (AKS workloads reach Key Vault
+and PostgreSQL only from inside the network, using Workload Identity
+instead of stored credentials, and AKS nodes pull images from ACR using
+a managed identity instead of a stored registry password). Key Vault,
+PostgreSQL, and ACR each get a private endpoint for in-VNet traffic plus
+a public path restricted by a firewall, so operators and tooling outside
+the VNet can also reach them directly: PostgreSQL's firewall allows a
+configurable list of source CIDR ranges, Key Vault's firewall allows
+exactly one configured public IP address, and ACR's firewall allows a
+configurable list of source CIDR ranges for the CI/CD tooling that
+pushes images. The main downside: those public paths are a materially
+larger attack surface than VNet-only access would be, mitigated only by
+deny-by-default firewalls (section 8) that admit nothing until an
+environment explicitly configures an allowed source, and Key Vault's
+exposure is the most consequential of the three, since Key Vault also
+holds PostgreSQL's own admin credential; ACR's public path is the second
+most consequential, since anything able to push to it can put an image
+onto the cluster that AKS will pull and run. Splitting resources across
+three Resource Groups instead of one also means the AKS cluster and the
+PostgreSQL server must be explicitly granted network access into a VNet
+they do not own, rather than inheriting it by being created alongside
+it. The AKS cluster's public exposure is different in kind from Key
+Vault's and PostgreSQL's: it is not an extra, risk-accepted convenience
+path, it is the one entry point the whole system in
+<code>docs/nats-tenant-queue-api/design.md</code> is built to serve
+traffic through, so this project treats it as a required, always-on
+public path rather than a deny-by-default one.</p>
+</div>
+<section id="2-context-and-scope" class="source-block"
+data-source-block="5"
+data-source-sha256="7f27d9838429652fd04876b144f647ac2408f51de0d0db5fc261c40076a8d500">
+<h2>2. Context and scope</h2>
+</section>
+<div class="source-block" data-source-block="6"
+data-source-sha256="441f7521668e21cab77b6c28eb016b8d3f90650ca5bc51e470f31545e4e35c0d">
+<p>This is greenfield infrastructure-as-code work; there is no existing
+Terraform state or hand-created Azure resources to reconcile against. In
+scope: a Terraform project that creates three Resource Groups (network,
+platform, data), one Virtual Network with its subnets (in the network
+Resource Group), one AKS cluster with Workload Identity and its OIDC
+issuer enabled, configured with the Standard Load Balancer SKU and a
+static, Terraform-managed public IP so cluster workloads are reachable
+from the internet, one Azure Key Vault RBAC-authorized with dual
+connectivity, a private endpoint for traffic from inside the VNet plus
+public network access restricted by its firewall to a single allowed
+public IP address, and one Azure Container Registry, Premium SKU, also
+RBAC-authorized with dual connectivity, a private endpoint for AKS's own
+image pulls plus public network access restricted by firewall rules for
+the CI/CD tooling that pushes images (all three in the platform Resource
+Group), and one Azure Database for PostgreSQL Flexible Server also with
+dual connectivity, a private endpoint for traffic from inside the VNet
+plus public network access restricted by firewall rules for traffic from
+the internet (in the data Resource Group), all in a single Azure region.
+Out of scope: deploying NATS, Keycloak, HUG, or the REST API into the
+cluster (that is Helm/<code>kubectl</code> work layered on top of this
+infrastructure, not part of this Terraform project), the CI/CD pipeline
+that builds the middleware application's image and pushes it to the
+registry this project creates, DNS and TLS certificate provisioning, and
+multi-region or multi-environment topology beyond what section 12
+recommends as a default.</p>
+</div>
+<section id="3-system-context" class="source-block"
+data-source-block="7"
+data-source-sha256="40793fe15cdedd8ecf4489800820100043e0c3ebe6ee96e6db9b0dc8f866fabd">
+<h2>3. System context</h2>
+</section>
+<figure class="diagram source-block" data-source-sha256="9e0f19cf55f0c6916c0f4531b895ad5f91cb2d1d644ba30e00779b1293311011" data-source-block="8"><img alt="Diagram 1 showing Azure subscription, Internet, Resource Group: rg-natssaas-network-prod, VNet: vnet-natssaas-prod 10.60.0.0/16, snet-aks 10.60.0.0/22\nAKS nodes, snet-pe 10.60.5.0/24\nprivate endpoints, Private DNS zone\nprivatelink.postgres.database.azure.com, Private DNS zone\nprivatelink.vaultcore.azure.net, Private DNS zone\nprivat" src="data:image/svg+xml;base64,PHN2ZyBpZD0ibXktc3ZnIiB3aWR0aD0iMTAwJSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgY2xhc3M9ImZsb3djaGFydCIgc3R5bGU9Im1heC13aWR0aDogMTAyOS40N3B4OyBiYWNrZ3JvdW5kLWNvbG9yOiB0cmFuc3BhcmVudDsiIHZpZXdCb3g9IjAgMCAxMDI5LjQ2ODc1IDE3MTIuNjc1MDQ4ODI4MTI1IiByb2xlPSJncmFwaGljcy1kb2N1bWVudCBkb2N1bWVudCIgYXJpYS1yb2xlZGVzY3JpcHRpb249ImZsb3djaGFydC12MiI+PHN0eWxlPiNteS1zdmd7Zm9udC1mYW1pbHk6SW50ZXIsdWktc2Fucy1zZXJpZixzeXN0ZW0tdWksc2Fucy1zZXJpZjtmb250LXNpemU6MTZweDtmaWxsOiMxNzI2MzA7fUBrZXlmcmFtZXMgZWRnZS1hbmltYXRpb24tZnJhbWV7ZnJvbXtzdHJva2UtZGFzaG9mZnNldDowO319QGtleWZyYW1lcyBkYXNoe3Rve3N0cm9rZS1kYXNob2Zmc2V0OjA7fX0jbXktc3ZnIC5lZGdlLWFuaW1hdGlvbi1zbG93e3N0cm9rZS1kYXNoYXJyYXk6OSw1IWltcG9ydGFudDtzdHJva2UtZGFzaG9mZnNldDo5MDA7YW5pbWF0aW9uOmRhc2ggNTBzIGxpbmVhciBpbmZpbml0ZTtzdHJva2UtbGluZWNhcDpyb3VuZDt9I215LXN2ZyAuZWRnZS1hbmltYXRpb24tZmFzdHtzdHJva2UtZGFzaGFycmF5OjksNSFpbXBvcnRhbnQ7c3Ryb2tlLWRhc2hvZmZzZXQ6OTAwO2FuaW1hdGlvbjpkYXNoIDIwcyBsaW5lYXIgaW5maW5pdGU7c3Ryb2tlLWxpbmVjYXA6cm91bmQ7fSNteS1zdmcgLmVycm9yLWljb257ZmlsbDojZjdmOWZiO30jbXktc3ZnIC5lcnJvci10ZXh0e2ZpbGw6IzA4MDYwNDtzdHJva2U6IzA4MDYwNDt9I215LXN2ZyAuZWRnZS10aGlja25lc3Mtbm9ybWFse3N0cm9rZS13aWR0aDoxcHg7fSNteS1zdmcgLmVkZ2UtdGhpY2tuZXNzLXRoaWNre3N0cm9rZS13aWR0aDozLjVweDt9I215LXN2ZyAuZWRnZS1wYXR0ZXJuLXNvbGlke3N0cm9rZS1kYXNoYXJyYXk6MDt9I215LXN2ZyAuZWRnZS10aGlja25lc3MtaW52aXNpYmxle3N0cm9rZS13aWR0aDowO2ZpbGw6bm9uZTt9I215LXN2ZyAuZWRnZS1wYXR0ZXJuLWRhc2hlZHtzdHJva2UtZGFzaGFycmF5OjM7fSNteS1zdmcgLmVkZ2UtcGF0dGVybi1kb3R0ZWR7c3Ryb2tlLWRhc2hhcnJheToyO30jbXktc3ZnIC5tYXJrZXJ7ZmlsbDojNTI2YTc5O3N0cm9rZTojNTI2YTc5O30jbXktc3ZnIC5tYXJrZXIuY3Jvc3N7c3Ryb2tlOiM1MjZhNzk7fSNteS1zdmcgc3Zne2ZvbnQtZmFtaWx5OkludGVyLHVpLXNhbnMtc2VyaWYsc3lzdGVtLXVpLHNhbnMtc2VyaWY7Zm9udC1zaXplOjE2cHg7fSNteS1zdmcgcHttYXJnaW46MDt9I215LXN2ZyAubGFiZWx7Zm9udC1mYW1pbHk6SW50ZXIsdWktc2Fucy1zZXJpZixzeXN0ZW0tdWksc2Fucy1zZXJpZjtjb2xvcjojMTcyNjMwO30jbXktc3ZnIC5jbHVzdGVyLWxhYmVsIHRleHR7ZmlsbDojMDgwNjA0O30jbXktc3ZnIC5jbHVzdGVyLWxhYmVsIHNwYW57Y29sb3I6IzA4MDYwNDt9I215LXN2ZyAuY2x1c3Rlci1sYWJlbCBzcGFuIHB7YmFja2dyb3VuZC1jb2xvcjp0cmFuc3BhcmVudDt9I215LXN2ZyAubGFiZWwgdGV4dCwjbXktc3ZnIHNwYW57ZmlsbDojMTcyNjMwO2NvbG9yOiMxNzI2MzA7fSNteS1zdmcgLm5vZGUgcmVjdCwjbXktc3ZnIC5ub2RlIGNpcmNsZSwjbXktc3ZnIC5ub2RlIGVsbGlwc2UsI215LXN2ZyAubm9kZSBwb2x5Z29uLCNteS1zdmcgLm5vZGUgcGF0aHtmaWxsOiNkYmU1ZWM7c3Ryb2tlOiM2MDc5OGE7c3Ryb2tlLXdpZHRoOjFweDt9I215LXN2ZyAucm91Z2gtbm9kZSAubGFiZWwgdGV4dCwjbXktc3ZnIC5ub2RlIC5sYWJlbCB0ZXh0LCNteS1zdmcgLmltYWdlLXNoYXBlIC5sYWJlbCwjbXktc3ZnIC5pY29uLXNoYXBlIC5sYWJlbHt0ZXh0LWFuY2hvcjptaWRkbGU7fSNteS1zdmcgLm5vZGUgLmthdGV4IHBhdGh7ZmlsbDojMDAwO3N0cm9rZTojMDAwO3N0cm9rZS13aWR0aDoxcHg7fSNteS1zdmcgLnJvdWdoLW5vZGUgLmxhYmVsLCNteS1zdmcgLm5vZGUgLmxhYmVsLCNteS1zdmcgLmltYWdlLXNoYXBlIC5sYWJlbCwjbXktc3ZnIC5pY29uLXNoYXBlIC5sYWJlbHt0ZXh0LWFsaWduOmNlbnRlcjt9I215LXN2ZyAubm9kZS5jbGlja2FibGV7Y3Vyc29yOnBvaW50ZXI7fSNteS1zdmcgLnJvb3QgLmFuY2hvciBwYXRoe2ZpbGw6IzUyNmE3OSFpbXBvcnRhbnQ7c3Ryb2tlLXdpZHRoOjA7c3Ryb2tlOiM1MjZhNzk7fSNteS1zdmcgLmFycm93aGVhZFBhdGh7ZmlsbDojMDgwNjA0O30jbXktc3ZnIC5lZGdlUGF0aCAucGF0aHtzdHJva2U6IzUyNmE3OTtzdHJva2Utd2lkdGg6MXB4O30jbXktc3ZnIC5mbG93Y2hhcnQtbGlua3tzdHJva2U6IzUyNmE3OTtmaWxsOm5vbmU7fSNteS1zdmcgLmVkZ2VMYWJlbHtiYWNrZ3JvdW5kLWNvbG9yOiNlZGYyZjU7dGV4dC1hbGlnbjpjZW50ZXI7fSNteS1zdmcgLmVkZ2VMYWJlbCBwe2JhY2tncm91bmQtY29sb3I6I2VkZjJmNTt9I215LXN2ZyAuZWRnZUxhYmVsIHJlY3R7b3BhY2l0eTowLjU7YmFja2dyb3VuZC1jb2xvcjojZWRmMmY1O2ZpbGw6I2VkZjJmNTt9I215LXN2ZyAubGFiZWxCa2d7YmFja2dyb3VuZC1jb2xvcjpyZ2JhKDIzNywgMjQyLCAyNDUsIDAuNSk7fSNteS1zdmcgLmNsdXN0ZXIgcmVjdHtmaWxsOiNmN2Y5ZmI7c3Ryb2tlOmhzbCgyMTAsIDAlLCA4Ny42NDcwNTg4MjM1JSk7c3Ryb2tlLXdpZHRoOjFweDt9I215LXN2ZyAuY2x1c3RlciB0ZXh0e2ZpbGw6IzA4MDYwNDt9I215LXN2ZyAuY2x1c3RlciBzcGFue2NvbG9yOiMwODA2MDQ7fSNteS1zdmcgZGl2Lm1lcm1haWRUb29sdGlwe3Bvc2l0aW9uOmFic29sdXRlO3RleHQtYWxpZ246Y2VudGVyO21heC13aWR0aDoyMDBweDtwYWRkaW5nOjJweDtmb250LWZhbWlseTpJbnRlcix1aS1zYW5zLXNlcmlmLHN5c3RlbS11aSxzYW5zLXNlcmlmO2ZvbnQtc2l6ZToxMnB4O2JhY2tncm91bmQ6I2Y3ZjlmYjtib3JkZXI6MXB4IHNvbGlkIGhzbCgyMTAsIDAlLCA4Ny42NDcwNTg4MjM1JSk7Ym9yZGVyLXJhZGl1czoycHg7cG9pbnRlci1ldmVudHM6bm9uZTt6LWluZGV4OjEwMDt9I215LXN2ZyAuZmxvd2NoYXJ0VGl0bGVUZXh0e3RleHQtYW5jaG9yOm1pZGRsZTtmb250LXNpemU6MThweDtmaWxsOiMxNzI2MzA7fSNteS1zdmcgcmVjdC50ZXh0e2ZpbGw6bm9uZTtzdHJva2Utd2lkdGg6MDt9I215LXN2ZyAuaWNvbi1zaGFwZSwjbXktc3ZnIC5pbWFnZS1zaGFwZXtiYWNrZ3JvdW5kLWNvbG9yOiNlZGYyZjU7dGV4dC1hbGlnbjpjZW50ZXI7fSNteS1zdmcgLmljb24tc2hhcGUgcCwjbXktc3ZnIC5pbWFnZS1zaGFwZSBwe2JhY2tncm91bmQtY29sb3I6I2VkZjJmNTtwYWRkaW5nOjJweDt9I215LXN2ZyAuaWNvbi1zaGFwZSAubGFiZWwgcmVjdCwjbXktc3ZnIC5pbWFnZS1zaGFwZSAubGFiZWwgcmVjdHtvcGFjaXR5OjAuNTtiYWNrZ3JvdW5kLWNvbG9yOiNlZGYyZjU7ZmlsbDojZWRmMmY1O30jbXktc3ZnIC5sYWJlbC1pY29ue2Rpc3BsYXk6aW5saW5lLWJsb2NrO2hlaWdodDoxZW07b3ZlcmZsb3c6dmlzaWJsZTt2ZXJ0aWNhbC1hbGlnbjotMC4xMjVlbTt9I215LXN2ZyAubm9kZSAubGFiZWwtaWNvbiBwYXRoe2ZpbGw6Y3VycmVudENvbG9yO3N0cm9rZTpyZXZlcnQ7c3Ryb2tlLXdpZHRoOnJldmVydDt9I215LXN2ZyAubm9kZSAubmVvLW5vZGV7c3Ryb2tlOiM2MDc5OGE7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0ubm9kZSByZWN0LCNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0uY2x1c3RlciByZWN0LCNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0ubm9kZSBwb2x5Z29ue3N0cm9rZTp1cmwoI215LXN2Zy1ncmFkaWVudCk7ZmlsdGVyOmRyb3Atc2hhZG93KCAxcHggMnB4IDJweCByZ2JhKDE4NSwxODUsMTg1LDEpKTt9I215LXN2ZyBbZGF0YS1sb29rPSJuZW8iXS5zd2ltbGFuZS5jbHVzdGVyIHJlY3R7ZmlsdGVyOm5vbmU7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0ubm9kZSBwYXRoe3N0cm9rZTp1cmwoI215LXN2Zy1ncmFkaWVudCk7c3Ryb2tlLXdpZHRoOjFweDt9I215LXN2ZyBbZGF0YS1sb29rPSJuZW8iXS5ub2RlIC5vdXRlci1wYXRoe2ZpbHRlcjpkcm9wLXNoYWRvdyggMXB4IDJweCAycHggcmdiYSgxODUsMTg1LDE4NSwxKSk7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0ubm9kZSAubmVvLWxpbmUgcGF0aHtzdHJva2U6IzYwNzk4YTtmaWx0ZXI6bm9uZTt9I215LXN2ZyBbZGF0YS1sb29rPSJuZW8iXS5ub2RlIGNpcmNsZXtzdHJva2U6dXJsKCNteS1zdmctZ3JhZGllbnQpO2ZpbHRlcjpkcm9wLXNoYWRvdyggMXB4IDJweCAycHggcmdiYSgxODUsMTg1LDE4NSwxKSk7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0ubm9kZSBjaXJjbGUgLnN0YXRlLXN0YXJ0e2ZpbGw6IzAwMDAwMDt9I215LXN2ZyBbZGF0YS1sb29rPSJuZW8iXS5pY29uLXNoYXBlIC5pY29ue2ZpbGw6dXJsKCNteS1zdmctZ3JhZGllbnQpO2ZpbHRlcjpkcm9wLXNoYWRvdyggMXB4IDJweCAycHggcmdiYSgxODUsMTg1LDE4NSwxKSk7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0uaWNvbi1zaGFwZSAuaWNvbi1uZW8gcGF0aHtzdHJva2U6dXJsKCNteS1zdmctZ3JhZGllbnQpO2ZpbHRlcjpkcm9wLXNoYWRvdyggMXB4IDJweCAycHggcmdiYSgxODUsMTg1LDE4NSwxKSk7fSNteS1zdmcgOnJvb3R7LS1tZXJtYWlkLWZvbnQtZmFtaWx5OiJ0cmVidWNoZXQgbXMiLHZlcmRhbmEsYXJpYWwsc2Fucy1zZXJpZjt9PC9zdHlsZT48Zz48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kIiBjbGFzcz0ibWFya2VyIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDEwIDEwIiByZWZYPSI1IiByZWZZPSI1IiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSI4IiBtYXJrZXJIZWlnaHQ9IjgiIG9yaWVudD0iYXV0byI+PHBhdGggZD0iTSAwIDAgTCAxMCA1IEwgMCAxMCB6IiBjbGFzcz0iYXJyb3dNYXJrZXJQYXRoIiBzdHlsZT0ic3Ryb2tlLXdpZHRoOiAxOyBzdHJva2UtZGFzaGFycmF5OiAxLCAwOyIvPjwvbWFya2VyPjxtYXJrZXIgaWQ9Im15LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRTdGFydCIgY2xhc3M9Im1hcmtlciBmbG93Y2hhcnQtdjIiIHZpZXdCb3g9IjAgMCAxMCAxMCIgcmVmWD0iNC41IiByZWZZPSI1IiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSI4IiBtYXJrZXJIZWlnaHQ9IjgiIG9yaWVudD0iYXV0byI+PHBhdGggZD0iTSAwIDUgTCAxMCAxMCBMIDEwIDAgeiIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMTsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kLW1hcmdpbiIgY2xhc3M9Im1hcmtlciBmbG93Y2hhcnQtdjIiIHZpZXdCb3g9IjAgMCAxMS41IDE0IiByZWZYPSIxMS41IiByZWZZPSI3IiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSIxMC41IiBtYXJrZXJIZWlnaHQ9IjE0IiBvcmllbnQ9ImF1dG8iPjxwYXRoIGQ9Ik0gMCAwIEwgMTEuNSA3IEwgMCAxNCB6IiBjbGFzcz0iYXJyb3dNYXJrZXJQYXRoIiBzdHlsZT0ic3Ryb2tlLXdpZHRoOiAwOyBzdHJva2UtZGFzaGFycmF5OiAxLCAwOyIvPjwvbWFya2VyPjxtYXJrZXIgaWQ9Im15LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRTdGFydC1tYXJnaW4iIGNsYXNzPSJtYXJrZXIgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTEuNSAxNCIgcmVmWD0iMSIgcmVmWT0iNyIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iMTEuNSIgbWFya2VySGVpZ2h0PSIxNCIgb3JpZW50PSJhdXRvIj48cG9seWdvbiBwb2ludHM9IjAsNyAxMS41LDE0IDExLjUsMCIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMDsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLWNpcmNsZUVuZCIgY2xhc3M9Im1hcmtlciBmbG93Y2hhcnQtdjIiIHZpZXdCb3g9IjAgMCAxMCAxMCIgcmVmWD0iMTEiIHJlZlk9IjUiIG1hcmtlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgbWFya2VyV2lkdGg9IjExIiBtYXJrZXJIZWlnaHQ9IjExIiBvcmllbnQ9ImF1dG8iPjxjaXJjbGUgY3g9IjUiIGN5PSI1IiByPSI1IiBjbGFzcz0iYXJyb3dNYXJrZXJQYXRoIiBzdHlsZT0ic3Ryb2tlLXdpZHRoOiAxOyBzdHJva2UtZGFzaGFycmF5OiAxLCAwOyIvPjwvbWFya2VyPjxtYXJrZXIgaWQ9Im15LXN2Z19mbG93Y2hhcnQtdjItY2lyY2xlU3RhcnQiIGNsYXNzPSJtYXJrZXIgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTAgMTAiIHJlZlg9Ii0xIiByZWZZPSI1IiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSIxMSIgbWFya2VySGVpZ2h0PSIxMSIgb3JpZW50PSJhdXRvIj48Y2lyY2xlIGN4PSI1IiBjeT0iNSIgcj0iNSIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMTsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLWNpcmNsZUVuZC1tYXJnaW4iIGNsYXNzPSJtYXJrZXIgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTAgMTAiIHJlZlk9IjUiIHJlZlg9IjEyLjI1IiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSIxNCIgbWFya2VySGVpZ2h0PSIxNCIgb3JpZW50PSJhdXRvIj48Y2lyY2xlIGN4PSI1IiBjeT0iNSIgcj0iNSIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMDsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLWNpcmNsZVN0YXJ0LW1hcmdpbiIgY2xhc3M9Im1hcmtlciBmbG93Y2hhcnQtdjIiIHZpZXdCb3g9IjAgMCAxMCAxMCIgcmVmWD0iLTIiIHJlZlk9IjUiIG1hcmtlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgbWFya2VyV2lkdGg9IjE0IiBtYXJrZXJIZWlnaHQ9IjE0IiBvcmllbnQ9ImF1dG8iPjxjaXJjbGUgY3g9IjUiIGN5PSI1IiByPSI1IiBjbGFzcz0iYXJyb3dNYXJrZXJQYXRoIiBzdHlsZT0ic3Ryb2tlLXdpZHRoOiAwOyBzdHJva2UtZGFzaGFycmF5OiAxLCAwOyIvPjwvbWFya2VyPjxtYXJrZXIgaWQ9Im15LXN2Z19mbG93Y2hhcnQtdjItY3Jvc3NFbmQiIGNsYXNzPSJtYXJrZXIgY3Jvc3MgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTEgMTEiIHJlZlg9IjEyIiByZWZZPSI1LjIiIG1hcmtlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgbWFya2VyV2lkdGg9IjExIiBtYXJrZXJIZWlnaHQ9IjExIiBvcmllbnQ9ImF1dG8iPjxwYXRoIGQ9Ik0gMSwxIGwgOSw5IE0gMTAsMSBsIC05LDkiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDI7IHN0cm9rZS1kYXNoYXJyYXk6IDEsIDA7Ii8+PC9tYXJrZXI+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1jcm9zc1N0YXJ0IiBjbGFzcz0ibWFya2VyIGNyb3NzIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDExIDExIiByZWZYPSItMSIgcmVmWT0iNS4yIiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSIxMSIgbWFya2VySGVpZ2h0PSIxMSIgb3JpZW50PSJhdXRvIj48cGF0aCBkPSJNIDEsMSBsIDksOSBNIDEwLDEgbCAtOSw5IiBjbGFzcz0iYXJyb3dNYXJrZXJQYXRoIiBzdHlsZT0ic3Ryb2tlLXdpZHRoOiAyOyBzdHJva2UtZGFzaGFycmF5OiAxLCAwOyIvPjwvbWFya2VyPjxtYXJrZXIgaWQ9Im15LXN2Z19mbG93Y2hhcnQtdjItY3Jvc3NFbmQtbWFyZ2luIiBjbGFzcz0ibWFya2VyIGNyb3NzIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDE1IDE1IiByZWZYPSIxNy43IiByZWZZPSI3LjUiIG1hcmtlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgbWFya2VyV2lkdGg9IjEyIiBtYXJrZXJIZWlnaHQ9IjEyIiBvcmllbnQ9ImF1dG8iPjxwYXRoIGQ9Ik0gMSwxIEwgMTQsMTQgTSAxLDE0IEwgMTQsMSIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMi41OyIvPjwvbWFya2VyPjxtYXJrZXIgaWQ9Im15LXN2Z19mbG93Y2hhcnQtdjItY3Jvc3NTdGFydC1tYXJnaW4iIGNsYXNzPSJtYXJrZXIgY3Jvc3MgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTUgMTUiIHJlZlg9Ii0zLjUiIHJlZlk9IjcuNSIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iMTIiIG1hcmtlckhlaWdodD0iMTIiIG9yaWVudD0iYXV0byI+PHBhdGggZD0iTSAxLDEgTCAxNCwxNCBNIDEsMTQgTCAxNCwxIiBjbGFzcz0iYXJyb3dNYXJrZXJQYXRoIiBzdHlsZT0ic3Ryb2tlLXdpZHRoOiAyLjU7IHN0cm9rZS1kYXNoYXJyYXk6IDEsIDA7Ii8+PC9tYXJrZXI+PGcgY2xhc3M9InJvb3QiPjxnIGNsYXNzPSJjbHVzdGVycyIvPjxnIGNsYXNzPSJlZGdlUGF0aHMiLz48ZyBjbGFzcz0iZWRnZUxhYmVscyIvPjxnIGNsYXNzPSJub2RlcyI+PGcgY2xhc3M9InJvb3QiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIDApIj48ZyBjbGFzcz0iY2x1c3RlcnMiPjxnIGNsYXNzPSJjbHVzdGVyIiBpZD0ibXktc3ZnLVNVQiIgZGF0YS1sb29rPSJjbGFzc2ljIj48cmVjdCBzdHlsZT0iIiB4PSI4IiB5PSI4IiB3aWR0aD0iMTAxMy40Njg3NSIgaGVpZ2h0PSIxNjk2LjY3NTAyNDAzMjU5MjgiLz48ZyBjbGFzcz0iY2x1c3Rlci1sYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDQ2Ljg4MjgxMjUsIDgpIj48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPkF6dXJlPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IHN1YnNjcmlwdGlvbjwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImNsdXN0ZXIiIGlkPSJteS1zdmctUkdEQVRBIiBkYXRhLWxvb2s9ImNsYXNzaWMiPjxyZWN0IHN0eWxlPSIiIHg9IjQ1LjUiIHk9IjI4IiB3aWR0aD0iOTM4LjQ2ODc1IiBoZWlnaHQ9IjIwMC4yOTU2NTQyOTY4NzUiLz48ZyBjbGFzcz0iY2x1c3Rlci1sYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzY4Ljc2NTYyNSwgMjgpIj48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPlJlc291cmNlPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEdyb3VwOjwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiByZy1uYXRzc2Fhcy1kYXRhLXByb2Q8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJjbHVzdGVyIiBpZD0ibXktc3ZnLU1DUkciIGRhdGEtbG9vaz0iY2xhc3NpYyI+PHJlY3Qgc3R5bGU9IiIgeD0iNjAwLjc2NTYyNSIgeT0iMjQ4LjI5NTY1NDI5Njg3NSIgd2lkdGg9IjM4My4yMDMxMjUiIGhlaWdodD0iMTM1LjU5OTk5ODQ3NDEyMTEiLz48ZyBjbGFzcz0iY2x1c3Rlci1sYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNjEwLjc1NzgxMjUsIDI0OC4yOTU2NTQyOTY4NzUpIj48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPkFLUy1tYW5hZ2VkPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IG5vZGU8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gcmVzb3VyY2U8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gZ3JvdXAsPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGF1dG8tY3JlYXRlZDwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImNsdXN0ZXIiIGlkPSJteS1zdmctUkdQTEFUIiBkYXRhLWxvb2s9ImNsYXNzaWMiPjxyZWN0IHN0eWxlPSIiIHg9IjQ1LjUiIHk9IjQwMy44OTU2NTI3NzA5OTYxIiB3aWR0aD0iOTM4LjQ2ODc1IiBoZWlnaHQ9IjgxOC4xNTg3NjM4ODU0OTgiLz48ZyBjbGFzcz0iY2x1c3Rlci1sYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzU0LjI4MTI1LCA0MDMuODk1NjUyNzcwOTk2MSkiPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+UmVzb3VyY2U8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gR3JvdXA6PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IHJnLW5hdHNzYWFzLXBsYXRmb3JtLXByb2Q8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJjbHVzdGVyIiBpZD0ibXktc3ZnLVJHTkVUIiBkYXRhLWxvb2s9ImNsYXNzaWMiPjxyZWN0IHN0eWxlPSIiIHg9IjQ1LjUiIHk9IjEyNDIuMDU0NDE2NjU2NDk0MSIgd2lkdGg9IjkzOC40Njg3NSIgaGVpZ2h0PSI0NDIuNjIwNjA3Mzc2MDk4NjMiLz48ZyBjbGFzcz0iY2x1c3Rlci1sYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzU1LjkzNzUsIDEyNDIuMDU0NDE2NjU2NDk0MSkiPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+UmVzb3VyY2U8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gR3JvdXA6PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IHJnLW5hdHNzYWFzLW5ldHdvcmstcHJvZDwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImNsdXN0ZXIiIGlkPSJteS1zdmctVk5FVCIgZGF0YS1sb29rPSJjbGFzc2ljIj48cmVjdCBzdHlsZT0iIiB4PSI2MzguMjY1NjI1IiB5PSIxMjczLjU1NDQxNDc0OTE0NTUiIHdpZHRoPSIzMDguMjAzMTI1IiBoZWlnaHQ9IjM3Ny4yMjA2MDk2NjQ5MTciLz48ZyBjbGFzcz0iY2x1c3Rlci1sYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNjUyLjQ2ODc1LCAxMjczLjU1NDQxNDc0OTE0NTUpIj48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPlZOZXQ6PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IHZuZXQtbmF0c3NhYXMtcHJvZDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiAxMC42MC4wLjAvMTY8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjwvZz48ZyBjbGFzcz0iZWRnZVBhdGhzIj48cGF0aCBkPSJNMzExLjEwOSw2NDMuOTk4TDMzNy42NDcsNjQ2LjI5NEMzNjQuMTg1LDY0OC41OSw0MTcuMjYsNjUzLjE4Myw0NjUuNTM2LDY1NS40NzlDNTEzLjgxMyw2NTcuNzc1LDU1Ny4yODksNjU3Ljc3NSw1ODUuMjc3LDY1Ny43NzVDNjEzLjI2Niw2NTcuNzc1LDYyNS43NjYsNjU3Ljc3NSw2NDkuMzE1LDY4MS44NjFDNjcyLjg2NCw3MDUuOTQ2LDcwNy40NjIsNzU0LjExOCw3MjQuNzYyLDc3OC4yMDNMNzQyLjA2MSw4MDIuMjg5IiBpZD0ibXktc3ZnLUxfUEVLVl9LVl8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX1BFS1ZfS1ZfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TXpFeExqRXdPVE0zTlN3aWVTSTZOalF6TGprNU56ZzFNalk1TURNd09URjlMSHNpZUNJNk5EY3dMak16TlRrek56VXNJbmtpT2pZMU55NDNOelV3TXpJd05ETTBOVGQ5TEhzaWVDSTZOakF3TGpjMk5UWXlOU3dpZVNJNk5qVTNMamMzTlRBek1qQTBNelExTjMwc2V5SjRJam8yTXpndU1qWTFOakkxTENKNUlqbzJOVGN1TnpjMU1ETXlNRFF6TkRVM2ZTeDdJbmdpT2pjME5DNHpPVFF6TnpBME1UWTRNalEzTENKNUlqbzRNRFV1TlRNM056VTRPVFkwTVRJMWZWMD0iIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik0zMDAuNjMzLDc2NS4xMzNMMzI4LjkxNyw3NjkuNjIzQzM1Ny4yMDEsNzc0LjExNCw0MTMuNzY4LDc4My4wOTQsNDYzLjc5LDc4Ny41ODVDNTEzLjgxMyw3OTIuMDc1LDU1Ny4yODksNzkyLjA3NSw1ODUuMjc3LDc5Mi4wNzVDNjEzLjI2Niw3OTIuMDc1LDYyNS43NjYsNzkyLjA3NSw2NDQuNTUzLDc4MC4zMzZDNjYzLjM0MSw3NjguNTk2LDY4OC40MTYsNzQ1LjExOCw3MDAuOTUzLDczMy4zNzlMNzEzLjQ5MSw3MjEuNjM5IiBpZD0ibXktc3ZnLUxfUEVBQ1JfQUNSXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfUEVBQ1JfQUNSXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk16QXdMall6TWpneE1qVXNJbmtpT2pjMk5TNHhNek14TVRjeE5UYzNORFU1ZlN4N0luZ2lPalEzTUM0ek16VTVNemMxTENKNUlqbzNPVEl1TURjMU1ETXhNamd3TlRFM05uMHNleUo0SWpvMk1EQXVOelkxTmpJMUxDSjVJam8zT1RJdU1EYzFNRE14TWpnd05URTNObjBzZXlKNElqbzJNemd1TWpZMU5qSTFMQ0o1SWpvM09USXVNRGMxTURNeE1qZ3dOVEUzTm4wc2V5SjRJam8zTVRZdU5ERXdOREF4TkRNME5EYzVOQ3dpZVNJNk56RTRMamt3TlRNNE9UazRORGczZlYwPSIgZGF0YS1sb29rPSJjbGFzc2ljIiBtYXJrZXItZW5kPSJ1cmwoI215LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRFbmQpIi8+PHBhdGggZD0iTTMzNy42MzMsMTEyLjE1NUwzNTkuNzUsMTEzLjQ3OUMzODEuODY3LDExNC44MDMsNDI2LjEwMiwxMTcuNDUyLDQ2OS45NTcsMTE4Ljc3NkM1MTMuODEzLDEyMC4xLDU1Ny4yODksMTIwLjEsNTg1LjI3NywxMjAuMUM2MTMuMjY2LDEyMC4xLDYyNS43NjYsMTIwLjEsNjM5LjM1OSwxMjAuODM5QzY1Mi45NTIsMTIxLjU3Nyw2NjcuNjM4LDEyMy4wNTQsNjc0Ljk4MiwxMjMuNzkzTDY4Mi4zMjUsMTI0LjUzMiIgaWQ9Im15LXN2Zy1MX1BFUEdfUEdfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9QRVBHX1BHXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk16TTNMall6TWpneE1qVXNJbmtpT2pFeE1pNHhOVFEzTVRBM01qa3pNRFF4TTMwc2V5SjRJam8wTnpBdU16TTFPVE0zTlN3aWVTSTZNVEl3TGpBNU9UazVPRFEzTkRFeU1URjlMSHNpZUNJNk5qQXdMamMyTlRZeU5Td2llU0k2TVRJd0xqQTVPVGs1T0RRM05ERXlNVEY5TEhzaWVDSTZOak00TGpJMk5UWXlOU3dpZVNJNk1USXdMakE1T1RrNU9EUTNOREV5TVRGOUxIc2llQ0k2TmpnMkxqTXdORFk0TnpVc0lua2lPakV5TkM0NU16RTVNVEl5T0Rrd056WTNNMzFkIiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNMzE4Ljg2Miw5OTUuOTg4TDM0NC4xMDgsMTAwOS45MDNDMzY5LjM1MywxMDIzLjgxNyw0MTkuODQ1LDEwNTEuNjQ2LDQ2Ni44MjksMTA2NS41NjFDNTEzLjgxMywxMDc5LjQ3NSw1NTcuMjg5LDEwNzkuNDc1LDU4NS4yNzcsMTA3OS40NzVDNjEzLjI2NiwxMDc5LjQ3NSw2MjUuNzY2LDEwNzkuNDc1LDY1NS4yNTksMTEzNy40MzhDNjg0Ljc1MiwxMTk1LjQwMiw3MzEuMjM5LDEzMTEuMzI4LDc1NC40ODIsMTM2OS4yOTJMNzc3LjcyNiwxNDI3LjI1NSIgaWQ9Im15LXN2Zy1MX0FLU19TTkFLU18wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX0FLU19TTkFLU18wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZNekU0TGpnMk1qSXlPRFExTmpjNE55d2llU0k2T1RrMUxqazRPREl5TURJeE5EZzBNemg5TEhzaWVDSTZORGN3TGpNek5Ua3pOelVzSW5raU9qRXdOemt1TkRjMU1ETXlPREEyTXprMk5YMHNleUo0SWpvMk1EQXVOelkxTmpJMUxDSjVJam94TURjNUxqUTNOVEF6TWpnd05qTTVOalY5TEhzaWVDSTZOak00TGpJMk5UWXlOU3dpZVNJNk1UQTNPUzQwTnpVd016STRNRFl6T1RZMWZTeDdJbmdpT2pjM09TNHlNVFF6Tmpjd09UVTBORE1zSW5raU9qRTBNekF1T1RZM05qQXhOemMyTVRJemZWMD0iIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik0zMTEuMTA5LDYxMi41NTZMMzM3LjY0Nyw2MDYuNDc5QzM2NC4xODUsNjAwLjQwMiw0MTcuMjYsNTg4LjI0OSw0NjUuNTM2LDU4Mi4xNzJDNTEzLjgxMyw1NzYuMDk2LDU1Ny4yODksNTc2LjA5Niw1ODUuMjc3LDU3Ni4wOTZDNjEzLjI2Niw1NzYuMDk2LDYyNS43NjYsNTc2LjA5Niw2NTYuNDY3LDY5Ny41MTlDNjg3LjE2OCw4MTguOTQxLDczNi4wNywxMDYxLjc4Nyw3NjAuNTIxLDExODMuMjFMNzg0Ljk3MywxMzA0LjYzMyIgaWQ9Im15LXN2Zy1MX1BFS1ZfU05QRV8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX1BFS1ZfU05QRV8wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZNekV4TGpFd09UTTNOU3dpZVNJNk5qRXlMalUxTlRVNU1UQXhNVEk0TXpSOUxIc2llQ0k2TkRjd0xqTXpOVGt6TnpVc0lua2lPalUzTmk0d09UVTJORGM0TVRFNE9EazJmU3g3SW5naU9qWXdNQzQzTmpVMk1qVXNJbmtpT2pVM05pNHdPVFUyTkRjNE1URTRPRGsyZlN4N0luZ2lPall6T0M0eU5qVTJNalVzSW5raU9qVTNOaTR3T1RVMk5EYzRNVEU0T0RrMmZTeDdJbmdpT2pjNE5TNDNOakl4T1RFME5ETTVOaklzSW5raU9qRXpNRGd1TlRVME5ERTBOelE1TVRRMU5YMWQiIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik0zMzcuNjMzLDkzLjQ4N0wzNTkuNzUsOTEuNTM5QzM4MS44NjcsODkuNTkyLDQyNi4xMDIsODUuNjk2LDQ2OS45NTcsODMuNzQ4QzUxMy44MTMsODEuOCw1NTcuMjg5LDgxLjgsNTg1LjI3Nyw4MS44QzYxMy4yNjYsODEuOCw2MjUuNzY2LDgxLjgsNjU2Ljk0OSwyODUuNTk3QzY4OC4xMzMsNDg5LjM5NSw3MzguMDAxLDg5Ni45ODksNzYyLjkzNSwxMTAwLjc4N0w3ODcuODY4LDEzMDQuNTg0IiBpZD0ibXktc3ZnLUxfUEVQR19TTlBFXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfUEVQR19TTlBFXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk16TTNMall6TWpneE1qVXNJbmtpT2prekxqUTROekkyTURneE9EazVPVFE1ZlN4N0luZ2lPalEzTUM0ek16VTVNemMxTENKNUlqbzRNUzQzT1RrNU9Ua3lNemN3TmpBMU5YMHNleUo0SWpvMk1EQXVOelkxTmpJMUxDSjVJam80TVM0M09UazVPVGt5TXpjd05qQTFOWDBzZXlKNElqbzJNemd1TWpZMU5qSTFMQ0o1SWpvNE1TNDNPVGs1T1RreU16Y3dOakExTlgwc2V5SjRJam8zT0RndU16VTBNak0xTnpFNE5qQTJNeXdpZVNJNk1UTXdPQzQxTlRRME1UUTNORGt4TkRVMWZWMD0iIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik0zMDAuNjMzLDcyOS41NDhMMzI4LjkxNyw3MjIuNzUzQzM1Ny4yMDEsNzE1Ljk1Nyw0MTMuNzY4LDcwMi4zNjYsNDYzLjc5LDY5NS41NzFDNTEzLjgxMyw2ODguNzc1LDU1Ny4yODksNjg4Ljc3NSw1ODUuMjc3LDY4OC43NzVDNjEzLjI2Niw2ODguNzc1LDYyNS43NjYsNjg4Ljc3NSw2NTYuMjU1LDc5MS40MjNDNjg2Ljc0NSw4OTQuMDcxLDczNS4yMjMsMTA5OS4zNjYsNzU5LjQ2MywxMjAyLjAxNEw3ODMuNzAyLDEzMDQuNjYxIiBpZD0ibXktc3ZnLUxfUEVBQ1JfU05QRV8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX1BFQUNSX1NOUEVfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TXpBd0xqWXpNamd4TWpVc0lua2lPamN5T1M0MU5EZzBNemcyTmpJMk56ZzJmU3g3SW5naU9qUTNNQzR6TXpVNU16YzFMQ0o1SWpvMk9EZ3VOemMxTURNeU1EUXpORFUzZlN4N0luZ2lPall3TUM0M05qVTJNalVzSW5raU9qWTRPQzQzTnpVd016SXdORE0wTlRkOUxIc2llQ0k2TmpNNExqSTJOVFl5TlN3aWVTSTZOamc0TGpjM05UQXpNakEwTXpRMU4zMHNleUo0SWpvM09EUXVOakl4TnpJeE9UTXpNakUzTkN3aWVTSTZNVE13T0M0MU5UUTBNVFEzTkRreE5EVTFmVjA9IiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNMzMzLjMyLDk4MC4wNDNMMzU2LjE1Niw5ODguMTQ5QzM3OC45OTIsOTk2LjI1NCw0MjQuNjY0LDEwMTIuNDY0LDQ2OS4yMzgsMTAyMC41N0M1MTMuODEzLDEwMjguNjc1LDU1Ny4yODksMTAyOC42NzUsNTg1LjI3NywxMDI4LjY3NUM2MTMuMjY2LDEwMjguNjc1LDYyNS43NjYsMTAyOC42NzUsNjQ2LjYwMSwxMDEzLjAzN0M2NjcuNDM3LDk5Ny4zOTksNjk2LjYwOSw5NjYuMTIyLDcxMS4xOTUsOTUwLjQ4NEw3MjUuNzgxLDkzNC44NDYiIGlkPSJteS1zdmctTF9BS1NfS1ZfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9BS1NfS1ZfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TXpNekxqTXlNRE14TWpVc0lua2lPams0TUM0d05ETXlOalF3TmpjeU1qTjlMSHNpZUNJNk5EY3dMak16TlRrek56VXNJbmtpT2pFd01qZ3VOamMxTURNek5UWTVNek0yZlN4N0luZ2lPall3TUM0M05qVTJNalVzSW5raU9qRXdNamd1TmpjMU1ETXpOVFk1TXpNMmZTeDdJbmdpT2pZek9DNHlOalUyTWpVc0lua2lPakV3TWpndU5qYzFNRE16TlRZNU16TTJmU3g3SW5naU9qY3lPQzQxTURreE5qQTBPVEl3TVRjMExDSjVJam81TXpFdU9USXdORGd6TURJeE9UQTFOWDFkIiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNMzMzLjMyLDkyNC44NzJMMzU2LjE1Niw5MjIuNjM5QzM3OC45OTIsOTIwLjQwNiw0MjQuNjY0LDkxNS45NDEsNDY5LjIzOCw5MTMuNzA4QzUxMy44MTMsOTExLjQ3NSw1NTcuMjg5LDkxMS40NzUsNTg1LjI3Nyw5MTEuNDc1QzYxMy4yNjYsOTExLjQ3NSw2MjUuNzY2LDkxMS40NzUsNjUwLjY0Myw4ODAuNTU3QzY3NS41Miw4NDkuNjM5LDcxMi43NzQsNzg3LjgwMyw3MzEuNDAxLDc1Ni44ODVMNzUwLjAyOSw3MjUuOTY3IiBpZD0ibXktc3ZnLUxfQUtTX0FDUl8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX0FLU19BQ1JfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TXpNekxqTXlNRE14TWpVc0lua2lPamt5TkM0NE56SXlNakl5TnpRd01qZ3pmU3g3SW5naU9qUTNNQzR6TXpVNU16YzFMQ0o1SWpvNU1URXVORGMxTURNeU9EQTJNemsyTlgwc2V5SjRJam8yTURBdU56WTFOakkxTENKNUlqbzVNVEV1TkRjMU1ETXlPREEyTXprMk5YMHNleUo0SWpvMk16Z3VNalkxTmpJMUxDSjVJam81TVRFdU5EYzFNRE15T0RBMk16azJOWDBzZXlKNElqbzNOVEl1TURreU56STBNekk1TlRreU1pd2llU0k2TnpJeUxqVTBNRGswTURNNU1UZzFOVEo5WFE9PSIgZGF0YS1sb29rPSJjbGFzc2ljIiBtYXJrZXItZW5kPSJ1cmwoI215LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRFbmQpIi8+PHBhdGggZD0iTTMzMy4zMiw4OTIuNjczTDM1Ni4xNTYsODg0LjQwN0MzNzguOTkyLDg3Ni4xNDEsNDI0LjY2NCw4NTkuNjA4LDQ2OS4yMzgsODUxLjM0MUM1MTMuODEzLDg0My4wNzUsNTU3LjI4OSw4NDMuMDc1LDU4NS4yNzcsODQzLjA3NUM2MTMuMjY2LDg0My4wNzUsNjI1Ljc2Niw4NDMuMDc1LDY1NS45MTQsNzYxLjM1MkM2ODYuMDYxLDY3OS42MjgsNzMzLjg1Nyw1MTYuMTgyLDc1Ny43NTUsNDM0LjQ1OEw3ODEuNjUzLDM1Mi43MzUiIGlkPSJteS1zdmctTF9BS1NfTEJfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tZG90dGVkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfQUtTX0xCXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk16TXpMak15TURNeE1qVXNJbmtpT2pnNU1pNDJOek0wTWpJMk16QXdOVGs0ZlN4N0luZ2lPalEzTUM0ek16VTVNemMxTENKNUlqbzRORE11TURjMU1ETXhNamd3TlRFM05uMHNleUo0SWpvMk1EQXVOelkxTmpJMUxDSjVJam80TkRNdU1EYzFNRE14TWpnd05URTNObjBzZXlKNElqbzJNemd1TWpZMU5qSTFMQ0o1SWpvNE5ETXVNRGMxTURNeE1qZ3dOVEUzTm4wc2V5SjRJam8zT0RJdU56YzFOamN4TlRBeE56QXhNeXdpZVNJNk16UTRMamc1TlRZMU1qYzNNRGs1TmpGOVhRPT0iIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik0yOTguNjY0LDExNTQuMjU0TDMyNy4yNzYsMTE1NC4yNTRDMzU1Ljg4OCwxMTU0LjI1NCw0MTMuMTEyLDExNTQuMjU0LDQ2My40NjIsMTE1NC4yNTRDNTEzLjgxMywxMTU0LjI1NCw1NTcuMjg5LDExNTQuMjU0LDU4NS4yNzcsMTE1NC4yNTRDNjEzLjI2NiwxMTU0LjI1NCw2MjUuNzY2LDExNTQuMjU0LDY1Ni41NzQsMTAyMC42ODRDNjg3LjM4Miw4ODcuMTEzLDczNi40OTcsNjE5Ljk3MSw3NjEuMDU1LDQ4Ni40TDc4NS42MTMsMzUyLjgzIiBpZD0ibXktc3ZnLUxfUElQX0xCXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfUElQX0xCXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk1qazRMalkyTkRBMk1qVXNJbmtpT2pFeE5UUXVNalUwTkRFM05ERTVORE16Tm4wc2V5SjRJam8wTnpBdU16TTFPVE0zTlN3aWVTSTZNVEUxTkM0eU5UUTBNVGMwTVRrME16TTJmU3g3SW5naU9qWXdNQzQzTmpVMk1qVXNJbmtpT2pFeE5UUXVNalUwTkRFM05ERTVORE16Tm4wc2V5SjRJam8yTXpndU1qWTFOakkxTENKNUlqb3hNVFUwTGpJMU5EUXhOelF4T1RRek16WjlMSHNpZUNJNk56ZzJMak16TmpZMk9UazFNelF5TVRjc0lua2lPak0wT0M0NE9UVTJOVEkzTnpBNU9UWXhmVjA9IiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNMjY5LjcwMywzMjAuNDk2TDMwMy4xNDIsMzIwLjQ5NkMzMzYuNTgxLDMyMC40OTYsNDAzLjQ1OCwzMjAuNDk2LDQ1OC42MzUsMzIwLjQ5NkM1MTMuODEzLDMyMC40OTYsNTU3LjI4OSwzMjAuNDk2LDU4NS4yNzcsMzIwLjQ5NkM2MTMuMjY2LDMyMC40OTYsNjI1Ljc2NiwzMjAuNDk2LDYzNy41OTksMzIwLjMzNkM2NDkuNDMzLDMyMC4xNzcsNjYwLjYsMzE5Ljg1OCw2NjYuMTg0LDMxOS42OTlMNjcxLjc2NywzMTkuNTM5IiBpZD0ibXktc3ZnLUxfSU5URVJORVRfTEJfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9JTlRFUk5FVF9MQl8wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZNalk1TGpjd016RXlOU3dpZVNJNk16SXdMalE1TlRZMU16RTFNalEyTlRoOUxIc2llQ0k2TkRjd0xqTXpOVGt6TnpVc0lua2lPak15TUM0ME9UVTJOVE14TlRJME5qVTRmU3g3SW5naU9qWXdNQzQzTmpVMk1qVXNJbmtpT2pNeU1DNDBPVFUyTlRNeE5USTBOalU0ZlN4N0luZ2lPall6T0M0eU5qVTJNalVzSW5raU9qTXlNQzQwT1RVMk5UTXhOVEkwTmpVNGZTeDdJbmdpT2pZM05TNDNOalUyTWpVc0lua2lPak14T1M0ME1qUTVNekE0TVRFNE16UTVmVjA9IiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNNzgyLjE3NiwzNDguODk2TDc1OC4xOTEsNDI2LjA5MkM3MzQuMjA2LDUwMy4yODksNjg2LjIzNiw2NTcuNjgyLDY1Ni4wMDEsNzM0Ljg3OEM2MjUuNzY2LDgxMi4wNzUsNjEzLjI2Niw4MTIuMDc1LDU4NS4yNzcsODEyLjA3NUM1NTcuMjg5LDgxMi4wNzUsNTEzLjgxMyw4MTIuMDc1LDQ2OS44MzksODIyLjc4N0M0MjUuODY1LDgzMy40OTgsMzgxLjM5NSw4NTQuOTIxLDM1OS4xNTksODY1LjYzM0wzMzYuOTI0LDg3Ni4zNDQiIGlkPSJteS1zdmctTF9MQl9BS1NfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9MQl9BS1NfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TnpneUxqRTNOakUzTmpneU5qVTBNek1zSW5raU9qTTBPQzQ0T1RVMk5USTNOekE1T1RZeGZTeDdJbmdpT2pZek9DNHlOalUyTWpVc0lua2lPamd4TWk0d056VXdNekV5T0RBMU1UYzJmU3g3SW5naU9qWXdNQzQzTmpVMk1qVXNJbmtpT2pneE1pNHdOelV3TXpFeU9EQTFNVGMyZlN4N0luZ2lPalEzTUM0ek16VTVNemMxTENKNUlqbzRNVEl1TURjMU1ETXhNamd3TlRFM05uMHNleUo0SWpvek16TXVNekl3TXpFeU5Td2llU0k2T0RjNExqQTRNRE01T1RjeU5URTBPVGg5WFE9PSIgZGF0YS1sb29rPSJjbGFzc2ljIiBtYXJrZXItZW5kPSJ1cmwoI215LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRFbmQpIi8+PHBhdGggZD0iTTI0MS43OTEsMzQ0LjQ5NkwyNzkuODgyLDM3NC42MjlDMzE3Ljk3Myw0MDQuNzYyLDM5NC4xNTQsNDY1LjAyOSw0NTMuOTgzLDQ5NS4xNjJDNTEzLjgxMyw1MjUuMjk2LDU1Ny4yODksNTI1LjI5Niw1ODUuMjc3LDUyNS4yOTZDNjEzLjI2Niw1MjUuMjk2LDYyNS43NjYsNTI1LjI5Niw2NTIuNTA5LDU3MS4xOTJDNjc5LjI1Miw2MTcuMDg4LDcyMC4yMzgsNzA4Ljg4MSw3NDAuNzMxLDc1NC43NzdMNzYxLjIyNCw4MDAuNjc0IiBpZD0ibXktc3ZnLUxfSU5URVJORVRfS1ZfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9JTlRFUk5FVF9LVl8wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZNalF4TGpjNU1EazFOVEkyTnprME56QTRMQ0o1SWpvek5EUXVORGsxTmpVek1UVXlORFkxT0gwc2V5SjRJam8wTnpBdU16TTFPVE0zTlN3aWVTSTZOVEkxTGpJNU5UWTBPRFUzTkRneU9URjlMSHNpZUNJNk5qQXdMamMyTlRZeU5Td2llU0k2TlRJMUxqSTVOVFkwT0RVM05EZ3lPVEY5TEhzaWVDSTZOak00TGpJMk5UWXlOU3dpZVNJNk5USTFMakk1TlRZME9EVTNORGd5T1RGOUxIc2llQ0k2TnpZeUxqZzFORGd3TWpreE5EWTFOamNzSW5raU9qZ3dOQzR6TWpZeE56azNPRFkxTkRFeWZWMD0iIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik0yNTEuNzg2LDI5Ni40OTZMMjg4LjIxMSwyNzQuODIxQzMyNC42MzYsMjUzLjE0NiwzOTcuNDg2LDIwOS43OTcsNDU1LjY0OSwxODguMTIyQzUxMy44MTMsMTY2LjQ0OCw1NTcuMjg5LDE2Ni40NDgsNTg1LjI3NywxNjYuNDQ4QzYxMy4yNjYsMTY2LjQ0OCw2MjUuNzY2LDE2Ni40NDgsNjM5LjM2OCwxNjQuOTc2QzY1Mi45NzEsMTYzLjUwNCw2NjcuNjc3LDE2MC41Niw2NzUuMDMsMTU5LjA4OEw2ODIuMzgyLDE1Ny42MTciIGlkPSJteS1zdmctTF9JTlRFUk5FVF9QR18wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX0lOVEVSTkVUX1BHXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk1qVXhMamM0TlRrM01qUTJPVFE1T1RVMExDSjVJam95T1RZdU5EazFOalV6TVRVeU5EWTFPSDBzZXlKNElqbzBOekF1TXpNMU9UTTNOU3dpZVNJNk1UWTJMalEwTnpneU5qTTROVFE1T0RBMWZTeDdJbmdpT2pZd01DNDNOalUyTWpVc0lua2lPakUyTmk0ME5EYzRNall6T0RVME9UZ3dOWDBzZXlKNElqbzJNemd1TWpZMU5qSTFMQ0o1SWpveE5qWXVORFEzT0RJMk16ZzFORGs0TURWOUxIc2llQ0k2TmpnMkxqTXdORFk0TnpVc0lua2lPakUxTmk0NE16RTBNell6TXpBNE9UUTBmVjA9IiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNMjU3LjAwNCwzNDQuNDk2TDI5Mi41NiwzNjMuMjI5QzMyOC4xMTUsMzgxLjk2MiwzOTkuMjI1LDQxOS40MjksNDU2LjUxOSw0MzguMTYyQzUxMy44MTMsNDU2Ljg5Niw1NTcuMjg5LDQ1Ni44OTYsNTg1LjI3Nyw0NTYuODk2QzYxMy4yNjYsNDU2Ljg5Niw2MjUuNzY2LDQ1Ni44OTYsNjQ4Ljc4NCw0NzkuMDI0QzY3MS44MDIsNTAxLjE1Miw3MDUuMzM4LDU0NS40MDksNzIyLjEwNyw1NjcuNTM4TDczOC44NzUsNTg5LjY2NiIgaWQ9Im15LXN2Zy1MX0lOVEVSTkVUX0FDUl8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX0lOVEVSTkVUX0FDUl8wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZNalUzTGpBd05ETTFNemMzTURJeU16VXpMQ0o1SWpvek5EUXVORGsxTmpVek1UVXlORFkxT0gwc2V5SjRJam8wTnpBdU16TTFPVE0zTlN3aWVTSTZORFUyTGpnNU5UWTFNRGcyTXpZME56UTJmU3g3SW5naU9qWXdNQzQzTmpVMk1qVXNJbmtpT2pRMU5pNDRPVFUyTlRBNE5qTTJORGMwTm4wc2V5SjRJam8yTXpndU1qWTFOakkxTENKNUlqbzBOVFl1T0RrMU5qVXdPRFl6TmpRM05EWjlMSHNpZUNJNk56UXhMakk1TURZM01USTBOVFl5TmpNc0lua2lPalU1TWk0NE5UUXdOVGt5TXpRME5qazBmVjA9IiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNMzM5LjkwNiwxMzU5LjI3NUwzNjEuNjQ1LDEzNTkuMjc1QzM4My4zODMsMTM1OS4yNzUsNDI2Ljg1OSwxMzU5LjI3NSw0NzAuMzM2LDEzNTkuMjc1QzUxMy44MTMsMTM1OS4yNzUsNTU3LjI4OSwxMzU5LjI3NSw1ODQuNjExLDEzNTkuMjc1QzYxMS45MzIsMTM1OS4yNzUsNjIzLjA5OSwxMzU5LjI3NSw2MjguNjgyLDEzNTkuMjc1TDYzNC4yNjYsMTM1OS4yNzUiIGlkPSJteS1zdmctTF9ETlNQR19WTkVUXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLWRvdHRlZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX0ROU1BHX1ZORVRfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TXpNNUxqa3dOakkxTENKNUlqb3hNelU1TGpJM05UQXpNREV6TmpFd09EUjlMSHNpZUNJNk5EY3dMak16TlRrek56VXNJbmtpT2pFek5Ua3VNamMxTURNd01UTTJNVEE0Tkgwc2V5SjRJam8yTURBdU56WTFOakkxTENKNUlqb3hNelU1TGpJM05UQXpNREV6TmpFd09EUjlMSHNpZUNJNk5qTTRMakkyTlRZeU5Td2llU0k2TVRNMU9TNHlOelV3TXpBeE16WXhNRGcwZlN4N0luZ2lPamMwTXk0NU9UVXdNamsyTlRFNE1ESTJMQ0o1SWpveE5ETXdMamsyTnpZd01UYzNOakV5TTMxZCIgZGF0YS1sb29rPSJjbGFzc2ljIiBtYXJrZXItZW5kPSJ1cmwoI215LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRFbmQpIi8+PHBhdGggZD0iTTMzOC4yODEsMTQ5Mi40NzVMMzYwLjI5LDE0OTIuNDc1QzM4Mi4yOTksMTQ5Mi40NzUsNDI2LjMxOCwxNDkyLjQ3NSw0NzAuMDY1LDE0OTIuNDc1QzUxMy44MTMsMTQ5Mi40NzUsNTU3LjI4OSwxNDkyLjQ3NSw1ODQuNjExLDE0OTIuNDc1QzYxMS45MzIsMTQ5Mi40NzUsNjIzLjA5OSwxNDkyLjQ3NSw2MjguNjgyLDE0OTIuNDc1TDYzNC4yNjYsMTQ5Mi40NzUiIGlkPSJteS1zdmctTF9ETlNLVl9WTkVUXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLWRvdHRlZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX0ROU0tWX1ZORVRfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TXpNNExqSTRNVEkxTENKNUlqb3hORGt5TGpRM05UQXlOekE0TkRNMU1EWjlMSHNpZUNJNk5EY3dMak16TlRrek56VXNJbmtpT2pFME9USXVORGMxTURJM01EZzBNelV3Tm4wc2V5SjRJam8yTURBdU56WTFOakkxTENKNUlqb3hORGt5TGpRM05UQXlOekE0TkRNMU1EWjlMSHNpZUNJNk5qTTRMakkyTlRZeU5Td2llU0k2TVRRNU1pNDBOelV3TWpjd09EUXpOVEEyZlN4N0luZ2lPalk0TkM0ek5URTFOakkxTENKNUlqb3hORGd6TGpnNE9UY3lNemcwTlRFeU1EUjlYUT09IiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNMzE2LjMxMywxNjE2Ljg3NUwzNDEuOTgzLDE2MTYuODc1QzM2Ny42NTQsMTYxNi44NzUsNDE4Ljk5NSwxNjE2Ljg3NSw0NjYuNDA0LDE2MTYuODc1QzUxMy44MTMsMTYxNi44NzUsNTU3LjI4OSwxNjE2Ljg3NSw1ODQuNjExLDE2MTYuODc1QzYxMS45MzIsMTYxNi44NzUsNjIzLjA5OSwxNjE2Ljg3NSw2MjguNjgyLDE2MTYuODc1TDYzNC4yNjYsMTYxNi44NzUiIGlkPSJteS1zdmctTF9ETlNBQ1JfVk5FVF8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1kb3R0ZWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9ETlNBQ1JfVk5FVF8wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZNekUyTGpNeE1qVXNJbmtpT2pFMk1UWXVPRGMxTURJME56azFOVE15TW4wc2V5SjRJam8wTnpBdU16TTFPVE0zTlN3aWVTSTZNVFl4Tmk0NE56VXdNalEzT1RVMU16SXlmU3g3SW5naU9qWXdNQzQzTmpVMk1qVXNJbmtpT2pFMk1UWXVPRGMxTURJME56azFOVE15TW4wc2V5SjRJam8yTXpndU1qWTFOakkxTENKNUlqb3hOakUyTGpnM05UQXlORGM1TlRVek1qSjlMSHNpZUNJNk56VTVMak0xTkRJeE5USTFNVEE0TXpFc0lua2lPakUwT1RZdU5UWTNOakF3TWpVd01qUTBNWDFkIiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbHMiPjxnIGNsYXNzPSJlZGdlTGFiZWwiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9QRUtWX0tWXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIDApIj48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiLz48L3RleHQ+PC9nPjwvZz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVsIj48ZyBjbGFzcz0ibGFiZWwiIGRhdGEtaWQ9IkxfUEVBQ1JfQUNSXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIDApIj48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiLz48L3RleHQ+PC9nPjwvZz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVsIj48ZyBjbGFzcz0ibGFiZWwiIGRhdGEtaWQ9IkxfUEVQR19QR18wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAwKSI+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIi8+PC90ZXh0PjwvZz48L2c+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDcwLjMzNTkzNzUsIDEwNzkuNDc1MDMyODA2Mzk2NSkiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9BS1NfU05BS1NfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTEwKSI+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSIiIHg9Ii03MS4xODc1IiB5PSItMSIgd2lkdGg9IjE0Mi4zNzUiIGhlaWdodD0iMjIiLz48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5ub2RlczwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBpbiw8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gY3Jvc3MtUkc8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQ3MC4zMzU5Mzc1LCA1NzYuMDk1NjQ3ODExODg5NikiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9QRUtWX1NOUEVfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTEwKSI+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSIiIHg9Ii01OS41NTQ2ODc1IiB5PSItMSIgd2lkdGg9IjExOS4xMDkzNzUiIGhlaWdodD0iMjIiLz48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5uaWM8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gaW4sPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGNyb3NzLVJHPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVsIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg0NzAuMzM1OTM3NSwgODEuNzk5OTk5MjM3MDYwNTUpIj48ZyBjbGFzcz0ibGFiZWwiIGRhdGEtaWQ9IkxfUEVQR19TTlBFXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xMCkiPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0iIiB4PSItNTkuNTU0Njg3NSIgeT0iLTEiIHdpZHRoPSIxMTkuMTA5Mzc1IiBoZWlnaHQ9IjIyIi8+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+bmljPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGluLDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBjcm9zcy1SRzwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDcwLjMzNTkzNzUsIDY4OC43NzUwMzIwNDM0NTcpIj48ZyBjbGFzcz0ibGFiZWwiIGRhdGEtaWQ9IkxfUEVBQ1JfU05QRV8wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMTApIj48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9IiIgeD0iLTU5LjU1NDY4NzUiIHk9Ii0xIiB3aWR0aD0iMTE5LjEwOTM3NSIgaGVpZ2h0PSIyMiIvPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPm5pYzwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBpbiw8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gY3Jvc3MtUkc8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQ3MC4zMzU5Mzc1LCAxMDI4LjY3NTAzMzU2OTMzNikiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9BS1NfS1ZfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTE4Ljc5OTk5OTIzNzA2MDU0NykiPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0iIiB4PSItNzUuMTQ4NDM3NSIgeT0iLTEiIHdpZHRoPSIxNTAuMjk2ODc1IiBoZWlnaHQ9IjM5LjU5OTk5ODQ3NDEyMTA5NCIvPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPldvcmtsb2FkPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IElkZW50aXR5PC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+ZmVkZXJhdGVkPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGNyZWRlbnRpYWw8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQ3MC4zMzU5Mzc1LCA5MTEuNDc1MDMyODA2Mzk2NSkiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9BS1NfQUNSXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0zNi40MDAwMDE1MjU4Nzg5MDYpIj48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9IiIgeD0iLTg3Ljg3NSIgeT0iLTEiIHdpZHRoPSIxNzUuNzUiIGhlaWdodD0iNzQuODAwMDAzMDUxNzU3ODEiLz48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5rdWJlbGV0PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGlkZW50aXR5LDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBBY3JQdWxsPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+cm9sZTwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIyLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+aW1hZ2U8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gcHVsbHM8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gb3ZlcjwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBwcml2YXRlPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjMuMmVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5lbmRwb2ludDwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDcwLjMzNTkzNzUsIDg0My4wNzUwMzEyODA1MTc2KSI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX0FLU19MQl8wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMTApIj48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9IiIgeD0iLTcyLjQ5MjE4NzUiIHk9Ii0xIiB3aWR0aD0iMTQ0Ljk4NDM3NSIgaGVpZ2h0PSIyMiIvPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPnByb3Zpc2lvbnMvYXR0YWNoZXM8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQ3MC4zMzU5Mzc1LCAxMTU0LjI1NDQxNzQxOTQzMzYpIj48ZyBjbGFzcz0ibGFiZWwiIGRhdGEtaWQ9IkxfUElQX0xCXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xMCkiPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0iIiB4PSItNDMuNDIxODc1IiB5PSItMSIgd2lkdGg9Ijg2Ljg0Mzc1IiBoZWlnaHQ9IjIyIi8+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+YXR0YWNoZWQ8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gdG88L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQ3MC4zMzU5Mzc1LCAzMjAuNDk1NjUzMTUyNDY1OCkiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9JTlRFUk5FVF9MQl8wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMTguNzk5OTk5MjM3MDYwNTQ3KSI+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSIiIHg9Ii03Ni42MjUiIHk9Ii0xIiB3aWR0aD0iMTUzLjI1IiBoZWlnaHQ9IjM5LjU5OTk5ODQ3NDEyMTA5NCIvPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPkhUVFBTLDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBhbGw8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gc291cmNlczwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIxZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPmZ1dHVyZTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBIVUc8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gR2F0ZXdheTwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX0xCX0FLU18wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAwKSI+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIi8+PC90ZXh0PjwvZz48L2c+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDcwLjMzNTkzNzUsIDUyNS4yOTU2NDg1NzQ4MjkxKSI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX0lOVEVSTkVUX0tWXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xOC43OTk5OTkyMzcwNjA1NDcpIj48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9IiIgeD0iLTcxLjI5Njg3NSIgeT0iLTEiIHdpZHRoPSIxNDIuNTkzNzUiIGhlaWdodD0iMzkuNTk5OTk4NDc0MTIxMDk0Ii8+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+b25lPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGFsbG93ZWQ8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gSVA8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gb25seTwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIxZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPmZpcmV3YWxsPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IHJ1bGU8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQ3MC4zMzU5Mzc1LCAxNjYuNDQ3ODI2Mzg1NDk4MDUpIj48ZyBjbGFzcz0ibGFiZWwiIGRhdGEtaWQ9IkxfSU5URVJORVRfUEdfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTE4Ljc5OTk5OTIzNzA2MDU0NykiPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0iIiB4PSItODYuMzM1OTM3NSIgeT0iLTEiIHdpZHRoPSIxNzIuNjcxODc1IiBoZWlnaHQ9IjM5LjU5OTk5ODQ3NDEyMTA5NCIvPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPmFsbG93ZWQ8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gc291cmNlPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IElQczwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBvbmx5PC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+ZmlyZXdhbGw8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gcnVsZTwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDcwLjMzNTkzNzUsIDQ1Ni44OTU2NTA4NjM2NDc0NikiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9JTlRFUk5FVF9BQ1JfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTI3LjU5OTk5ODQ3NDEyMTA5NCkiPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0iIiB4PSItOTIuOTI5Njg3NSIgeT0iLTEiIHdpZHRoPSIxODUuODU5Mzc1IiBoZWlnaHQ9IjU3LjE5OTk5Njk0ODI0MjE5Ii8+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+YWxsb3dlZDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBzb3VyY2U8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gSVBzPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IG9ubHk8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5maXJld2FsbDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBydWxlLDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBDSS9DRDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBpbWFnZTwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIyLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+cHVzaDwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDg5LjA4NTk0LCAxMzU5LjI3NTAzKSI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX0ROU1BHX1ZORVRfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTEwKSI+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSIiIHg9Ii0zMi43MjY1NjI1IiB5PSItMSIgd2lkdGg9IjY1LjQ1MzEyNSIgaGVpZ2h0PSIyMiIvPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPmxpbmtlZDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiB0bzwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDg4LjI3MzQ0LCAxNDkyLjQ3NTAzKSI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX0ROU0tWX1ZORVRfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTEwKSI+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSIiIHg9Ii0zMi43MjY1NjI1IiB5PSItMSIgd2lkdGg9IjY1LjQ1MzEyNSIgaGVpZ2h0PSIyMiIvPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPmxpbmtlZDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiB0bzwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDc3LjI4OTA2LCAxNjE2Ljg3NTAyKSI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX0ROU0FDUl9WTkVUXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xMCkiPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0iIiB4PSItMzIuNzI2NTYyNSIgeT0iLTEiIHdpZHRoPSI2NS40NTMxMjUiIGhlaWdodD0iMjIiLz48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5saW5rZWQ8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gdG88L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZXMiPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LVBHLTIzIiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDc5Mi4zNjcxODc1LCAxMzUuNTk5OTk4NDc0MTIxMSkiPjxwYXRoIGQ9Ik0wLDE1LjczMDQ0MTIzMDk5NzQwNSBhMTA2LjA2MjUsMTUuNzMwNDQxMjMwOTk3NDA1IDAsMCwwIDIxMi4xMjUsMCBhMTA2LjA2MjUsMTUuNzMwNDQxMjMwOTk3NDA1IDAsMCwwIC0yMTIuMTI1LDAgbDAsODMuOTMwNDM4MTc5MjM5NTkgYTEwNi4wNjI1LDE1LjczMDQ0MTIzMDk5NzQwNSAwLDAsMCAyMTIuMTI1LDAgbDAsLTgzLjkzMDQzODE3OTIzOTU5IiBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIG91dGVyLXBhdGgiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0xMDYuMDYyNSwgLTU3LjY5NTY2MDMyMDYxNzIpIi8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMTcuNTk5OTk4NDc0MTIxMDk0KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+UG9zdGdyZVNRTDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBGbGV4aWJsZTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBTZXJ2ZXI8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5wdWJsaWM8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gYWNjZXNzPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+ICs8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gZmlyZXdhbGw8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMi4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPnJ1bGVzPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1QRUtWLTE1IiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIxMS40NTMxMjUsIDYzNS4zNzUwMzI0MjQ5MjY4KSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTk5LjY1NjI1IiB5PSItMzIuNzk5OTk5MjM3MDYwNTUiIHdpZHRoPSIxOTkuMzEyNSIgaGVpZ2h0PSI2NS41OTk5OTg0NzQxMjExIi8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMTcuNzk5OTk5MjM3MDYwNTQ3KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+UHJpdmF0ZTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBlbmRwb2ludDwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIxZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPnZhdWx0Y29yZS5henVyZS5uZXQ8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LUtWLTE0IiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDc5Mi4zNjcxODc1LCA4NjkuNTY3NjA1OTcyMjkpIj48cGF0aCBkPSJNMCwxNS4zNTQ5MzgyNzE2MDQ5MzcgYTk5LjUsMTUuMzU0OTM4MjcxNjA0OTM3IDAsMCwwIDE5OSwwIGE5OS41LDE1LjM1NDkzODI3MTYwNDkzNyAwLDAsMCAtMTk5LDAgbDAsMTAxLjE1NDk0MTMyMzM2Mjc1IGE5OS41LDE1LjM1NDkzODI3MTYwNDkzNyAwLDAsMCAxOTksMCBsMCwtMTAxLjE1NDk0MTMyMzM2Mjc1IiBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIG91dGVyLXBhdGgiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC05OS41LCAtNjUuOTMyNDA4OTMzMjg2MzEpIi8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMjYuNDAwMDAxNTI1ODc4OTA2KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+S2V5PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IFZhdWx0PC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+UkJBQzwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBhdXRob3JpemVkPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjIuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5wdWJsaWM8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gYWNjZXNzPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+ICs8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gZmlyZXdhbGw6PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IDE8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMy4yZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPklQPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1QRUFDUi0xOSIgZGF0YS1sb29rPSJjbGFzc2ljIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyMTEuNDUzMTI1LCA3NTAuOTc1MDMwODk5MDQ3OSkiPjxyZWN0IGNsYXNzPSJiYXNpYyBsYWJlbC1jb250YWluZXIiIHN0eWxlPSIiIHg9Ii04OS4xNzk2ODc1IiB5PSItMzIuNzk5OTk5MjM3MDYwNTUiIHdpZHRoPSIxNzguMzU5Mzc1IiBoZWlnaHQ9IjY1LjU5OTk5ODQ3NDEyMTEiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xNy43OTk5OTkyMzcwNjA1NDcpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5Qcml2YXRlPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGVuZHBvaW50PC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+YXp1cmVjci5pbzwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9Im5vZGUgZGVmYXVsdCIgaWQ9Im15LXN2Zy1mbG93Y2hhcnQtQUNSLTE4IiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDc5Mi4zNjcxODc1LCA2NTcuMzA4ODM0MDc1OTI3NykiPjxwYXRoIGQ9Ik0wLDE1LjY4NDI0MjM5NjAxMjg1NiBhMTA1LjIyNjU2MjUsMTUuNjg0MjQyMzk2MDEyODU2IDAsMCwwIDIxMC40NTMxMjUsMCBhMTA1LjIyNjU2MjUsMTUuNjg0MjQyMzk2MDEyODU2IDAsMCwwIC0yMTAuNDUzMTI1LDAgbDAsMTAxLjQ4NDI0NTQ0Nzc3MDY2IGExMDUuMjI2NTYyNSwxNS42ODQyNDIzOTYwMTI4NTYgMCwwLDAgMjEwLjQ1MzEyNSwwIGwwLC0xMDEuNDg0MjQ1NDQ3NzcwNjYiIGNsYXNzPSJiYXNpYyBsYWJlbC1jb250YWluZXIgb3V0ZXItcGF0aCIgc3R5bGU9IiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEwNS4yMjY1NjI1LCAtNjYuNDI2MzY1MTE5ODk4MTgpIi8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMjYuNDAwMDAxNTI1ODc4OTA2KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+Q29udGFpbmVyPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IFJlZ2lzdHJ5PC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+UHJlbWl1bSw8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gUkJBQzwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBhdXRob3JpemVkPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjIuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5wdWJsaWM8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gYWNjZXNzPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+ICs8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gZmlyZXdhbGw6PC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjMuMmVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5DSURSPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGxpc3Q8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LVBFUEctMjQiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjExLjQ1MzEyNSwgMTA0LjU5OTk5ODQ3NDEyMTEpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItMTI2LjE3OTY4NzUiIHk9Ii00MS41OTk5OTg0NzQxMjEwOTQiIHdpZHRoPSIyNTIuMzU5Mzc1IiBoZWlnaHQ9IjgzLjE5OTk5Njk0ODI0MjE5Ii8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMjYuNTk5OTk4NDc0MTIxMDk0KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+UHJpdmF0ZTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBlbmRwb2ludDwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIxZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPnBvc3RncmVzLmRhdGFiYXNlLmF6dXJlLmM8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMi4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPm9tPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1BS1MtMTMiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjExLjQ1MzEyNSwgOTM2Ljc4ODIxOTQ1MTkwNDMpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItMTIxLjg2NzE4NzUiIHk9Ii01OS4yMDAwMDA3NjI5Mzk0NSIgd2lkdGg9IjI0My43MzQzNzUiIGhlaWdodD0iMTE4LjQwMDAwMTUyNTg3ODkiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC00NC4yMDAwMDA3NjI5Mzk0NSkiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPkFLUzwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBjbHVzdGVyPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+V29ya2xvYWQ8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gSWRlbnRpdHk8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gKzwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBPSURDPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjIuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5pc3N1ZXI8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMy4yZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPlN0YW5kYXJkPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IExvYWQ8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gQmFsYW5jZXI8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iNC4zMDAwMDAwMDAwMDAwMDFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+U0tVPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1TTkFLUy0xIiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDc5Mi4zNjcxODc1LCAxNDYzLjc2NzYwMTAxMzE4MzYpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItMTA4LjAxNTYyNSIgeT0iLTMyLjc5OTk5OTIzNzA2MDU1IiB3aWR0aD0iMjE2LjAzMTI1IiBoZWlnaHQ9IjY1LjU5OTk5ODQ3NDEyMTEiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xNy43OTk5OTkyMzcwNjA1NDcpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5zbmV0LWFrczwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiAxMC42MC4wLjAvMjI8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5BS1M8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gbm9kZXM8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LVNOUEUtMiIgZGF0YS1sb29rPSJjbGFzc2ljIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg3OTIuMzY3MTg3NSwgMTM0MS4zNTQ0MTM5ODYyMDYpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItMTA1LjA0Njg3NSIgeT0iLTMyLjc5OTk5OTIzNzA2MDU1IiB3aWR0aD0iMjEwLjA5Mzc1IiBoZWlnaHQ9IjY1LjU5OTk5ODQ3NDEyMTEiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xNy43OTk5OTkyMzcwNjA1NDcpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5zbmV0LXBlPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IDEwLjYwLjUuMC8yNDwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIxZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPnByaXZhdGU8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gZW5kcG9pbnRzPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1MQi0yMiIgZGF0YS1sb29rPSJjbGFzc2ljIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg3OTIuMzY3MTg3NSwgMzE2LjA5NTY1MzUzMzkzNTU1KSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTExNi42MDE1NjI1IiB5PSItMzIuNzk5OTk5MjM3MDYwNTUiIHdpZHRoPSIyMzMuMjAzMTI1IiBoZWlnaHQ9IjY1LjU5OTk5ODQ3NDEyMTEiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xNy43OTk5OTkyMzcwNjA1NDcpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5TdGFuZGFyZDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBMb2FkPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEJhbGFuY2VyPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+QXp1cmUvQUtTLW1hbmFnZWQ8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LVBJUC0xMiIgZGF0YS1sb29rPSJjbGFzc2ljIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyMTEuNDUzMTI1LCAxMTU0LjI1NDQxNzQxOTQzMzYpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItODcuMjEwOTM3NSIgeT0iLTMyLjc5OTk5OTIzNzA2MDU1IiB3aWR0aD0iMTc0LjQyMTg3NSIgaGVpZ2h0PSI2NS41OTk5OTg0NzQxMjExIi8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMTcuNzk5OTk5MjM3MDYwNTQ3KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+UHVibGljPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IElQPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+U3RhbmRhcmQsPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IHN0YXRpYzwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9Im5vZGUgZGVmYXVsdCIgaWQ9Im15LXN2Zy1mbG93Y2hhcnQtSU5URVJORVQtMCIgZGF0YS1sb29rPSJjbGFzc2ljIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyMTEuNDUzMTI1LCAzMjAuNDk1NjUzMTUyNDY1OCkiPjxyZWN0IGNsYXNzPSJiYXNpYyBsYWJlbC1jb250YWluZXIiIHN0eWxlPSIiIHg9Ii01OC4yNSIgeT0iLTI0IiB3aWR0aD0iMTE2LjUiIGhlaWdodD0iNDgiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC05KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+SW50ZXJuZXQ8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LUROU1BHLTMiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjExLjQ1MzEyNSwgMTM1OS4yNzUwMzAxMzYxMDg0KSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTEyOC40NTMxMjUiIHk9Ii00MS41OTk5OTg0NzQxMjEwOTQiIHdpZHRoPSIyNTYuOTA2MjUiIGhlaWdodD0iODMuMTk5OTk2OTQ4MjQyMTkiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0yNi41OTk5OTg0NzQxMjEwOTQpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5Qcml2YXRlPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEROUzwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiB6b25lPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+cHJpdmF0ZWxpbmsucG9zdGdyZXMuZGF0YWJhPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjIuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5zZS5henVyZS5jb208L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LUROU0tWLTQiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjExLjQ1MzEyNSwgMTQ5Mi40NzUwMjcwODQzNTA2KSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTEyNi44MjgxMjUiIHk9Ii00MS41OTk5OTg0NzQxMjEwOTQiIHdpZHRoPSIyNTMuNjU2MjUiIGhlaWdodD0iODMuMTk5OTk2OTQ4MjQyMTkiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0yNi41OTk5OTg0NzQxMjEwOTQpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5Qcml2YXRlPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEROUzwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiB6b25lPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+cHJpdmF0ZWxpbmsudmF1bHRjb3JlLmF6dXJlLjwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIyLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+bmV0PC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1ETlNBQ1ItNSIgZGF0YS1sb29rPSJjbGFzc2ljIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyMTEuNDUzMTI1LCAxNjE2Ljg3NTAyNDc5NTUzMjIpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItMTA0Ljg1OTM3NSIgeT0iLTMyLjc5OTk5OTIzNzA2MDU1IiB3aWR0aD0iMjA5LjcxODc1IiBoZWlnaHQ9IjY1LjU5OTk5ODQ3NDEyMTEiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xNy43OTk5OTkyMzcwNjA1NDcpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5Qcml2YXRlPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEROUzwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiB6b25lPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+cHJpdmF0ZWxpbmsuYXp1cmVjci5pbzwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PC9nPjwvZz48L2c+PC9nPjwvZz48ZGVmcz48ZmlsdGVyIGlkPSJteS1zdmctZHJvcC1zaGFkb3ciIGhlaWdodD0iMTMwJSIgd2lkdGg9IjEzMCUiPjxmZURyb3BTaGFkb3cgZHg9IjQiIGR5PSI0IiBzdGREZXZpYXRpb249IjAiIGZsb29kLW9wYWNpdHk9IjAuMDYiIGZsb29kLWNvbG9yPSIjMDAwMDAwIi8+PC9maWx0ZXI+PC9kZWZzPjxkZWZzPjxmaWx0ZXIgaWQ9Im15LXN2Zy1kcm9wLXNoYWRvdy1zbWFsbCIgaGVpZ2h0PSIxNTAlIiB3aWR0aD0iMTUwJSI+PGZlRHJvcFNoYWRvdyBkeD0iMiIgZHk9IjIiIHN0ZERldmlhdGlvbj0iMCIgZmxvb2Qtb3BhY2l0eT0iMC4wNiIgZmxvb2QtY29sb3I9IiMwMDAwMDAiLz48L2ZpbHRlcj48L2RlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJteS1zdmctZ3JhZGllbnQiIGdyYWRpZW50VW5pdHM9Im9iamVjdEJvdW5kaW5nQm94IiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzYwNzk4YSIgc3RvcC1vcGFjaXR5PSIxIi8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSJoc2woMjAyLjUsIDAlLCA4NC41MDk4MDM5MjE2JSkiIHN0b3Atb3BhY2l0eT0iMSIvPjwvbGluZWFyR3JhZGllbnQ+PC9zdmc+"><figcaption>Diagram 1</figcaption><details><summary>View Mermaid source</summary><pre><code class="language-mermaid">flowchart TB
+    subgraph SUB[Azure subscription]
+        INTERNET[Internet]
+
+        subgraph RGNET[Resource Group: rg-natssaas-network-prod]
+            subgraph VNET[VNet: vnet-natssaas-prod  10.60.0.0/16]
+                SNAKS[snet-aks 10.60.0.0/22\nAKS nodes]
+                SNPE[snet-pe 10.60.5.0/24\nprivate endpoints]
+            end
+            DNSPG[Private DNS zone\nprivatelink.postgres.database.azure.com]
+            DNSKV[Private DNS zone\nprivatelink.vaultcore.azure.net]
+            DNSACR[Private DNS zone\nprivatelink.azurecr.io]
+            DNSPG -. linked to .-&gt; VNET
+            DNSKV -. linked to .-&gt; VNET
+            DNSACR -. linked to .-&gt; VNET
+        end
+
+        subgraph RGPLAT[Resource Group: rg-natssaas-platform-prod]
+            PIP[Public IP\nStandard, static]
+            AKS[AKS cluster\nWorkload Identity + OIDC issuer\nStandard Load Balancer SKU]
+            KV[(Key Vault\nRBAC authorized\npublic access + firewall: 1 IP)]
+            PEKV[Private endpoint\nvaultcore.azure.net]
+            PEKV --&gt; KV
+            ACR[(Container Registry\nPremium, RBAC authorized\npublic access + firewall: CIDR list)]
+            PEACR[Private endpoint\nazurecr.io]
+            PEACR --&gt; ACR
+        end
+
+        subgraph MCRG[AKS-managed node resource group, auto-created]
+            LB[Standard Load Balancer\nAzure/AKS-managed]
+        end
+
+        subgraph RGDATA[Resource Group: rg-natssaas-data-prod]
+            PG[(PostgreSQL Flexible Server\npublic access + firewall rules)]
+            PEPG[Private endpoint\npostgres.database.azure.com]
+            PEPG --&gt; PG
+        end
+
+        AKS -- nodes in, cross-RG --&gt; SNAKS
+        PEKV -- nic in, cross-RG --&gt; SNPE
+        PEPG -- nic in, cross-RG --&gt; SNPE
+        PEACR -- nic in, cross-RG --&gt; SNPE
+        AKS -- Workload Identity federated credential --&gt; KV
+        AKS -- kubelet identity, AcrPull role\nimage pulls over private endpoint --&gt; ACR
+        AKS -. provisions/attaches .-&gt; LB
+        PIP -- attached to --&gt; LB
+        INTERNET -- HTTPS, all sources\nfuture HUG Gateway --&gt; LB
+        LB --&gt; AKS
+        INTERNET -- one allowed IP only\nfirewall rule --&gt; KV
+        INTERNET -- allowed source IPs only\nfirewall rule --&gt; PG
+        INTERNET -- allowed source IPs only\nfirewall rule, CI/CD image push --&gt; ACR
+    end</code></pre></details></figure>
+<div class="source-block" data-source-block="9"
+data-source-sha256="6f02f5f173eeebe4d75de0315394c14937ea3649cbe1452cc32ba8c1be164cd5">
+<p>This Terraform project creates the ground everything in
+<code>docs/nats-tenant-queue-api/design.md</code> stands on. It does not
+create or configure NATS, Keycloak, HUG, or the REST API itself; it
+stops at the point where <code>kubectl</code> and Helm can take over,
+and at the point where the API's Kubernetes ServiceAccount can already
+exchange its token for a Key Vault secret without embedding any static
+Azure credential in a pod, matching the trust boundary that design
+already commits to. The boundary this project must preserve: Key Vault,
+PostgreSQL, and ACR are all reachable from inside the VNet over their
+private endpoints, and from the internet only from source IPs explicitly
+present in their respective firewalls, exactly one IP for Key Vault and
+a configurable list of CIDR ranges for PostgreSQL and for ACR, with no
+other public source accepted by any of the three. AKS pulls the
+middleware application's image from ACR over ACR's private endpoint,
+using the cluster's kubelet identity, and never over ACR's public path;
+that public path exists only for the CI/CD tooling (out of scope,
+section 13) that builds and pushes the image from outside the VNet. The
+AKS cluster's own data-plane path is the one deliberate exception to
+"restricted by default": it is provisioned with a Standard Load Balancer
+and a static public IP so that, once the application layer
+(<code>docs/nats-tenant-queue-api/design.md</code>, section 3) deploys
+HUG's Gateway as a Kubernetes <code>LoadBalancer</code> Service, the
+whole system is reachable from any internet source, gated by the
+application layer's own TLS termination and routing, not by an
+infrastructure-level firewall. A second boundary this project
+introduces: the network Resource Group holds only network plumbing (the
+VNet, its subnets, the private DNS zones); no compute or data resource
+is ever created inside it, so the team that owns network security review
+only ever reviews network-shaped resources there.</p>
+</div>
+<section id="4-proposed-design" class="source-block"
+data-source-block="10"
+data-source-sha256="cb43280d884b7bd10ddfe1c903a3a3ffc221ebb65bc3295cbb6d512812e2ddb1">
+<h2>4. Proposed design</h2>
+</section>
+<section id="how-it-works" class="source-block" data-source-block="11"
+data-source-sha256="e248d7da23aef6704ac43f3f639e0b91f6c326e9ecb982e008905e4785a6b4ed">
+<h3>How it works</h3>
+</section>
+<div class="source-block" data-source-block="12"
+data-source-sha256="7e9cdafaafab33e2b024cd5dfa497e5fb02afdd272bdd22c42ec058a7ea57ab1">
+<p>Someone runs this project for the first time against a brand-new
+Azure subscription. First, a one-time bootstrap script (outside
+Terraform, see Decisions) creates a Storage Account and blob container
+to hold Terraform's own state, since Terraform cannot manage the state
+store it depends on to run. With that in place,
+<code>terraform init</code> points at the <code>azurerm</code> backend,
+and <code>terraform apply</code> walks a single dependency graph: it
+creates the three Resource Groups first (network, platform, data;
+everything else references one of their names and locations), then,
+inside the network Resource Group, the Virtual Network with its three
+subnets and its two private DNS zones, then, inside the platform
+Resource Group, the Key Vault (public network access enabled, firewall
+default-deny with no IP rule until the environment's
+<code>key_vault_allowed_public_ip</code> variable supplies one) and its
+private endpoint (whose network interface joins <code>snet-pe</code>
+across the Resource Group boundary) and the AKS cluster (whose nodes
+join <code>snet-aks</code> the same cross-RG way, with Workload Identity
+enabled, the Standard Load Balancer SKU, and outbound type
+<code>loadBalancer</code>), plus a static Standard public IP address in
+the platform Resource Group that Terraform passes to AKS so any
+Kubernetes <code>LoadBalancer</code> Service created later attaches to
+that same stable address instead of a fresh, unpredictable one, and the
+Container Registry (Premium SKU, RBAC authorized, public network access
+enabled, firewall default-deny with no CIDR rule until the environment's
+<code>acr_firewall_allowed_cidrs</code> variable supplies some) and its
+private endpoint (also joining <code>snet-pe</code>), then a role
+assignment that needs AKS and ACR to both already exist, so Terraform
+orders it after both resources automatically, from the resource
+references alone: granting the AKS cluster's kubelet identity the
+<code>AcrPull</code> role on the registry
+(<code>Key Vault Secrets User</code> for each individual in-cluster
+workload — Keycloak, the REST API — is a separate role assignment
+against a separate, dedicated user-assigned identity, granted by that
+workload's own companion document extending this same root module; see
+Decisions), then, inside the data Resource Group, the PostgreSQL
+Flexible Server (public network access enabled, no firewall rules until
+the environment's <code>postgres_firewall_allowed_cidrs</code> variable
+supplies some) and its own private endpoint (whose network interface
+also joins <code>snet-pe</code>, the same cross-RG way as Key Vault's),
+and finally a generated admin password written into Key Vault as a
+secret. Reaching across a Resource Group boundary to join a subnet on an
+ongoing basis (not just at first apply, but for every future node
+scale-out) needs an explicit <code>Network Contributor</code> role
+assignment on the network Resource Group, granted to the AKS cluster's
+identity; Terraform creates this role assignment as part of the same
+graph, ordered before the AKS cluster resource that needs it. The Key
+Vault and PostgreSQL private endpoints need no such standing role
+assignment; creating a private endpoint's network interface in a subnet
+only requires that Terraform's own deploying identity (already
+Owner/Contributor across all three Resource Groups) have join rights at
+apply time, which it already does. One <code>terraform apply</code>
+performs all of this in the correct order; no manual two-phase apply or
+<code>-target</code> flag is needed once the state backend itself
+exists. The operator sees Terraform's plan list every resource before
+anything is created, then a single set of outputs at the end: the AKS
+cluster name, its OIDC issuer URL, its static public IP address, the Key
+Vault name and URI, the Container Registry's login server hostname, and
+the PostgreSQL server's private FQDN, everything the next layer (Helm
+charts, <code>kubectl</code>, and the CI/CD pipeline that pushes the
+middleware application's image) needs to proceed, including the exact IP
+the HUG Gateway's <code>LoadBalancer</code> Service should pin itself to
+and the exact registry hostname the middleware application's Deployment
+manifest should reference.</p>
+</div>
+<section id="components-and-responsibilities" class="source-block"
+data-source-block="13"
+data-source-sha256="ec9a76783795a31c5a8fa78eb007e1288ed67056f6e893afc753006cc7f2e898">
+<h3>Components and responsibilities</h3>
+</section>
+<div class="source-block" data-source-block="14"
+data-source-sha256="6a40340fc45484c9388259d144be9e7c5db072edeca7a0a9d022104df4d3c452">
+<ul>
+<li><strong><code>modules/resource_group</code>.</strong> Owns a single
+Resource Group and its location and tags; the root module instantiates
+it three times (network, platform, data). Does not own anything inside
+any Resource Group; every other module takes the relevant Resource
+Group's name as input.</li>
+<li><strong><code>modules/network</code>.</strong> Deployed into the
+network Resource Group. Owns the Virtual Network, its two subnets
+(<code>snet-aks</code>, <code>snet-pe</code>), and the two private DNS
+zones (for Key Vault and PostgreSQL private-link names) plus their VNet
+links. Does not own any resource that lives inside the subnets, and does
+not own granting any other Resource Group's identities access to itself;
+it only owns the network shape those resources plug into.</li>
+<li><strong><code>modules/aks</code>.</strong> Deployed into the
+platform Resource Group. Owns the AKS cluster, its system and user node
+pools, Azure CNI Overlay networking, its Standard Load Balancer SKU and
+outbound type, and enabling Workload Identity plus the OIDC issuer
+(<code>oidc_issuer_url</code>, exposed as a module output, is what every
+workload-specific federated identity credential is built against
+downstream). Owns the static Standard public IP address
+(<code>azurerm_public_ip</code>) that AKS's managed Load Balancer
+attaches to. Does not own any per-workload identity, federated
+credential, or Key Vault role assignment: those belong to whichever
+workload needs them (Keycloak's, in
+<code>docs/keycloak-operator/design.md</code> section 4.1; the REST
+API's, in <code>docs/rest-api-workload/design.md</code> section 6), each
+extending this root module directly rather than being provisioned by
+this module. Does not own the Load Balancer resource itself, which Azure
+creates and manages automatically, in AKS's own auto-generated node
+resource group, the moment the first Kubernetes
+<code>LoadBalancer</code> Service is created; this module only owns the
+inputs (SKU, public IP) that shape it. Does not own what runs inside the
+cluster (no Helm releases, no Kubernetes manifests), does not own the
+ACR role assignment itself (lives in the root module, since it is the
+join point between two modules' outputs), and does not own the
+<code>Network Contributor</code> role assignment that lets its nodes
+join a subnet in a different Resource Group (also the root module's
+job).</li>
+<li><strong><code>modules/key_vault</code>.</strong> Deployed into the
+platform Resource Group, alongside AKS. Owns the Key Vault resource, its
+RBAC authorization mode, purge protection, its public network access
+setting and single-IP firewall rule, and its private endpoint (whose NIC
+joins <code>snet-pe</code> in the network Resource Group). Does not own
+who gets access; role assignments are granted from the root module once
+the principal (AKS's identity) exists.</li>
+<li><strong><code>modules/container_registry</code>.</strong> Deployed
+into the platform Resource Group, alongside AKS and Key Vault. Owns the
+Container Registry resource, its Premium SKU, RBAC authorization
+(<code>admin_enabled = false</code>, matching Key Vault's own
+no-static-credential stance), its public network access setting and
+CIDR-list firewall rule, and its private endpoint (whose NIC joins
+<code>snet-pe</code> in the network Resource Group, the same subnet Key
+Vault's and PostgreSQL's private endpoints use). Does not own who gets
+<code>AcrPull</code>/<code>AcrPush</code> access; those role assignments
+are granted from the root module once the relevant principal exists, and
+does not own the CI/CD pipeline or credential that actually pushes an
+image (out of scope, section 13).</li>
+<li><strong><code>modules/postgresql</code>.</strong> Deployed into the
+data Resource Group, alone. Owns the PostgreSQL Flexible Server, its
+SKU, storage, backup retention, its public network access setting, its
+firewall rules (one
+<code>azurerm_postgresql_flexible_server_firewall_rule</code> per entry
+in the allowed-CIDR list), and its private endpoint (whose NIC joins
+<code>snet-pe</code> in the network Resource Group, the same subnet Key
+Vault's private endpoint uses). Does not own the admin credential's
+lifecycle beyond initial creation; it accepts the password as an input
+variable rather than generating it itself, so the root module can write
+that same value to Key Vault.</li>
+<li><strong>Root module.</strong> Owns wiring the child modules
+together, the <code>Network Contributor</code> role assignment on the
+network Resource Group for AKS, the <code>AcrPull</code> role assignment
+on the Container Registry for AKS's kubelet identity, and the
+<code>random_password</code> resource for the PostgreSQL admin
+credential. Does not own any workload's
+<code>Key Vault Secrets User</code> role assignment (each workload's
+companion document extends this root module with its own, see
+<code>modules/aks</code> above) and does not duplicate any resource
+definition that already lives in a child module.</li>
+</ul>
+</div>
+<section id="decisions" class="source-block role-decisions"
+data-source-block="15"
+data-source-sha256="5a6a5f0f1903f8ea343148136e7bb0710d2555ca216504d9bf9d9b532157aa00">
+<h3>Decisions</h3>
+</section>
+<div class="source-block" data-source-block="16"
+data-source-sha256="e66f30ca474928aa923a8f40409732c63d93bb833041963449a9c3b2e354b529">
+<p>We provision one VNet and one instance of each resource, matching the
+application design's single-region, single-VNet assumption. A
+per-environment or per-region split is deferred (see Open questions)
+rather than built now, because there is no second environment to serve
+yet and building for it speculatively would add module parameters
+nothing currently exercises.</p>
+</div>
+<div class="source-block" data-source-block="17"
+data-source-sha256="ef126f28906703808f5b5418300601fcdc3308823ec1740bb3fd73bbe8dd3d6f">
+<p>We split the resources across three Resource Groups instead of one:
+<code>rg-natssaas-network-prod</code> for the VNet, subnets, and private
+DNS zones; <code>rg-natssaas-platform-prod</code> for the AKS cluster
+and Key Vault; <code>rg-natssaas-data-prod</code> for the PostgreSQL
+Flexible Server. This gives each a separate lifecycle and a separate
+RBAC boundary, so, for example, someone can be granted Contributor on
+the data Resource Group to manage PostgreSQL without also getting any
+access to the AKS cluster or the network. It also means a
+<code>terraform destroy</code> or an access grant scoped to one Resource
+Group cannot reach the resources in another by accident. The cost is
+real: AKS now reaches into a VNet it does not own, which needs an
+explicit <code>Network Contributor</code> role assignment on the network
+Resource Group (see Components and responsibilities), and every
+cross-Resource-Group reference (AKS's nodes, and both private endpoints)
+is one more place a <code>terraform plan</code> can surface a
+permissions error instead of a clean diff. We rejected keeping
+everything in one Resource Group, which is simpler to reason about and
+has no cross-RG role assignments to get wrong, because it gives every
+operator with Contributor on that one Resource Group full control over
+the network, the cluster, the secret store, and the database all at
+once, which is a wider blast radius than this system should default
+to.</p>
+</div>
+<div class="source-block" data-source-block="18"
+data-source-sha256="2dce73efc32251060453db7e15c4fc757d27decf6b33f2c7d10f750ed3e6580a">
+<p>We bootstrap the Terraform state backend (an Azure Storage Account
+and blob container) with a short one-time script or manual
+<code>az</code> commands, outside Terraform itself, rather than trying
+to manage it as a Terraform resource. Terraform cannot create the
+backend it is about to authenticate against and store its own state in;
+every practical Terraform-on-Azure setup treats this as a separate,
+rarely-repeated step. The cost is one manual step that is not captured
+as code, so it is documented as a short runbook (see section 6) rather
+than left implicit.</p>
+</div>
+<div class="source-block" data-source-block="19"
+data-source-sha256="1e79cc314921b3b33604891d1c5aea61cd753532c40c14b59c1cad105bc1d698">
+<p>We give Key Vault dual connectivity: a private endpoint for in-VNet
+traffic, and public network access gated by Key Vault's own firewall
+(<code>network_acls</code>, default action <code>Deny</code>) restricted
+to exactly one allowed public IP address, rather than either a fully
+private vault or a broader allowlist. Unlike PostgreSQL, Azure Key
+Vault's private endpoint and its public-access firewall are not mutually
+exclusive, so this needs no change to how Key Vault sits in the network
+(it still uses the same <code>snet-pe</code> private endpoint as
+before). We chose a single IP rather than a CIDR list, unlike
+PostgreSQL's allowlist, because the intended use of this path is one
+specific known caller (for example, one operator's workstation or one CI
+runner) rather than a general pool of external clients; if a second
+caller needs public access later, that is a deliberate one-line change
+to <code>key_vault_allowed_public_ip</code>, not an oversight. The cost
+is real: Key Vault holds every secret this project manages, including
+PostgreSQL's own admin credential, so its public path is the single
+highest-value target in this system, and it stays open to that one IP
+even though the application design's own trust boundary (Workload
+Identity, in-cluster-only access) never uses it. Reaching Key Vault from
+any other public IP, or before <code>key_vault_allowed_public_ip</code>
+is set, still requires network access into the VNet, for example
+<code>az aks command invoke</code> (runs the command from inside the
+cluster's network) or a bastion host.</p>
+</div>
+<div class="source-block" data-source-block="20"
+data-source-sha256="22b6b0eadde94c9b98e31c110f72d93e4e1590757c799115941718998389940b">
+<p>We give the Container Registry dual connectivity as well, and we pick
+the <strong>Premium</strong> SKU specifically to get it: Basic and
+Standard ACR SKUs do not support Azure Private Link at all, so a private
+endpoint for AKS's own image pulls is only reachable with Premium. AKS
+pulls the middleware application's image over that private endpoint,
+using the <code>AcrPull</code> role granted to the cluster's kubelet
+identity (Decisions, <code>modules/aks</code>), never a stored registry
+password; ACR's <code>admin_enabled</code> stays <code>false</code> for
+the same no-static-credential reason
+<code>docs/nats-tenant-queue-api/design.md</code>'s own trust boundary
+already commits to for Key Vault access. The registry's public path,
+gated by a CIDR-list firewall (<code>acr_firewall_allowed_cidrs</code>,
+mirroring PostgreSQL's allowlist shape rather than Key Vault's single-IP
+shape, since a build fleet or CI runner pool is more often a range than
+one fixed address), exists only so the CI/CD pipeline that builds the
+middleware application's image (out of scope, section 13) can push to it
+from outside the VNet; that pipeline still needs its own Azure AD
+identity with <code>AcrPush</code> granted separately; provisioning that
+identity is out of scope here (see Open questions). We reject a Basic or
+Standard SKU with public-access-only (no private endpoint) as the
+alternative, since that would mean every image pull from every AKS node
+crosses the public internet path, subject to the same firewall allowlist
+churn problem called out for PostgreSQL below, for traffic that has no
+reason to ever leave the VNet.</p>
+</div>
+<div class="source-block" data-source-block="21"
+data-source-sha256="45771420460084f11bb05e93c94331612edf39408c856b00ee56f864feffccc9">
+<p>We give PostgreSQL Flexible Server dual connectivity instead: public
+network access enabled and gated by firewall rules, plus a private
+endpoint for traffic that originates inside the VNet. AKS's in-cluster
+traffic (Keycloak's connection pool) reaches PostgreSQL over the private
+endpoint and never touches the public path; the firewall-gated public
+path exists so operators, migration scripts, and disaster-recovery
+tooling outside the VNet can connect directly, without first needing VPN
+or bastion access into the VNet, unlike Key Vault. Azure Database for
+PostgreSQL Flexible Server does not support combining a private endpoint
+with VNet Integration (delegated subnet) mode; choosing dual
+connectivity means PostgreSQL is no longer VNet-injected, so it no
+longer needs a delegated subnet at all (<code>snet-postgres</code> from
+the previous revision of this design is retired; PostgreSQL's private
+endpoint joins <code>snet-pe</code> instead, see section 6). We reject
+leaving the firewall allowlist open to <code>0.0.0.0/0</code>, since
+that would expose an authentication-gated database port to the entire
+internet; the allowed-CIDR list defaults to empty, so the public path
+stays closed until an environment explicitly opts a CIDR range in (see
+Requirements and section 8).</p>
+</div>
+<div class="source-block" data-source-block="22"
+data-source-sha256="bb9719b4ebc1544b534d0c5e817f5c4c8ce881d8dd4c62fc2d424cd75de1cb56">
+<p>We configure AKS with the Standard Load Balancer SKU (not Basic,
+which Azure has deprecated for new clusters) and a Terraform-managed
+static public IP, so the cluster's data plane is reachable from the
+internet from day one, matching
+<code>docs/nats-tenant-queue-api/design.md</code>'s assumption that HUG
+sits behind an Azure Standard Load Balancer with a public IP. Terraform
+itself does not create the Load Balancer resource; Azure creates and
+manages it automatically, inside AKS's own auto-generated node resource
+group, the first time a Kubernetes <code>LoadBalancer</code> Service
+(HUG's Gateway Service, at the application layer) asks for one. What
+Terraform does own is the static public IP that Load Balancer attaches
+to: without it, Azure would allocate a fresh dynamic IP, which could
+change on cluster recreation or on some Load Balancer reconfigurations,
+breaking DNS records that point at it. This is a materially different
+exposure than Key Vault's and PostgreSQL's: there is no
+infrastructure-level firewall gating who can reach the AKS Load
+Balancer, because gating internet traffic is the application layer's job
+(HUG's TLS termination and routing), not this project's; this project's
+responsibility stops at making the public IP exist and stay stable.</p>
+</div>
+<div class="source-block" data-source-block="23"
+data-source-sha256="4fa762e382f754de7e0b5618e740e32f798281a562edc710781b8f3723f095e6">
+<p>We use Azure CNI Overlay (not kubenet, not classic Azure CNI) for AKS
+pod networking. Overlay keeps pod IP consumption off the VNet's address
+space, so <code>snet-aks</code> only needs to size for nodes, not for
+nodes times max pods per node; this keeps the address plan (section 6)
+small and avoids a subnet resize later if the node count grows.</p>
+</div>
+<div class="source-block" data-source-block="24"
+data-source-sha256="16745abb5bb4c97695b22b0aaba441d81a4ad3ff2642b9bc422e13fa3564de13">
+<p>We generate the PostgreSQL admin password with Terraform's
+<code>random_password</code> resource and write it to Key Vault as a
+secret, rather than having PostgreSQL Flexible Server's own Azure AD
+authentication replace password auth entirely. Keycloak's JDBC driver
+expects a conventional username/password connection string; building and
+maintaining an Azure AD token exchange inside Keycloak's datasource
+config is real extra work this design does not take on now. The cost is
+that the password value passes through Terraform state at least once,
+which is why state storage access itself is restricted (see section
+8).</p>
+</div>
+<section id="5-invariants-and-requirements" class="source-block"
+data-source-block="25"
+data-source-sha256="a564a89ef16d655f45f32b2298c33c4d79e1b4129c3a882f233e5c6d85b55fc2">
+<h2>5. Invariants and requirements</h2>
+</section>
+<section id="invariants" class="source-block role-invariants"
+data-source-block="26"
+data-source-sha256="41701f368993e3f63ab599cb3ebcf32756d56c298bf06612195e918bf86cd6b4">
+<h3>Invariants</h3>
+</section>
+<div class="source-block" data-source-block="27"
+data-source-sha256="699660b8e9e8342d5aa0590d5016e9b100417c3253d2c70749399f3d1976a544">
+<ul>
+<li><code>INV-1</code>: PostgreSQL Flexible Server's public network
+access accepts a connection only from a source IP address explicitly
+present in its firewall rule allowlist; every other public source is
+rejected before authentication is attempted.</li>
+<li><code>INV-2</code>: Key Vault's public network access accepts a
+connection only from the single, explicitly configured
+<code>key_vault_allowed_public_ip</code> address; every other public
+source is rejected before any operation is attempted, and no operation
+succeeds from a public source without also presenting a valid Azure AD
+token authorized by RBAC (network reachability alone grants
+nothing).</li>
+<li><code>INV-3</code>: No Azure credential (client secret, connection
+string, admin password) is ever written into a <code>.tf</code> file or
+committed to version control. Generated secrets exist only as Terraform
+state values and Key Vault secrets.</li>
+<li><code>INV-4</code>: The three Resource Groups, the PostgreSQL
+server, the Key Vault, and the Container Registry carry
+<code>prevent_destroy</code> lifecycle guards, so a
+<code>terraform destroy</code> or an errant <code>apply</code> cannot
+remove them without first editing the Terraform code to lift the
+guard.</li>
+<li><code>INV-5</code>: The network Resource Group never contains a
+compute or data resource (no AKS cluster, no Key Vault, no PostgreSQL
+server). It contains only the VNet, subnets, and private DNS zones.</li>
+<li><code>INV-6</code>: Traffic to PostgreSQL from inside the VNet, over
+its private endpoint, is never evaluated against the firewall rule
+allowlist and never leaves the VNet; only traffic arriving over
+PostgreSQL's public path is subject to <code>INV-1</code>.</li>
+<li><code>INV-7</code>: Traffic to Key Vault from inside the VNet, over
+its private endpoint, is never evaluated against the firewall's
+single-IP rule and never leaves the VNet; only traffic arriving over Key
+Vault's public path is subject to <code>INV-2</code>.</li>
+<li><code>INV-8</code>: AKS's public IP address is a Standard SKU,
+static (never dynamic) IP managed by Terraform; it does not change value
+across a <code>terraform apply</code>, an AKS node pool change, or an
+AKS-managed Load Balancer reconfiguration.</li>
+<li><code>INV-9</code>: The Container Registry's public network access
+accepts a connection only from a source IP address explicitly present in
+its firewall's CIDR allowlist; every other public source is rejected
+before authentication is attempted.</li>
+<li><code>INV-10</code>: Traffic to the Container Registry from inside
+the VNet, over its private endpoint, is never evaluated against the
+firewall's CIDR allowlist and never leaves the VNet; only traffic
+arriving over the registry's public path is subject to
+<code>INV-9</code>.</li>
+<li><code>INV-11</code>: The Container Registry's admin user is
+disabled. No Azure credential for it is ever written into a
+<code>.tf</code> file or committed to version control (this is the
+ACR-specific instance of <code>INV-3</code>); AKS pulls images using its
+kubelet managed identity's <code>AcrPull</code> role assignment, never a
+username/password.</li>
+</ul>
+</div>
+<section id="requirements" class="source-block role-requirements"
+data-source-block="28"
+data-source-sha256="d58a3741c408d72bf8e99cb9c99f055d7cabeda3c3b4d006597446e8412a7e76">
+<h3>Requirements</h3>
+</section>
+<div class="source-block" data-source-block="29"
+data-source-sha256="69d5b42a99c27655ea094b624b44d16b412088ccbd5f578b576b6470d32b2dc7">
+<ul>
+<li><code>terraform plan</code> run twice in a row with no code change
+shows zero planned changes (the configuration is idempotent).</li>
+<li>Every resource carries a <code>Project = "nats-saas"</code> tag so
+cost and inventory tooling can find everything this project owns.</li>
+<li>Module inputs (region, address space, SKUs, node counts) are
+declared as variables with defaults, not hardcoded, so a future second
+environment can override them without editing module code.</li>
+<li><code>postgres_firewall_allowed_cidrs</code> defaults to an empty
+list, so PostgreSQL's public path stays closed (<code>INV-1</code>
+admits nothing) until an environment's configuration explicitly adds one
+or more CIDR ranges.</li>
+<li><code>key_vault_allowed_public_ip</code> defaults to
+<code>null</code>, so Key Vault's public path stays closed
+(<code>INV-2</code> admits nothing) until an environment's configuration
+explicitly sets exactly one IP address.</li>
+<li><code>acr_firewall_allowed_cidrs</code> defaults to an empty list,
+so the Container Registry's public push path stays closed
+(<code>INV-9</code> admits nothing) until an environment's configuration
+explicitly adds one or more CIDR ranges.</li>
+</ul>
+</div>
+<section id="6-interfaces-and-data" class="source-block"
+data-source-block="30"
+data-source-sha256="c031b53bb441f0ffee3273a73ce9f61efab706f92df0957046bc404cf8ffd544">
+<h2>6. Interfaces and data</h2>
+</section>
+<div class="source-block" data-source-block="31"
+data-source-sha256="e634de5ed57d0a700eb3e0e2e874ea8b486f4c8349d0e5df8c89b67e556360db">
+<p>This project's interface is its Terraform variables and outputs, not
+an HTTP API.</p>
+</div>
+<div class="source-block" data-source-block="32"
+data-source-sha256="d7e08f3703f59d44562a17ae752df27dddd0b664f7a83b25aee77eddb6c071ed">
+<p><strong>Key input variables:</strong> <code>location</code> (default
+<code>westeurope</code>), <code>network_resource_group_name</code>
+(default <code>rg-natssaas-network-prod</code>),
+<code>platform_resource_group_name</code> (default
+<code>rg-natssaas-platform-prod</code>),
+<code>data_resource_group_name</code> (default
+<code>rg-natssaas-data-prod</code>), <code>vnet_address_space</code>
+(default <code>10.60.0.0/16</code>),
+<code>aks_kubernetes_version</code>, <code>postgres_sku_name</code>
+(default <code>GP_Standard_D2ds_v5</code>),
+<code>postgres_admin_username</code>,
+<code>postgres_firewall_allowed_cidrs</code> (list of strings, default
+<code>[]</code>), <code>key_vault_allowed_public_ip</code> (single
+string, default <code>null</code>),
+<code>acr_firewall_allowed_cidrs</code> (list of strings, default
+<code>[]</code>).</p>
+</div>
+<div class="source-block" data-source-block="33"
+data-source-sha256="66f2b397b0f6734329331465c90c305a6552ae8fa3d71eee05107f2e38574cd3">
+<p><strong>Key outputs:</strong> <code>aks_cluster_name</code>,
+<code>aks_oidc_issuer_url</code> (consumed by the Helm/manifest layer to
+finish wiring Workload Identity for the API's ServiceAccount),
+<code>aks_public_ip_address</code> (the static IP the HUG Gateway's
+<code>LoadBalancer</code> Service and its DNS record should target),
+<code>key_vault_name</code>, <code>key_vault_uri</code> (the same URI
+resolves to the private endpoint's IP for clients inside the VNet, and
+to Key Vault's public IP, reachable only from
+<code>key_vault_allowed_public_ip</code>, for clients outside it),
+<code>acr_login_server</code> (the registry hostname, for example
+<code>acrnatssaasprod.azurecr.io</code>; resolves to the private
+endpoint's IP for clients inside the VNet, including AKS nodes, and to
+ACR's public IP, reachable only from
+<code>acr_firewall_allowed_cidrs</code>, for clients outside it, such as
+a CI/CD runner pushing the middleware application's image),
+<code>postgres_fqdn</code> (PostgreSQL's public DNS name; the private
+DNS zone linked to the VNet resolves it to the private endpoint's IP for
+clients inside the VNet, while clients outside the VNet resolve it to
+the public IP and reach it only if their source IP is on the firewall
+allowlist).</p>
+</div>
+<div class="source-block" data-source-block="34"
+data-source-sha256="c566464919260b2ceb04f2f006ea80d31ac352a8d41c7dc2e85310380b031da4">
+<p><strong>Address plan:</strong></p>
+</div>
+<div class="source-block table-wrap" data-source-block="35"
+data-source-sha256="36a9b663902b41c8fa9ef90342754a13603154cc1883e9c25de96d667500ddfb">
+<table>
+<thead>
+<tr>
+<th>Subnet</th>
+<th>CIDR</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>snet-aks</code></td>
+<td><code>10.60.0.0/22</code></td>
+<td>AKS node NICs (pod IPs are overlay, not VNet-routed)</td>
+</tr>
+<tr>
+<td><code>snet-pe</code></td>
+<td><code>10.60.5.0/24</code></td>
+<td>Private endpoint NICs (Key Vault and PostgreSQL)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="source-block" data-source-block="36"
+data-source-sha256="1e61e44d59140715033940f9517dccc3facc00b7ee19f16329dff49bf5b51040">
+<p><code>10.60.4.0/24</code> (the previous <code>snet-postgres</code>
+delegated subnet) is retired and left unassigned; PostgreSQL no longer
+needs a delegated subnet once it runs in
+public-access-plus-private-endpoint mode instead of VNet Integration
+(see Decisions).</p>
+</div>
+<section id="naming-and-identity" class="source-block"
+data-source-block="37"
+data-source-sha256="8d3d7b7a1af98b0dfa8eb94237680e19b796bb68dc456be15450d239907cc0ab">
+<h3>Naming and identity</h3>
+</section>
+<div class="source-block" data-source-block="38"
+data-source-sha256="0055be3cf1602b79b3ba7887dd60bec84f20f56072bf5fb3dd6b7d47927296f4">
+<ul>
+<li><strong>Resource names</strong>:
+<code>&lt;type&gt;-natssaas-&lt;env&gt;</code> (for example
+<code>vnet-natssaas-prod</code>, <code>aks-natssaas-prod</code>,
+<code>kv-natssaas-prod</code>, <code>psql-natssaas-prod</code>), or
+<code>rg-natssaas-&lt;purpose&gt;-&lt;env&gt;</code> for the three
+Resource Groups (<code>rg-natssaas-network-prod</code>,
+<code>rg-natssaas-platform-prod</code>,
+<code>rg-natssaas-data-prod</code>), with <code>env</code> defaulted to
+<code>prod</code> since only one environment exists today. If a second
+environment is added later, <code>env</code> becomes a real input
+instead of a fixed default; existing resource names do not change (see
+Open questions).</li>
+<li><strong>Container Registry name</strong>:
+<code>acrnatssaas&lt;env&gt;</code> (for example
+<code>acrnatssaasprod</code>), breaking the
+<code>&lt;type&gt;-natssaas-&lt;env&gt;</code> pattern above on purpose:
+<code>azurerm_container_registry</code> names must be globally unique
+across all of Azure and may only contain alphanumeric characters, no
+hyphens, so this is the one resource name in this project that cannot
+follow the shared convention. <code>acr_login_server</code> (section 6)
+is derived by Azure from this name, not set independently.</li>
+<li><strong>State backend bootstrap</strong> (one-time, outside
+Terraform): create a Storage Account and blob container by hand or with
+a short shell script before the first <code>terraform init</code>; every
+<code>terraform</code> command after that references it through the
+<code>azurerm</code> backend block. If that Storage Account is ever lost
+without a state backup, Terraform loses track of every resource it
+created; recovery means either restoring the Storage Account from
+Azure's own soft-delete/versioning or re-importing each Azure resource
+into a fresh state file by its resource ID.</li>
+<li><strong>PostgreSQL admin password</strong>: generated once by
+<code>random_password</code> at first apply, stored in Terraform state
+and mirrored into Key Vault. If it needs rotating, that happens outside
+Terraform (an <code>az postgres flexible-server update</code> plus a Key
+Vault secret update), because re-running <code>random_password</code>
+inside Terraform on every apply would rotate the credential on every
+unrelated change, which is not the intended trigger.</li>
+<li><strong>PostgreSQL firewall rules</strong>: each entry in the
+<code>postgres_firewall_allowed_cidrs</code> list becomes one named,
+<code>for_each</code>-driven
+<code>azurerm_postgresql_flexible_server_firewall_rule</code> resource,
+so removing a CIDR from the list removes its rule on the next
+<code>apply</code> rather than leaving an orphaned rule behind.</li>
+<li><strong>Key Vault firewall rule</strong>:
+<code>key_vault_allowed_public_ip</code>, when set, becomes the single
+<code>ip_rules</code> entry in the Key Vault's <code>network_acls</code>
+block (<code>default_action = "Deny"</code>). Unset (<code>null</code>),
+the <code>ip_rules</code> list is empty and no public IP is allowed at
+all; changing the variable's value replaces that one entry on the next
+<code>apply</code>, it does not accumulate old values.</li>
+<li><strong>Container Registry firewall rules</strong>: each entry in
+the <code>acr_firewall_allowed_cidrs</code> list becomes one
+<code>ip_rule</code> block in the registry's
+<code>network_rule_set</code> (<code>default_action = "Deny"</code>),
+the same <code>for_each</code>-driven, no-orphaned-rule shape as
+PostgreSQL's firewall rules above, not the single-value shape Key Vault
+uses.</li>
+<li><strong>AKS public IP</strong>: a single
+<code>azurerm_public_ip</code> named <code>pip-natssaas-prod</code>,
+Standard SKU, static allocation, created once in the platform Resource
+Group. AKS references it by resource ID in its Load Balancer profile, so
+the address stays the same across <code>apply</code>s; if the resource
+is ever deleted and recreated outside this documented flow, Azure
+assigns a new address and every Kubernetes <code>LoadBalancer</code>
+Service and DNS record pointing at the old one breaks.</li>
+</ul>
+</div>
+<section id="example-terraform-configuration-azurerm"
+class="source-block" data-source-block="39"
+data-source-sha256="78833ab4e7f1ba7bbb169abfd5a9eaceb047b4ec8fe19dd249f7a0f0f6552970">
+<h3>Example Terraform configuration (azurerm)</h3>
+</section>
+<div class="source-block" data-source-block="40"
+data-source-sha256="13a19b88b3c60df893d2711e2455f2387674a5f29943d52db0954f06b1862466">
+<p>Snippets below illustrate the shape of the modules and root wiring
+described above; they are illustrative, not the full project (error
+handling for edge cases, all variables, and all outputs are trimmed for
+brevity).</p>
+</div>
+<div class="source-block" data-source-block="41"
+data-source-sha256="4c04887063fa5fc5929aa84d30d70e811bc468df82bb2b281762a4c0bf8c8b8c">
+<p><strong><code>providers.tf</code></strong> (root module):</p>
+</div>
+<div class="source-block" data-source-block="42"
+data-source-sha256="f0cf20deb1f60aca8ae471decb8374ff00ce8e9a435b789e051f4bdb4629d96b">
+<pre class="hcl"><code>terraform {
+  required_version = &quot;&gt;= 1.7.0&quot;
+
+  required_providers {
+    azurerm = {
+      source  = &quot;hashicorp/azurerm&quot;
+      version = &quot;~&gt; 3.90&quot;
+    }
+    random = {
+      source  = &quot;hashicorp/random&quot;
+      version = &quot;~&gt; 3.6&quot;
+    }
+  }
+
+  backend &quot;azurerm&quot; {
+    resource_group_name  = &quot;rg-natssaas-tfstate&quot;
+    storage_account_name = &quot;stnatssaastfstate&quot;
+    container_name       = &quot;tfstate&quot;
+    key                  = &quot;prod/terraform.tfstate&quot;
+  }
+}
+
+provider &quot;azurerm&quot; {
+  features {
+    key_vault {
+      purge_soft_delete_on_destroy    = false
+      recover_soft_deleted_key_vaults = true
+    }
+  }
+}</code></pre>
+</div>
+<div class="source-block" data-source-block="43"
+data-source-sha256="2e6a40e7f62c18502887cef6b287f3067cdc7f308aa8742a9074f436f6cde10c">
+<p><strong><code>modules/resource_group/main.tf</code>:</strong></p>
+</div>
+<div class="source-block" data-source-block="44"
+data-source-sha256="e1c5585efb7cd981e109e364653f691217cadf7a9b5a798cc091d1fcec7773d7">
+<pre class="hcl"><code>variable &quot;name&quot; {
+  type = string
+}
+
+variable &quot;location&quot; {
+  type = string
+}
+
+variable &quot;tags&quot; {
+  type = map(string)
+}
+
+resource &quot;azurerm_resource_group&quot; &quot;this&quot; {
+  name     = var.name
+  location = var.location
+  tags     = var.tags
+
+  lifecycle {
+    prevent_destroy = true # INV-4
+  }
+}
+
+output &quot;name&quot; {
+  value = azurerm_resource_group.this.name
+}
+
+output &quot;location&quot; {
+  value = azurerm_resource_group.this.location
+}</code></pre>
+</div>
+<div class="source-block" data-source-block="45"
+data-source-sha256="4c85be9d24567fe4e62bdaa654e649b12810524565a96cdeb3f68334f012a87f">
+<p><strong><code>modules/network/main.tf</code></strong> (VNet, subnets,
+private DNS zones):</p>
+</div>
+<div class="source-block" data-source-block="46"
+data-source-sha256="86fe0cda14babc7dfc54cc474252afde131bc3238b741e97bae62196e596a250">
+<pre class="hcl"><code>resource &quot;azurerm_virtual_network&quot; &quot;this&quot; {
+  name                = &quot;vnet-natssaas-${var.env}&quot;
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  address_space       = [var.vnet_address_space]
+  tags                = var.tags
+}
+
+resource &quot;azurerm_subnet&quot; &quot;aks&quot; {
+  name                 = &quot;snet-aks&quot;
+  resource_group_name  = var.resource_group_name
+  virtual_network_name = azurerm_virtual_network.this.name
+  address_prefixes     = [var.aks_subnet_cidr] # 10.60.0.0/22
+}
+
+resource &quot;azurerm_subnet&quot; &quot;pe&quot; {
+  name                 = &quot;snet-pe&quot;
+  resource_group_name  = var.resource_group_name
+  virtual_network_name = azurerm_virtual_network.this.name
+  address_prefixes     = [var.pe_subnet_cidr] # 10.60.5.0/24
+}
+
+resource &quot;azurerm_private_dns_zone&quot; &quot;key_vault&quot; {
+  name                = &quot;privatelink.vaultcore.azure.net&quot;
+  resource_group_name = var.resource_group_name
+  tags                = var.tags
+}
+
+resource &quot;azurerm_private_dns_zone&quot; &quot;postgres&quot; {
+  name                = &quot;privatelink.postgres.database.azure.com&quot;
+  resource_group_name = var.resource_group_name
+  tags                = var.tags
+}
+
+resource &quot;azurerm_private_dns_zone&quot; &quot;acr&quot; {
+  name                = &quot;privatelink.azurecr.io&quot;
+  resource_group_name = var.resource_group_name
+  tags                = var.tags
+}
+
+resource &quot;azurerm_private_dns_zone_virtual_network_link&quot; &quot;key_vault&quot; {
+  name                  = &quot;link-kv-natssaas-${var.env}&quot;
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.key_vault.name
+  virtual_network_id    = azurerm_virtual_network.this.id
+}
+
+resource &quot;azurerm_private_dns_zone_virtual_network_link&quot; &quot;postgres&quot; {
+  name                  = &quot;link-psql-natssaas-${var.env}&quot;
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.postgres.name
+  virtual_network_id    = azurerm_virtual_network.this.id
+}
+
+resource &quot;azurerm_private_dns_zone_virtual_network_link&quot; &quot;acr&quot; {
+  name                  = &quot;link-acr-natssaas-${var.env}&quot;
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.acr.name
+  virtual_network_id    = azurerm_virtual_network.this.id
+}</code></pre>
+</div>
+<div class="source-block" data-source-block="47"
+data-source-sha256="925d994a2de0afd95631f2f8fe12f3cdae5ae8c34da2fc3fadad07339561e54d">
+<p><strong><code>modules/aks/main.tf</code></strong> (static public IP,
+AKS cluster, Workload Identity):</p>
+</div>
+<div class="source-block" data-source-block="48"
+data-source-sha256="8cb9682a48fe8457911d8cdbb1f62bf33f7eed46c307f20d916eb5173196a717">
+<pre class="hcl"><code>resource &quot;azurerm_public_ip&quot; &quot;aks&quot; {
+  name                = &quot;pip-natssaas-${var.env}&quot;
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  allocation_method   = &quot;Static&quot;
+  sku                 = &quot;Standard&quot;
+  tags                = var.tags
+}
+
+resource &quot;azurerm_kubernetes_cluster&quot; &quot;this&quot; {
+  name                      = &quot;aks-natssaas-${var.env}&quot;
+  resource_group_name       = var.resource_group_name
+  location                  = var.location
+  dns_prefix                = &quot;aks-natssaas-${var.env}&quot;
+  kubernetes_version        = var.kubernetes_version
+  oidc_issuer_enabled       = true
+  workload_identity_enabled = true
+
+  default_node_pool {
+    name           = &quot;system&quot;
+    vm_size        = var.system_node_vm_size
+    vnet_subnet_id = var.aks_subnet_id # cross-RG: snet-aks in the network RG
+    auto_scaling_enabled = true
+    min_count      = var.system_node_min_count
+    max_count      = var.system_node_max_count
+  }
+
+  identity {
+    type = &quot;SystemAssigned&quot;
+  }
+
+  network_profile {
+    network_plugin      = &quot;azure&quot;
+    network_plugin_mode = &quot;overlay&quot;
+    load_balancer_sku   = &quot;standard&quot;
+    outbound_type       = &quot;loadBalancer&quot;
+    load_balancer_profile {
+      outbound_ip_address_ids = [azurerm_public_ip.aks.id]
+    }
+  }
+
+  tags = var.tags
+}
+
+output &quot;cluster_id&quot; {
+  value = azurerm_kubernetes_cluster.this.id
+}
+
+output &quot;oidc_issuer_url&quot; {
+  value = azurerm_kubernetes_cluster.this.oidc_issuer_url
+}
+
+output &quot;kubelet_identity_object_id&quot; {
+  value = azurerm_kubernetes_cluster.this.kubelet_identity[0].object_id
+}
+
+output &quot;public_ip_address&quot; {
+  value = azurerm_public_ip.aks.ip_address
+}</code></pre>
+</div>
+<div class="source-block" data-source-block="49"
+data-source-sha256="bf7ece45127c950b7c04d590f05dd7f8f2d5b1e4ac9e42bf158fb72927606258">
+<p><strong><code>modules/key_vault/main.tf</code></strong>
+(RBAC-authorized vault, single-IP firewall, private endpoint):</p>
+</div>
+<div class="source-block" data-source-block="50"
+data-source-sha256="2a3e243ad7ea623ca13353aa076ddcf8f3043ee0e9120e97fae376caf1c20aa7">
+<pre class="hcl"><code>resource &quot;azurerm_key_vault&quot; &quot;this&quot; {
+  name                          = &quot;kv-natssaas-${var.env}&quot;
+  resource_group_name           = var.resource_group_name
+  location                      = var.location
+  tenant_id                     = var.tenant_id
+  sku_name                      = &quot;standard&quot;
+  enable_rbac_authorization     = true
+  purge_protection_enabled      = true
+  public_network_access_enabled = true
+  tags                          = var.tags
+
+  network_acls {
+    default_action = &quot;Deny&quot;
+    bypass         = &quot;AzureServices&quot;
+    ip_rules       = var.allowed_public_ip == null ? [] : [var.allowed_public_ip] # INV-2
+  }
+
+  lifecycle {
+    prevent_destroy = true # INV-4
+  }
+}
+
+resource &quot;azurerm_private_endpoint&quot; &quot;key_vault&quot; {
+  name                = &quot;pe-kv-natssaas-${var.env}&quot;
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  subnet_id           = var.pe_subnet_id # cross-RG: snet-pe in the network RG
+  tags                = var.tags
+
+  private_service_connection {
+    name                           = &quot;psc-kv-natssaas-${var.env}&quot;
+    private_connection_resource_id = azurerm_key_vault.this.id
+    subresource_names              = [&quot;vault&quot;]
+    is_manual_connection           = false
+  }
+
+  private_dns_zone_group {
+    name                 = &quot;default&quot;
+    private_dns_zone_ids = [var.key_vault_private_dns_zone_id]
+  }
+}
+
+output &quot;id&quot; {
+  value = azurerm_key_vault.this.id
+}
+
+output &quot;uri&quot; {
+  value = azurerm_key_vault.this.vault_uri
+}</code></pre>
+</div>
+<div class="source-block" data-source-block="51"
+data-source-sha256="ee75cd4bacbe06d374406405f8bcffecc0481f074a8b8d7b7d7ff0b205308220">
+<p><strong><code>modules/container_registry/main.tf</code></strong>
+(Premium SKU, RBAC-only, <code>for_each</code> firewall rules, private
+endpoint):</p>
+</div>
+<div class="source-block" data-source-block="52"
+data-source-sha256="4a2587c49d0703b34c677462daaa1a6d92d239aac86a32cbf50b7bc0967ffb51">
+<pre class="hcl"><code>resource &quot;azurerm_container_registry&quot; &quot;this&quot; {
+  name                          = &quot;acrnatssaas${var.env}&quot; # no hyphens allowed, see Naming and identity
+  resource_group_name           = var.resource_group_name
+  location                      = var.location
+  sku                           = &quot;Premium&quot; # required for private_endpoint support
+  admin_enabled                 = false     # INV-11: no static registry credential
+  public_network_access_enabled = true
+  tags                          = var.tags
+
+  network_rule_set {
+    default_action = &quot;Deny&quot;
+
+    dynamic &quot;ip_rule&quot; {
+      for_each = var.firewall_allowed_cidrs # INV-9: empty by default
+      content {
+        action   = &quot;Allow&quot;
+        ip_range = ip_rule.value
+      }
+    }
+  }
+
+  lifecycle {
+    prevent_destroy = true # INV-4, same guard as the other platform-tier resources
+  }
+}
+
+resource &quot;azurerm_private_endpoint&quot; &quot;acr&quot; {
+  name                = &quot;pe-acr-natssaas-${var.env}&quot;
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  subnet_id           = var.pe_subnet_id # cross-RG: snet-pe in the network RG, shared with Key Vault&#39;s and PostgreSQL&#39;s PEs
+  tags                = var.tags
+
+  private_service_connection {
+    name                           = &quot;psc-acr-natssaas-${var.env}&quot;
+    private_connection_resource_id = azurerm_container_registry.this.id
+    subresource_names              = [&quot;registry&quot;]
+    is_manual_connection           = false
+  }
+
+  private_dns_zone_group {
+    name                 = &quot;default&quot;
+    private_dns_zone_ids = [var.acr_private_dns_zone_id]
+  }
+}
+
+output &quot;id&quot; {
+  value = azurerm_container_registry.this.id
+}
+
+output &quot;login_server&quot; {
+  value = azurerm_container_registry.this.login_server
+}</code></pre>
+</div>
+<div class="source-block" data-source-block="53"
+data-source-sha256="221e576c52d20ce3805d1c4ea887ca2b6b05132fc69f908893e2c4d3b5988e91">
+<p><strong><code>modules/postgresql/main.tf</code></strong> (Flexible
+Server, <code>for_each</code> firewall rules, private endpoint):</p>
+</div>
+<div class="source-block" data-source-block="54"
+data-source-sha256="952472ae91e5e042e80bf108f9c2617c439248f02f10cf75e76c36b973242f84">
+<pre class="hcl"><code>resource &quot;azurerm_postgresql_flexible_server&quot; &quot;this&quot; {
+  name                          = &quot;psql-natssaas-${var.env}&quot;
+  resource_group_name           = var.resource_group_name
+  location                      = var.location
+  version                       = &quot;16&quot;
+  sku_name                      = var.sku_name
+  storage_mb                    = var.storage_mb
+  backup_retention_days         = var.backup_retention_days
+  administrator_login           = var.admin_username
+  administrator_password        = var.admin_password
+  public_network_access_enabled = true
+  tags                          = var.tags
+
+  lifecycle {
+    prevent_destroy = true # INV-4
+  }
+}
+
+resource &quot;azurerm_postgresql_flexible_server_firewall_rule&quot; &quot;allowed&quot; {
+  for_each = toset(var.firewall_allowed_cidrs) # INV-1: empty by default
+
+  name             = &quot;allow-${replace(each.value, &quot;/&quot;, &quot;-&quot;)}&quot;
+  server_id        = azurerm_postgresql_flexible_server.this.id
+  start_ip_address = cidrhost(each.value, 0)
+  end_ip_address   = cidrhost(each.value, -1)
+}
+
+resource &quot;azurerm_private_endpoint&quot; &quot;postgres&quot; {
+  name                = &quot;pe-psql-natssaas-${var.env}&quot;
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  subnet_id           = var.pe_subnet_id # cross-RG: snet-pe in the network RG, shared with Key Vault&#39;s PE
+  tags                = var.tags
+
+  private_service_connection {
+    name                           = &quot;psc-psql-natssaas-${var.env}&quot;
+    private_connection_resource_id = azurerm_postgresql_flexible_server.this.id
+    subresource_names              = [&quot;postgresqlServer&quot;]
+    is_manual_connection           = false
+  }
+
+  private_dns_zone_group {
+    name                 = &quot;default&quot;
+    private_dns_zone_ids = [var.postgres_private_dns_zone_id]
+  }
+}
+
+output &quot;fqdn&quot; {
+  value = azurerm_postgresql_flexible_server.this.fqdn
+}</code></pre>
+</div>
+<div class="source-block" data-source-block="55"
+data-source-sha256="034d5baf294b1d60693af062e3c67a3a2c612b45599b9e5b032270f2b8325f44">
+<p><strong>Root module wiring</strong> (<code>main.tf</code>): cross-RG
+<code>Network Contributor</code> grant for AKS, the <code>AcrPull</code>
+grant, and the generated admin password:</p>
+</div>
+<div class="source-block" data-source-block="56"
+data-source-sha256="004615b49f6cf429a2069b8c70c6b6452929b8c755b2ea55dfa8ff94384499b8">
+<pre class="hcl"><code>resource &quot;random_password&quot; &quot;postgres_admin&quot; {
+  length  = 32
+  special = true
+}
+
+resource &quot;azurerm_role_assignment&quot; &quot;aks_network_contributor&quot; {
+  scope                = module.network.vnet_id
+  role_definition_name = &quot;Network Contributor&quot;
+  principal_id         = module.aks.kubelet_identity_object_id
+}
+
+module &quot;postgresql&quot; {
+  source              = &quot;./modules/postgresql&quot;
+  resource_group_name = module.rg_data.name
+  location            = var.location
+  admin_username      = var.postgres_admin_username
+  admin_password      = random_password.postgres_admin.result
+  firewall_allowed_cidrs = var.postgres_firewall_allowed_cidrs
+  pe_subnet_id        = module.network.pe_subnet_id
+  postgres_private_dns_zone_id = module.network.postgres_private_dns_zone_id
+  # ...
+}
+
+# Key Vault Secrets User for individual in-cluster workloads (Keycloak, the REST API)
+# is NOT granted here against a shared AKS identity — each workload gets its own
+# dedicated azurerm_user_assigned_identity, federated credential, and role assignment,
+# added by that workload&#39;s own companion document extending this root module:
+#   - Keycloak: docs/keycloak-operator/design.md section 4.1 (azurerm_user_assigned_identity.keycloak)
+#   - REST API: docs/rest-api-workload/design.md section 6 (azurerm_user_assigned_identity.rest_api)
+# An earlier revision of this module granted this role to module.aks.kubelet_identity_object_id
+# instead; that was wrong (the kubelet identity has no federated credential a pod&#39;s
+# ServiceAccount can exchange a token against) and has been removed, per
+# docs/rest-api-workload/design.md section 4, Decisions.
+
+module &quot;container_registry&quot; {
+  source                  = &quot;./modules/container_registry&quot;
+  resource_group_name     = module.rg_platform.name
+  location                = var.location
+  firewall_allowed_cidrs  = var.acr_firewall_allowed_cidrs
+  pe_subnet_id             = module.network.pe_subnet_id
+  acr_private_dns_zone_id  = module.network.acr_private_dns_zone_id
+  # ...
+}
+
+resource &quot;azurerm_role_assignment&quot; &quot;aks_acr_pull&quot; {
+  scope                = module.container_registry.id
+  role_definition_name = &quot;AcrPull&quot;
+  principal_id          = module.aks.kubelet_identity_object_id
+
+  depends_on = [module.aks, module.container_registry] # both must exist first
+}
+
+resource &quot;azurerm_key_vault_secret&quot; &quot;postgres_admin_password&quot; {
+  name         = &quot;postgres-admin-password&quot;
+  value        = random_password.postgres_admin.result
+  key_vault_id = module.key_vault.id
+}</code></pre>
+</div>
+<section id="7-failure-behavior-and-lifecycle"
+class="source-block role-failures" data-source-block="57"
+data-source-sha256="caf163a2a6ae29594c9aceec85019732d86f557465622ee179014fdfedcee686">
+<h2>7. Failure behavior and lifecycle</h2>
+</section>
+<div class="source-block" data-source-block="58"
+data-source-sha256="17ddde56f115abea5469fdfb8659fd22159566f020b1ff391957fa937df3e82d">
+<ul>
+<li><strong><code>terraform apply</code> fails partway through</strong>:
+Terraform's own state tracks what already succeeded; re-running
+<code>apply</code> resumes from the failed resource rather than
+recreating everything, as long as the state file itself survived. No
+resource in this project depends on manual cleanup between retries.</li>
+<li><strong>State lock contention</strong>: the <code>azurerm</code>
+backend uses the Storage Account's native blob lease for locking, so a
+second <code>apply</code> run while one is already in progress waits or
+fails cleanly with a lock-held error rather than corrupting state; the
+operator retries once the first run finishes.</li>
+<li><strong>State file corrupted or deleted</strong>: recovery is
+Storage Account blob versioning/soft-delete restore first; failing that,
+every resource must be <code>terraform import</code>ed back into a fresh
+state file, which is slow but possible since every resource here has a
+stable Azure resource ID.</li>
+<li><strong>A workload's <code>Key Vault Secrets User</code> role
+assignment fails</strong> (for example, a transient Azure AD propagation
+delay): this project's own resources are unaffected, since that role
+assignment lives in the workload's own companion document
+(<code>docs/keycloak-operator/design.md</code> section 4.1,
+<code>docs/rest-api-workload/design.md</code> section 6), not here; that
+workload's Workload Identity cannot yet reach Key Vault until its own
+<code>terraform apply</code> (against the same root module) is
+re-run.</li>
+<li><strong>AKS cluster or ACR creation succeeds but the
+<code>AcrPull</code> role assignment fails or has not yet
+propagated</strong>: the cluster and registry both exist and are
+otherwise healthy, but AKS nodes cannot yet pull the middleware
+application's image; any Pod scheduled in this window sits in
+<code>ImagePullBackOff</code> until Azure AD propagates the role
+assignment (typically under a few minutes) or <code>apply</code> is
+re-run, whichever comes first, since Terraform's graph already orders
+the role assignment after both resources.</li>
+<li><strong>The <code>Network Contributor</code> role assignment on the
+network Resource Group fails or has not yet propagated</strong>: AKS
+node provisioning fails with a permissions error even though the subnet
+itself exists; re-running <code>apply</code> retries cleanly once the
+role assignment has propagated, since Terraform's graph already orders
+the role assignment before the AKS cluster resource that needs it.</li>
+<li><strong><code>prevent_destroy</code> blocks an intended
+teardown</strong>: this is deliberate (<code>INV-4</code>). Removing the
+guard requires an explicit code change and a second commit, so an
+accidental <code>destroy</code> (or an accidental removal of a resource
+block) cannot silently take down the Resource Group, PostgreSQL, or Key
+Vault.</li>
+<li><strong>AKS's managed Load Balancer is recreated or reconfigured by
+Azure</strong> (for example, after changing the Load Balancer profile's
+outbound rules): as long as the static public IP resource itself is
+untouched, the recreated Load Balancer reattaches to the same address
+(<code>INV-8</code>); no Kubernetes Service or external DNS record needs
+to change. If the static public IP resource is deleted (outside this
+documented flow) and recreated, its address changes, and every Service
+and DNS record pointing at the old one needs manual updating; this is
+the one place in this project where a deleted resource's replacement is
+not a transparent, no-op recovery.</li>
+</ul>
+</div>
+<section id="8-security-privacy-and-operations" class="source-block"
+data-source-block="59"
+data-source-sha256="d373a802adb9444e8d300217a0222856fa057b13255436c0f4709f894158a5f1">
+<h2>8. Security, privacy, and operations</h2>
+</section>
+<div class="source-block" data-source-block="60"
+data-source-sha256="25847e1f0adefe08575904def991702da9bb88debea0465921f653788fd502b4">
+<ul>
+<li><strong>Trust boundary</strong>: only Terraform's own execution
+identity (a service principal or the operator's own Azure AD identity,
+whichever runs <code>apply</code>) has Owner/Contributor rights across
+all three Resource Groups; day-to-day operators can instead be scoped to
+just one (for example, Contributor on the data Resource Group only, for
+someone who only manages PostgreSQL), since the three-way split
+(<code>INV-5</code>) makes that a meaningful boundary rather than a
+nominal one. The only access one Resource Group has into another is the
+explicit <code>Network Contributor</code> role assignments described in
+section 4, scoped narrowly to AKS's and PostgreSQL's own managed
+identities, not to every principal with access to the platform or data
+Resource Group. After <code>apply</code>, the AKS cluster's Workload
+Identity is the only in-cluster path to Key Vault; no static Azure
+credential is stored in a Kubernetes Secret or a pod image, matching
+<code>INV-3</code> here and the equivalent commitment in
+<code>docs/nats-tenant-queue-api/design.md</code>.</li>
+<li><strong>State file sensitivity</strong>: Terraform state contains
+the generated PostgreSQL admin password in plaintext (a known Terraform
+limitation, not specific to this project). The backend Storage Account
+has public network access disabled, uses Azure RBAC (not shared keys)
+for access, and keeps blob versioning on, so state access is scoped to
+the same operators who already have Contributor rights on the Resource
+Group, and a bad <code>apply</code> can be rolled back to a prior state
+version.</li>
+<li><strong>Public exposure, PostgreSQL</strong>: PostgreSQL Flexible
+Server's public network access is enabled, gated only by its firewall
+rule allowlist (<code>INV-1</code>) and by TLS-enforced,
+password-authenticated connections (TLS enforcement applies to both the
+public and private paths, not just the public one). This is a materially
+larger attack surface than a VNet-only server; every entry added to
+<code>postgres_firewall_allowed_cidrs</code> should be reviewed at the
+same rigor as a network firewall change, and entries should be pruned
+once they are no longer needed (a former operator's home IP, a
+decommissioned CI runner), since a stale allowlist entry is a standing
+exposure that Terraform's own drift detection will not flag as wrong
+(see Open questions).</li>
+<li><strong>Public exposure, Key Vault</strong>: Key Vault's public
+network access is enabled, gated by a firewall allowing exactly one IP
+address (<code>INV-2</code>). This is the more consequential of the two
+public paths in this project: Key Vault holds every secret this project
+manages, including PostgreSQL's admin password, so a compromise of the
+one allowed IP (not a firewall misconfiguration, an actual compromise of
+that caller) puts every secret at risk in a way a PostgreSQL compromise
+alone would not. The one mitigation <code>INV-2</code> calls out that
+PostgreSQL's firewall does not have: Key Vault's RBAC authorization mode
+still requires a valid, separately-authorized Azure AD token for every
+operation, so network reachability from the allowed IP is necessary but
+not sufficient on its own; an attacker on that IP without a valid token
+still gets nothing.</li>
+<li><strong>Public exposure, ACR</strong>: the Container Registry's
+public network access is enabled, gated by a firewall allowing only the
+CIDR ranges in <code>acr_firewall_allowed_cidrs</code>
+(<code>INV-9</code>). Its admin user is disabled (<code>INV-11</code>),
+so even a source IP on the allowlist gets nothing without a separately
+RBAC-authorized Azure AD token; the practical exposure this path adds is
+that whatever holds an <code>AcrPush</code>-authorized identity from an
+allowlisted source can put an arbitrary image into the registry that AKS
+will later pull and run, so that identity's own credential hygiene
+(rotation, least-privilege scope to <code>AcrPush</code> only, not
+<code>Owner</code> or <code>AcrDelete</code>) matters as much as the
+firewall rule itself; provisioning and rotating that CI/CD identity is
+out of scope for this project (section 13, Open questions).</li>
+<li><strong>Public exposure, AKS</strong>: the AKS cluster's data plane
+is reachable from any internet source through its Standard Load
+Balancer's static public IP, with no infrastructure-level firewall
+restricting who can connect, unlike Key Vault and PostgreSQL. This is
+intentional, not an oversight: it is the system's one public entry point
+(<code>docs/nats-tenant-queue-api/design.md</code>), and the actual
+gating (TLS termination, routing, authentication) is HUG's and the API's
+job at the application layer, not this Terraform project's. This
+project's own responsibility for that boundary is limited to keeping the
+public IP stable and to whatever the AKS API server's own access policy
+is set to (see Open questions), not to filtering application
+traffic.</li>
+<li><strong>Shared limits</strong>: PostgreSQL Flexible Server's SKU
+sets a hard connection limit (a <code>GP_Standard_D2ds_v5</code> server
+allows roughly 400 concurrent connections); Keycloak's connection pool
+size must stay under that ceiling, which is a configuration concern for
+the layer above this project, not for Terraform itself, but is called
+out here since it is a direct consequence of the SKU choice in section
+4. AKS node pool VM size and count bound total pod capacity; this
+project defaults to a small autoscaling user pool (see Open questions
+for production sizing).</li>
+<li><strong>Cost</strong>: the three private endpoints (Key Vault,
+PostgreSQL, and ACR), the static Standard public IP, Key Vault's premium
+features (purge protection), and ACR's Premium SKU (required for its
+private endpoint, and priced meaningfully above Basic/Standard
+regardless of image storage volume) each carry a fixed monthly cost
+beyond the compute/storage cost of AKS and PostgreSQL themselves; no
+budget or alert is set up by this project (see Out of scope).</li>
+</ul>
+</div>
+<section id="9-acceptance-criteria"
+class="source-block role-acceptance-criteria" data-source-block="61"
+data-source-sha256="6d76b4820d002f28fcf60404f54b3b5893667240dd3e86def26e97bd7b6ad68d">
+<h2>9. Acceptance criteria</h2>
+</section>
+<div class="source-block" data-source-block="62"
+data-source-sha256="bce05979c6eebf66693eebcf7eec81d247f67780de94a28ca8537cab4983879c">
+<ul>
+<li><code>AC-1</code>: Running <code>terraform apply</code> against a
+clean subscription creates the three Resource Groups, VNet, AKS cluster,
+PostgreSQL Flexible Server, and Key Vault, correctly split across the
+network, platform, and data Resource Groups, with no manual steps other
+than the one-time state-backend bootstrap; a subsequent
+<code>terraform plan</code> shows no changes.</li>
+<li><code>AC-2</code>: A pod in the AKS cluster, using a ServiceAccount
+annotated for Workload Identity, retrieves a secret from the Key Vault
+without any Azure credential present in the pod spec, its image, or a
+Kubernetes Secret.</li>
+<li><code>AC-3</code>: A connection attempt to the PostgreSQL server's
+FQDN from a public source IP that is not present in the firewall
+allowlist is rejected; a connection from a public source IP that is
+present in the allowlist succeeds; a connection from inside the VNet
+(for example, <code>az aks command invoke</code>) succeeds over the
+private endpoint regardless of the firewall allowlist's contents.</li>
+<li><code>AC-4</code>: A request to the Key Vault's public data-plane
+endpoint from a public IP other than
+<code>key_vault_allowed_public_ip</code> is rejected; a request from
+<code>key_vault_allowed_public_ip</code> itself is admitted by the
+firewall but still requires a valid, RBAC-authorized Azure AD token to
+succeed; a request routed through the private endpoint succeeds without
+needing the firewall's involvement at all.</li>
+<li><code>AC-5</code>: Running <code>terraform destroy</code> without
+first editing the lifecycle blocks in code fails to remove any of the
+three Resource Groups, the PostgreSQL server, the Key Vault, and the
+Container Registry.</li>
+<li><code>AC-7</code>: An AKS node, using its kubelet identity, pulls
+the middleware application's image from the Container Registry over the
+private endpoint without any registry credential present in the pod
+spec, its image, or a Kubernetes Secret.</li>
+<li><code>AC-8</code>: A <code>docker push</code> (or
+<code>az acr login</code> plus push) to the registry's public endpoint
+from a source IP that is not present in
+<code>acr_firewall_allowed_cidrs</code> is rejected; a push from an
+allowlisted IP is admitted by the firewall but still requires a valid,
+RBAC-authorized Azure AD token carrying <code>AcrPush</code> to succeed;
+a pull from inside the VNet succeeds over the private endpoint
+regardless of the firewall allowlist's contents.</li>
+<li><code>AC-6</code>: A Kubernetes Service of type
+<code>LoadBalancer</code> created in the AKS cluster, annotated to use
+the Terraform-managed static public IP, is reachable over the internet
+at that exact IP address, and a second, unrelated
+<code>terraform apply</code> does not change that address.</li>
+</ul>
+</div>
+<section id="10-test-approach" class="source-block"
+data-source-block="63"
+data-source-sha256="c12e936da26b05f551bb9244d0b3c7384b2d3d340c374095d6baea0e971a43de">
+<h2>10. Test approach</h2>
+</section>
+<div class="source-block" data-source-block="64"
+data-source-sha256="0c0203d1bbbe52808829c2d46940156d6750fdfa43a4486b5af99f4c2955bd34">
+<ul>
+<li><code>terraform validate</code> and
+<code>terraform fmt -check</code> run in CI on every change, catching
+syntax and formatting drift before review.</li>
+<li><code>terraform plan</code> runs in CI against a real (sandbox)
+subscription on every pull request, and its output is reviewed before
+merge, proving the change does what the diff claims.</li>
+<li>A static scan (<code>tflint</code> plus a policy tool such as
+<code>checkov</code>) runs in CI and checks that Key Vault's
+<code>network_acls.ip_rules</code> never holds more than the single
+expected entry (<code>INV-2</code>), that no PostgreSQL or ACR firewall
+rule spans <code>0.0.0.0/0</code> or another suspiciously broad range
+(part of <code>INV-1</code>, <code>INV-9</code>), and that the
+registry's <code>admin_enabled</code> stays <code>false</code>
+(<code>INV-11</code>), beyond manual review.</li>
+<li><code>AC-1</code> is proved by a scheduled or on-demand full
+<code>apply</code> against a sandbox subscription followed by
+<code>terraform plan</code> showing zero diff.</li>
+<li><code>AC-2</code> through <code>AC-4</code> are proved manually once
+per significant network or identity change: exercise the Workload
+Identity secret read from a throwaway pod, attempt PostgreSQL
+connections from an allowlisted IP, a non-allowlisted IP, and from
+inside the VNet, and attempt Key Vault connections from
+<code>key_vault_allowed_public_ip</code>, from another public IP, and
+from inside the VNet, recording the pass/fail of each.</li>
+<li><code>AC-5</code> is proved by attempting
+<code>terraform destroy</code> in the sandbox subscription and
+confirming it errors out on the guarded resources before deleting
+anything.</li>
+<li><code>AC-6</code> is proved by deploying a throwaway
+<code>LoadBalancer</code> Service pinned to the Terraform output IP,
+confirming it answers from outside the VNet, then re-running
+<code>terraform apply</code> with an unrelated change and confirming the
+IP output is unchanged.</li>
+<li><code>AC-7</code> is proved by pushing a throwaway image to the
+registry from an allowlisted IP, scheduling a throwaway Pod referencing
+it via the registry's login server, and confirming the Pod pulls and
+starts without any <code>imagePullSecrets</code> on its ServiceAccount
+or spec.</li>
+<li><code>AC-8</code> is proved by attempting a push from a
+non-allowlisted IP (expect rejection at the firewall), a push from an
+allowlisted IP without an <code>AcrPush</code>-authorized token (expect
+rejection at authorization), a push from an allowlisted IP with a
+properly authorized token (expect success), and a pull from inside the
+VNet regardless of the firewall allowlist's contents (expect success),
+recording the pass/fail of each.</li>
+</ul>
+</div>
+<section id="11-risks-and-tradeoffs" class="source-block role-risks"
+data-source-block="65"
+data-source-sha256="1285aaa4ffd2e9469718aff3ada6282e941a59e9a8b79073a130a46b00ce69bd">
+<h2>11. Risks and tradeoffs</h2>
+</section>
+<div class="source-block" data-source-block="66"
+data-source-sha256="06878646165d3aa4e432bbe92201be29eefdb97e7621af161f32705b68ec2c75">
+<ul>
+<li>The state-backend bootstrap step lives outside Terraform and outside
+version control by nature; if it drifts from what this document
+describes (wrong Storage Account settings, shared-key access left
+enabled), nothing in CI catches that, since CI only checks the Terraform
+code, not the backend it runs against. Mitigation: keep the bootstrap
+script and its exact <code>az</code> commands in the repository even
+though it is not itself Terraform.</li>
+<li>Giving Key Vault a public path, even restricted to one IP, is the
+single highest-value exposure in this project: Key Vault holds every
+secret this project manages, including PostgreSQL's admin password, so a
+compromise of the one allowed caller (not a firewall misconfiguration,
+an actual compromise, such as a stolen laptop or a hijacked CI runner)
+is a compromise of the whole system's secrets, not just of Key Vault.
+The mitigation is <code>INV-2</code>'s network restriction to exactly
+one IP plus the requirement for a separately-authorized Azure AD token
+(section 8); there is no mitigation here for that one allowed caller
+itself being compromised.</li>
+<li>Giving the Container Registry a public push path, even a
+firewall-gated one requiring an authorized token, means the registry's
+security now depends on an external CI/CD identity this project does not
+provision or rotate; a compromised or overly broad <code>AcrPush</code>
+credential is a path to running an attacker-controlled image inside the
+cluster, not just a data exposure like Key Vault or PostgreSQL. The
+mitigation is the deny-by-default CIDR allowlist (<code>INV-9</code>),
+the disabled admin user (<code>INV-11</code>), and scoping that external
+credential to <code>AcrPush</code> alone rather than a broader role;
+there is no mitigation here for that credential itself being
+compromised, and provisioning it is an open question (section 12), not
+something this project's own code enforces.</li>
+<li>Giving PostgreSQL a public path, even a firewall-gated one, is real
+risk taken on beyond a VNet-only server: a misconfigured or overly broad
+firewall rule, a leaked admin password (mitigated but not eliminated,
+see below), or a future Postgres CVE reachable pre-authentication would
+all be directly exploitable from the internet. The mitigation is the
+deny-by-default allowlist (<code>INV-1</code>) and the static-scan check
+in section 10; there is no mitigation here for a
+legitimately-allowlisted source IP being itself compromised.</li>
+<li>Terraform state holds the PostgreSQL admin password in plaintext;
+this is mitigated (section 8) but not eliminated. A future move to
+PostgreSQL Flexible Server's native Azure AD authentication for
+Keycloak's own connection would remove this risk entirely, at the cost
+of extra Keycloak datasource configuration (noted in Decisions).</li>
+<li>A single state file still spans all three Resource Groups, so a
+mistake in the Terraform code itself (not an RBAC mistake, since that is
+what the three-way split guards against) can still affect the network,
+the cluster, the database, and the secret store together. Splitting into
+multiple state files per Resource Group would shrink that further but
+adds cross-state data-source lookups and more moving parts; deferred
+until the single-state approach actually causes a problem.</li>
+<li>Splitting AKS away from the VNet that hosts its subnet means its
+<code>Network Contributor</code> role assignment is a real, reviewable
+dependency, not an implicit one; if that role assignment is ever revoked
+on the network Resource Group without the AKS cluster being removed
+first, the next AKS node scale-out fails with a permissions error
+instead of a plan-time warning.</li>
+<li>AKS's data plane has no infrastructure-level firewall at all, unlike
+Key Vault and PostgreSQL; this project relies entirely on the
+application layer (HUG's TLS termination and routing, per
+<code>docs/nats-tenant-queue-api/design.md</code>) to keep that public
+entry point safe. If HUG is ever misconfigured or not yet deployed while
+the public IP already exists, the AKS Load Balancer's default backend
+behavior (typically a connection refusal or timeout with no Service
+listening) is what stands between the internet and the cluster, not
+anything this Terraform project enforces.</li>
+</ul>
+</div>
+<section id="12-open-questions" class="source-block role-open-questions"
+data-source-block="67"
+data-source-sha256="9a814093a20806bc5a44c69acb6ee4c27c516199b03238efaf23de1e8b4e534d">
+<h2>12. Open questions</h2>
+</section>
+<div class="source-block" data-source-block="68"
+data-source-sha256="c5440b5cc53e093f5074276e6f0da8ffaa84f53b23727addb459b2602ab0b921">
+<ul>
+<li>Should this project support more than one environment
+(dev/staging/prod) now, or only when a second environment is actually
+needed? Recommended default: keep <code>env</code> as a variable
+defaulted to <code>prod</code> today, and when a second environment is
+needed, key the Terraform backend state path by environment (for
+example, a <code>dev/terraform.tfstate</code> and
+<code>prod/terraform.tfstate</code> blob path in the same Storage
+Account) rather than introducing Terraform workspaces. Does not block
+starting work.</li>
+<li>Should PostgreSQL Flexible Server run zone-redundant high
+availability? Recommended default: start without HA (lower cost) for
+initial development and revisit before production traffic depends on it,
+consistent with the single-region posture already accepted in
+<code>docs/nats-tenant-queue-api/design.md</code>. Blocks production
+launch, not initial infrastructure work.</li>
+<li>Should the AKS API server be fully private (no public endpoint at
+all), or public with an authorized IP range allowlist? Recommended
+default: public with an authorized IP range restricted to the office/VPN
+egress and CI runners, since a fully private cluster requires every
+operator and CI job to already have VNet network access, which is more
+upfront operational work than this project currently justifies. Revisit
+before general availability.</li>
+<li>What AKS node VM size and autoscaler min/max should the user node
+pool use in production? Recommended default: start at
+<code>Standard_D4s_v5</code>, autoscaling 2 to 5 nodes, and revisit once
+real workload (NATS JetStream, Keycloak, the API, HUG) resource requests
+are known from running it. Blocks production sizing, not initial
+infrastructure work.</li>
+<li>Who is responsible for the one-time state-backend bootstrap script,
+and where does it live? Recommended default: a <code>bootstrap/</code>
+directory in this same repository with the exact <code>az</code> CLI
+commands, run once by whoever stands up the first environment. Does not
+block starting work on the rest of the project.</li>
+<li>Who owns reviewing and pruning
+<code>postgres_firewall_allowed_cidrs</code> over time, and how often?
+Recommended default: treat it like any other firewall change, reviewed
+in the same pull request process as the rest of this Terraform code,
+with a standing reminder (calendar or a scheduled CI check listing
+current entries) to prune anything no longer needed. Does not block
+starting work.</li>
+<li>Given PostgreSQL now has a public path, should it require Azure AD
+authentication in addition to password authentication, rather than
+password authentication alone, as extra defense in depth? Recommended
+default: keep password authentication only for now (matching the
+Decisions in section 4, since Keycloak's JDBC datasource expects it) and
+revisit before any source range broader than a small, known set of
+operator or CI IPs is added to the allowlist. Blocks widening the
+allowlist beyond a small initial set, not initial infrastructure
+work.</li>
+<li>Whose IP address is <code>key_vault_allowed_public_ip</code>, and
+who owns updating it if that IP changes (a dynamic office IP, a rotated
+CI runner)? Recommended default: use a static, known-stable IP (a NAT
+gateway or fixed egress IP, not an individual's home connection) and
+treat changing it as a reviewed pull request like any other firewall
+change, the same process as <code>postgres_firewall_allowed_cidrs</code>
+(see the open question above). Blocks setting the variable to a real
+value, not the rest of this project's infrastructure work.</li>
+<li>Who provisions the CI/CD identity that pushes the middleware
+application's image to the registry, and what role does it hold?
+Recommended default: a dedicated Azure AD identity (a federated
+credential from the CI platform, for example GitHub Actions OIDC, rather
+than a long-lived client secret) scoped to <code>AcrPush</code> only on
+this registry, provisioned alongside the CI/CD pipeline itself (out of
+scope, section 13) rather than by this Terraform project, since this
+project has no other CI/CD-owned resource to attach it to. Blocks the
+CI/CD pipeline from pushing anything, not this project's own
+infrastructure work.</li>
+<li>Should the Container Registry have an image retention/cleanup policy
+(ACR's built-in retention policy for untagged manifests, or a scheduled
+task), or is unbounded image accumulation acceptable for now?
+Recommended default: enable ACR's built-in untagged-manifest retention
+policy (Premium SKU already includes it) with a 30-day default, and
+revisit once real image push volume is known. Does not block starting
+work.</li>
+<li>Does the registry need geo-replication (a Premium-only feature,
+already paid for by the SKU choice in Decisions) for multi-region image
+pull latency or resilience? Recommended default: no geo-replication for
+now, consistent with the single-region posture already accepted
+elsewhere in this project; revisit only alongside a multi-region
+decision for the rest of the system (see the multi-region open question
+above). Does not block starting work.</li>
+<li>Does the AKS Load Balancer need more than one public IP (for
+example, a separate one for a future second <code>LoadBalancer</code>
+Service), or does HUG's single Gateway Service, fronting both
+<code>/v1/*</code> and <code>/auth/*</code> per
+<code>docs/nats-tenant-queue-api/design.md</code>, cover every case with
+the one this project provisions? Recommended default: provision exactly
+one static public IP now, and add a second only if a concrete second
+<code>LoadBalancer</code> Service is actually needed later. Does not
+block starting work.</li>
+</ul>
+</div>
+<section id="13-out-of-scope" class="source-block"
+data-source-block="69"
+data-source-sha256="c22168596a4b1b1829bac627abf17561e31167099a31c6893f97bddab585a496">
+<h2>13. Out of scope</h2>
+</section>
+<div class="source-block" data-source-block="70"
+data-source-sha256="97400a9bc1687752e468fbffa368096d06d76b1c306318f9cc4c695fd6927551">
+<ul>
+<li>Deploying NATS, Keycloak, HUG, or the REST API into the cluster
+(Helm charts and Kubernetes manifests, layered on top of this
+infrastructure).</li>
+<li>CI/CD pipeline configuration for running Terraform itself, beyond
+the CI checks named in section 10.</li>
+<li>The CI/CD pipeline that builds the middleware application's
+container image and pushes it to the Container Registry this project
+creates, and the Azure AD identity (with <code>AcrPush</code>) that
+pipeline authenticates as (see Open questions).</li>
+<li>Image retention/cleanup policy and geo-replication configuration for
+the Container Registry beyond the recommended defaults in Open
+questions.</li>
+<li>DNS domain registration and TLS certificate provisioning for the
+public-facing Load Balancer.</li>
+<li>Cost budgets, alerts, or spend monitoring.</li>
+<li>Multi-region deployment and disaster recovery.</li>
+<li>The tenant-provisioning pipeline (NATS account creation, Key Vault
+per-tenant credential writes) described as out of scope in
+<code>docs/nats-tenant-queue-api/design.md</code>.</li>
+<li>The dedicated user-assigned identity, federated credential, and
+<code>Key Vault Secrets User</code> role assignment for each in-cluster
+workload that needs Key Vault access (Keycloak, the REST API); each is
+provisioned by that workload's own companion document extending this
+root module, not by this project directly. See
+<code>docs/keycloak-operator/design.md</code> section 4.1 and
+<code>docs/rest-api-workload/design.md</code> section 6.</li>
+</ul>
+</div>
+
+    </main>
+  </div>
+  <footer class="document-footer">Generated from docs/terraform-infra/design.md by blueprint/html-doc@1. Edit the Markdown source, then regenerate.</footer>
+</body>
+</html>

@@ -1,0 +1,933 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+  <meta name="document-kind" content="design">
+  <meta name="source-path" content="/Users/marcocella/projects/nats-saas/docs/nats-tenant-queue-api/design.md">
+  <meta name="source-sha256" content="4f28d60f457d842811a3add35150c3b570f5c60d11324ca235f2bc509935277e">
+  <meta name="generator" content="blueprint/html-doc@1">
+  <title>Multi-tenant NATS-backed data API on AKS</title>
+  <style>:root {
+  color-scheme: light;
+  --paper: #f7f9fb;
+  --surface: #ffffff;
+  --surface-soft: #edf2f5;
+  --ink: #172630;
+  --muted: #526773;
+  --line: #ccd8df;
+  --line-strong: #8fa5b3;
+  --accent: #385e75;
+  --accent-soft: #dbe5ec;
+  --focus: #176b93;
+  --risk: #6b4f28;
+  --risk-soft: #f3ecdf;
+  --radius: 12px;
+  --shadow: 0 16px 42px rgb(31 54 68 / 10%);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--paper); }
+a { color: var(--accent); text-underline-offset: 0.16em; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible, summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 10;
+  left: 1rem;
+  top: 1rem;
+  padding: .65rem .9rem;
+  background: var(--ink);
+  color: white;
+  transform: translateY(-180%);
+}
+.skip-link:focus { transform: translateY(0); }
+
+.document-header {
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(145deg, #e5edf2 0%, #f7f9fb 70%);
+}
+.document-header__inner,
+.page-shell,
+.document-footer {
+  width: min(1180px, calc(100% - 2rem));
+  margin-inline: auto;
+}
+.document-header__inner { padding: 3.8rem 0 3rem; }
+.eyebrow {
+  margin: 0 0 .8rem;
+  color: var(--accent);
+  font-size: .78rem;
+  font-weight: 750;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.document-title {
+  max-width: 900px;
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.25rem, 5vw, 4.6rem);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -.035em;
+}
+.metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem 1.25rem;
+  margin: 1.6rem 0 0;
+  color: var(--muted);
+  font-size: .88rem;
+}
+.metadata dt { font-weight: 700; color: var(--ink); }
+.metadata dd { margin: 0; overflow-wrap: anywhere; }
+.metadata__item { display: grid; grid-template-columns: auto 1fr; gap: .35rem; }
+
+.page-shell {
+  display: grid;
+  grid-template-columns: minmax(190px, 250px) minmax(0, 1fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+  padding-block: 3rem 5rem;
+}
+.toc {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  padding: 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgb(255 255 255 / 78%);
+}
+.toc-title { margin: 0 0 .75rem; font: 750 .78rem/1.2 Inter, sans-serif; letter-spacing: .09em; text-transform: uppercase; }
+.toc ol { list-style: none; padding: 0; margin: 0; }
+.toc li + li { margin-top: .34rem; }
+.toc li[data-level="3"] { padding-left: .8rem; font-size: .88rem; }
+.toc a { display: block; color: var(--muted); text-decoration: none; line-height: 1.35; }
+.toc a:hover { color: var(--ink); }
+
+.document-content {
+  min-width: 0;
+  padding: clamp(1.4rem, 4vw, 3.8rem);
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) + 4px);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.source-block { min-width: 0; }
+.source-block > :first-child { margin-top: 0; }
+.source-block > :last-child { margin-bottom: 0; }
+.source-block + .source-block { margin-top: 1rem; }
+.source-block:has(> h1), .source-block:has(> h2) { margin-top: 3.7rem; }
+.source-block:first-child { margin-top: 0; }
+h1, h2, h3, h4 { color: var(--ink); line-height: 1.2; scroll-margin-top: 1.5rem; }
+.document-content h1 { font: 500 clamp(2rem, 5vw, 3.2rem)/1.08 Georgia, serif; letter-spacing: -.025em; }
+.document-content h2 { padding-top: .4rem; font: 500 clamp(1.7rem, 3vw, 2.3rem)/1.15 Georgia, serif; letter-spacing: -.018em; }
+.document-content h3 { font-size: 1.12rem; }
+.document-content h4 { font-size: 1rem; }
+p, ul, ol, blockquote, pre, table, figure { margin-block: 1rem; }
+blockquote {
+  margin-inline: 0;
+  padding: .8rem 1rem;
+  border-left: 4px solid var(--line-strong);
+  background: var(--surface-soft);
+  color: #314854;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+.role-requirements, .role-acceptance-criteria, .role-invariants,
+.role-decisions, .role-risks, .role-open-questions {
+  margin-top: 1.25rem;
+  padding: 1rem 1.2rem;
+  border-left: 4px solid var(--line-strong);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--surface-soft);
+}
+.role-risks, .role-open-questions { border-left-color: var(--risk); background: var(--risk-soft); }
+code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+code { padding: .12em .32em; border-radius: 4px; background: var(--surface-soft); font-size: .9em; }
+pre {
+  max-width: 100%;
+  overflow: auto;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #132630;
+  color: #edf4f7;
+  line-height: 1.48;
+}
+pre code { padding: 0; background: transparent; color: inherit; }
+.table-wrap { max-width: 100%; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+th, td { padding: .68rem .75rem; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { background: var(--surface-soft); font-weight: 720; }
+tbody tr:nth-child(even) { background: #f9fbfc; }
+.diagram {
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fbfcfd;
+}
+.diagram img { display: block; width: 100%; height: auto; max-height: 650px; object-fit: contain; }
+.diagram figcaption { margin-top: .75rem; color: var(--muted); font-size: .86rem; }
+.diagram details { margin-top: .8rem; }
+.diagram summary { cursor: pointer; color: var(--accent); font-weight: 650; }
+.diagram details pre { max-height: 18rem; }
+.document-footer { padding: 0 0 3rem; color: var(--muted); font-size: .82rem; }
+
+@media (max-width: 760px) {
+  .document-header__inner { padding: 2.7rem 0 2.2rem; }
+  .page-shell { grid-template-columns: 1fr; gap: 1.2rem; padding-top: 1.25rem; }
+  .toc { position: static; max-height: none; }
+  .document-content { padding: 1.25rem; border-radius: var(--radius); }
+  .source-block:has(> h1), .source-block:has(> h2) { margin-top: 2.7rem; }
+}
+
+@media print {
+  :root { background: white; font-size: 10.5pt; }
+  @page { size: auto; margin: 16mm; }
+  .skip-link, .toc { display: none; }
+  .document-header { background: white; }
+  .document-header__inner, .page-shell, .document-footer { width: 100%; }
+  .document-header__inner { padding: 0 0 12mm; }
+  .document-title { font-size: 28pt; }
+  .page-shell { display: block; padding: 0; }
+  .document-content { padding: 0; border: 0; box-shadow: none; }
+  h1, h2, h3, h4 { break-after: avoid-page; }
+  table, figure, pre, blockquote { break-inside: avoid; }
+  thead { display: table-header-group; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .document-footer { padding: 10mm 0 0; }
+}
+</style>
+</head>
+<body>
+  <a class="skip-link" href="#document-content">Skip to document</a>
+  <header class="document-header">
+    <div class="document-header__inner">
+      <p class="eyebrow">Technical design</p>
+      <p class="document-title">Multi-tenant NATS-backed data API on AKS</p>
+      <dl class="metadata">
+        <div class="metadata__item"><dt>Status</dt><dd>Proposed for review</dd></div>
+        <div class="metadata__item"><dt>Source</dt><dd>/Users/marcocella/projects/nats-saas/docs/nats-tenant-queue-api/design.md</dd></div>
+        <div class="metadata__item"><dt>SHA-256</dt><dd><code>4f28d60f457d842811a3add35150c3b570f5c60d11324ca235f2bc509935277e</code></dd></div>
+      </dl>
+    </div>
+  </header>
+  <div class="page-shell">
+    <nav class="toc" aria-label="Document contents"><p class="toc-title">Contents</p><ol><li data-level="2"><a href="#1-executive-summary">1. Executive summary</a></li><li data-level="2"><a href="#2-context-and-scope">2. Context and scope</a></li><li data-level="2"><a href="#3-system-context">3. System context</a></li><li data-level="2"><a href="#4-proposed-design">4. Proposed design</a></li><li data-level="3"><a href="#how-it-works">How it works</a></li><li data-level="3"><a href="#components-and-responsibilities">Components and responsibilities</a></li><li data-level="3"><a href="#decisions">Decisions</a></li><li data-level="2"><a href="#5-invariants-and-requirements">5. Invariants and requirements</a></li><li data-level="3"><a href="#invariants">Invariants</a></li><li data-level="3"><a href="#requirements">Requirements</a></li><li data-level="2"><a href="#6-interfaces-and-data">6. Interfaces and data</a></li><li data-level="3"><a href="#naming-and-identity">Naming and identity</a></li><li data-level="2"><a href="#7-failure-behavior-and-lifecycle">7. Failure behavior and lifecycle</a></li><li data-level="2"><a href="#8-security-privacy-and-operations">8. Security, privacy, and operations</a></li><li data-level="2"><a href="#9-acceptance-criteria">9. Acceptance criteria</a></li><li data-level="2"><a href="#10-test-approach">10. Test approach</a></li><li data-level="2"><a href="#11-risks-and-tradeoffs">11. Risks and tradeoffs</a></li><li data-level="2"><a href="#12-open-questions">12. Open questions</a></li><li data-level="2"><a href="#13-out-of-scope">13. Out of scope</a></li></ol></nav>
+    <main id="document-content" class="document-content" data-source-block-count="46">
+<section id="multi-tenant-nats-backed-data-api-on-aks"
+class="source-block" data-source-block="1"
+data-source-sha256="a60b855582d314b7626d9349e4e832be5fa8a69aadaed498f1962d3f99dedd32">
+<h1>Multi-tenant NATS-backed data API on AKS</h1>
+</section>
+<div class="source-block" data-source-block="2"
+data-source-sha256="f3cfda141bb0d969e973d91600064c759ac4c936fa82e9f2c3f6bb2a60fbb270">
+<blockquote>
+<p><strong>Status:</strong> Proposed for review</p>
+</blockquote>
+</div>
+<section id="1-executive-summary" class="source-block role-summary"
+data-source-block="3"
+data-source-sha256="369eedb81a8602aa50ed832662b898c91ab782d2b66611d11a6b18d8001d4703">
+<h2>1. Executive summary</h2>
+</section>
+<div class="source-block" data-source-block="4"
+data-source-sha256="358c3a3596269cb4647eb1071d884b5c07a736b9c16f7fc557fec44f8dc0778c">
+<p>Today there is no system. This design describes a new REST API where
+each company (tenant) can create, list, read, and delete records, with
+NATS JetStream as the storage and transport layer underneath, all hosted
+in a single Azure Kubernetes Service (AKS) cluster in one Azure region.
+Both Keycloak and the REST API are exposed externally through HAProxy
+Unified Gateway (HUG), an in-cluster implementation of the Kubernetes
+Gateway API, fronted by an Azure Standard Load Balancer. The main risk
+is that NATS multi-tenancy is enforced at two layers (API authorization
+and NATS account boundaries), which costs extra operational setup
+(issuing and rotating per-tenant NATS credentials) compared to a single
+shared NATS account. We accept that cost because it means a bug in the
+API's tenant-scoping code cannot, by itself, leak one company's data
+into another's: the API process would still need that tenant's NATS
+credentials to reach the wrong data, and those credentials are looked up
+strictly from the verified caller identity. A second, related risk is
+that everything (identity, queue, API, ingress) lives in one AKS cluster
+in one region: a cluster-level or region-level outage takes the whole
+system down at once (see section 11).</p>
+</div>
+<div class="source-block" data-source-block="5"
+data-source-sha256="4703a73e9cf567a76cf611d5d04c72791d7cfe716e4b215e4e75846c24a58616">
+<p>Note on identity provider: Auth0 was the originally requested IdP,
+but Auth0 is a hosted SaaS product with no official self-hosted Helm
+chart, so it cannot be deployed inside AKS as requested. This design
+substitutes <strong>Keycloak</strong>, which does have an official
+Helm-deployable path and is designed to be self-hosted, and treats
+"Auth0" in the original request as "a self-hosted OIDC provider."</p>
+</div>
+<section id="2-context-and-scope" class="source-block"
+data-source-block="6"
+data-source-sha256="7f27d9838429652fd04876b144f647ac2408f51de0d0db5fc261c40076a8d500">
+<h2>2. Context and scope</h2>
+</section>
+<div class="source-block" data-source-block="7"
+data-source-sha256="b8e7ae6f8b2b9c878500d38300dbec9816ee84f9272ddb84e157714f637630f8">
+<p>This is a greenfield service (no existing system to preserve). In
+scope: a REST API for authenticated users of a tenant to create, list,
+read, and delete arbitrary JSON records, using NATS JetStream as the
+datastore, with hard tenant isolation enforced by NATS Accounts. The
+whole system (NATS, Keycloak, the REST API) is deployed in one Azure
+Kubernetes Service (AKS) cluster: NATS and Keycloak via their official
+Helm charts, the REST API as a standalone Go application built and
+deployed as its own Kubernetes Deployment. The solution is regional: the
+AKS cluster, its Azure Standard Load Balancer, Azure Database for
+PostgreSQL, Azure Key Vault, and the Managed Disks backing JetStream all
+live in a single Azure region and a single virtual network in that
+region. Both Keycloak and the REST API are reached externally only
+through HUG, the in-cluster Kubernetes Gateway API implementation,
+exposed via that region's Azure Standard Load Balancer. Multi-region
+deployment and cross-region disaster recovery are out of scope (section
+13). Out of scope items are listed in section 13.</p>
+</div>
+<section id="3-system-context" class="source-block"
+data-source-block="8"
+data-source-sha256="40793fe15cdedd8ecf4489800820100043e0c3ebe6ee96e6db9b0dc8f866fabd">
+<h2>3. System context</h2>
+</section>
+<figure class="diagram source-block" data-source-sha256="d786bfdaef7a480d13460db1a9a76e5a55d981d0f58153e35a7fdbfab0d2bfec" data-source-block="9"><img alt="Diagram 1 showing Company A users, Company B users, Azure region + virtual network, Azure Standard Load Balancer\npublic IP, regional, Azure Kubernetes Service cluster, HUG - Gateway API implementation, Gateway\nTLS termination, HTTPRoute /v1/*, HTTPRoute /auth/*, REST API Deployment - Go, AuthN/AuthZ middleware, Per-tenant NATS connect" src="data:image/svg+xml;base64,PHN2ZyBpZD0ibXktc3ZnIiB3aWR0aD0iMTAwJSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgY2xhc3M9ImZsb3djaGFydCIgc3R5bGU9Im1heC13aWR0aDogMjYyMi43N3B4OyBiYWNrZ3JvdW5kLWNvbG9yOiB0cmFuc3BhcmVudDsiIHZpZXdCb3g9IjAgMCAyNjIyLjc2NTYyNSA5NTguNDA4OTk2NTgyMDMxMiIgcm9sZT0iZ3JhcGhpY3MtZG9jdW1lbnQgZG9jdW1lbnQiIGFyaWEtcm9sZWRlc2NyaXB0aW9uPSJmbG93Y2hhcnQtdjIiPjxzdHlsZT4jbXktc3Zne2ZvbnQtZmFtaWx5OkludGVyLHVpLXNhbnMtc2VyaWYsc3lzdGVtLXVpLHNhbnMtc2VyaWY7Zm9udC1zaXplOjE2cHg7ZmlsbDojMTcyNjMwO31Aa2V5ZnJhbWVzIGVkZ2UtYW5pbWF0aW9uLWZyYW1le2Zyb217c3Ryb2tlLWRhc2hvZmZzZXQ6MDt9fUBrZXlmcmFtZXMgZGFzaHt0b3tzdHJva2UtZGFzaG9mZnNldDowO319I215LXN2ZyAuZWRnZS1hbmltYXRpb24tc2xvd3tzdHJva2UtZGFzaGFycmF5OjksNSFpbXBvcnRhbnQ7c3Ryb2tlLWRhc2hvZmZzZXQ6OTAwO2FuaW1hdGlvbjpkYXNoIDUwcyBsaW5lYXIgaW5maW5pdGU7c3Ryb2tlLWxpbmVjYXA6cm91bmQ7fSNteS1zdmcgLmVkZ2UtYW5pbWF0aW9uLWZhc3R7c3Ryb2tlLWRhc2hhcnJheTo5LDUhaW1wb3J0YW50O3N0cm9rZS1kYXNob2Zmc2V0OjkwMDthbmltYXRpb246ZGFzaCAyMHMgbGluZWFyIGluZmluaXRlO3N0cm9rZS1saW5lY2FwOnJvdW5kO30jbXktc3ZnIC5lcnJvci1pY29ue2ZpbGw6I2Y3ZjlmYjt9I215LXN2ZyAuZXJyb3ItdGV4dHtmaWxsOiMwODA2MDQ7c3Ryb2tlOiMwODA2MDQ7fSNteS1zdmcgLmVkZ2UtdGhpY2tuZXNzLW5vcm1hbHtzdHJva2Utd2lkdGg6MXB4O30jbXktc3ZnIC5lZGdlLXRoaWNrbmVzcy10aGlja3tzdHJva2Utd2lkdGg6My41cHg7fSNteS1zdmcgLmVkZ2UtcGF0dGVybi1zb2xpZHtzdHJva2UtZGFzaGFycmF5OjA7fSNteS1zdmcgLmVkZ2UtdGhpY2tuZXNzLWludmlzaWJsZXtzdHJva2Utd2lkdGg6MDtmaWxsOm5vbmU7fSNteS1zdmcgLmVkZ2UtcGF0dGVybi1kYXNoZWR7c3Ryb2tlLWRhc2hhcnJheTozO30jbXktc3ZnIC5lZGdlLXBhdHRlcm4tZG90dGVke3N0cm9rZS1kYXNoYXJyYXk6Mjt9I215LXN2ZyAubWFya2Vye2ZpbGw6IzUyNmE3OTtzdHJva2U6IzUyNmE3OTt9I215LXN2ZyAubWFya2VyLmNyb3Nze3N0cm9rZTojNTI2YTc5O30jbXktc3ZnIHN2Z3tmb250LWZhbWlseTpJbnRlcix1aS1zYW5zLXNlcmlmLHN5c3RlbS11aSxzYW5zLXNlcmlmO2ZvbnQtc2l6ZToxNnB4O30jbXktc3ZnIHB7bWFyZ2luOjA7fSNteS1zdmcgLmxhYmVse2ZvbnQtZmFtaWx5OkludGVyLHVpLXNhbnMtc2VyaWYsc3lzdGVtLXVpLHNhbnMtc2VyaWY7Y29sb3I6IzE3MjYzMDt9I215LXN2ZyAuY2x1c3Rlci1sYWJlbCB0ZXh0e2ZpbGw6IzA4MDYwNDt9I215LXN2ZyAuY2x1c3Rlci1sYWJlbCBzcGFue2NvbG9yOiMwODA2MDQ7fSNteS1zdmcgLmNsdXN0ZXItbGFiZWwgc3BhbiBwe2JhY2tncm91bmQtY29sb3I6dHJhbnNwYXJlbnQ7fSNteS1zdmcgLmxhYmVsIHRleHQsI215LXN2ZyBzcGFue2ZpbGw6IzE3MjYzMDtjb2xvcjojMTcyNjMwO30jbXktc3ZnIC5ub2RlIHJlY3QsI215LXN2ZyAubm9kZSBjaXJjbGUsI215LXN2ZyAubm9kZSBlbGxpcHNlLCNteS1zdmcgLm5vZGUgcG9seWdvbiwjbXktc3ZnIC5ub2RlIHBhdGh7ZmlsbDojZGJlNWVjO3N0cm9rZTojNjA3OThhO3N0cm9rZS13aWR0aDoxcHg7fSNteS1zdmcgLnJvdWdoLW5vZGUgLmxhYmVsIHRleHQsI215LXN2ZyAubm9kZSAubGFiZWwgdGV4dCwjbXktc3ZnIC5pbWFnZS1zaGFwZSAubGFiZWwsI215LXN2ZyAuaWNvbi1zaGFwZSAubGFiZWx7dGV4dC1hbmNob3I6bWlkZGxlO30jbXktc3ZnIC5ub2RlIC5rYXRleCBwYXRoe2ZpbGw6IzAwMDtzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MXB4O30jbXktc3ZnIC5yb3VnaC1ub2RlIC5sYWJlbCwjbXktc3ZnIC5ub2RlIC5sYWJlbCwjbXktc3ZnIC5pbWFnZS1zaGFwZSAubGFiZWwsI215LXN2ZyAuaWNvbi1zaGFwZSAubGFiZWx7dGV4dC1hbGlnbjpjZW50ZXI7fSNteS1zdmcgLm5vZGUuY2xpY2thYmxle2N1cnNvcjpwb2ludGVyO30jbXktc3ZnIC5yb290IC5hbmNob3IgcGF0aHtmaWxsOiM1MjZhNzkhaW1wb3J0YW50O3N0cm9rZS13aWR0aDowO3N0cm9rZTojNTI2YTc5O30jbXktc3ZnIC5hcnJvd2hlYWRQYXRoe2ZpbGw6IzA4MDYwNDt9I215LXN2ZyAuZWRnZVBhdGggLnBhdGh7c3Ryb2tlOiM1MjZhNzk7c3Ryb2tlLXdpZHRoOjFweDt9I215LXN2ZyAuZmxvd2NoYXJ0LWxpbmt7c3Ryb2tlOiM1MjZhNzk7ZmlsbDpub25lO30jbXktc3ZnIC5lZGdlTGFiZWx7YmFja2dyb3VuZC1jb2xvcjojZWRmMmY1O3RleHQtYWxpZ246Y2VudGVyO30jbXktc3ZnIC5lZGdlTGFiZWwgcHtiYWNrZ3JvdW5kLWNvbG9yOiNlZGYyZjU7fSNteS1zdmcgLmVkZ2VMYWJlbCByZWN0e29wYWNpdHk6MC41O2JhY2tncm91bmQtY29sb3I6I2VkZjJmNTtmaWxsOiNlZGYyZjU7fSNteS1zdmcgLmxhYmVsQmtne2JhY2tncm91bmQtY29sb3I6cmdiYSgyMzcsIDI0MiwgMjQ1LCAwLjUpO30jbXktc3ZnIC5jbHVzdGVyIHJlY3R7ZmlsbDojZjdmOWZiO3N0cm9rZTpoc2woMjEwLCAwJSwgODcuNjQ3MDU4ODIzNSUpO3N0cm9rZS13aWR0aDoxcHg7fSNteS1zdmcgLmNsdXN0ZXIgdGV4dHtmaWxsOiMwODA2MDQ7fSNteS1zdmcgLmNsdXN0ZXIgc3Bhbntjb2xvcjojMDgwNjA0O30jbXktc3ZnIGRpdi5tZXJtYWlkVG9vbHRpcHtwb3NpdGlvbjphYnNvbHV0ZTt0ZXh0LWFsaWduOmNlbnRlcjttYXgtd2lkdGg6MjAwcHg7cGFkZGluZzoycHg7Zm9udC1mYW1pbHk6SW50ZXIsdWktc2Fucy1zZXJpZixzeXN0ZW0tdWksc2Fucy1zZXJpZjtmb250LXNpemU6MTJweDtiYWNrZ3JvdW5kOiNmN2Y5ZmI7Ym9yZGVyOjFweCBzb2xpZCBoc2woMjEwLCAwJSwgODcuNjQ3MDU4ODIzNSUpO2JvcmRlci1yYWRpdXM6MnB4O3BvaW50ZXItZXZlbnRzOm5vbmU7ei1pbmRleDoxMDA7fSNteS1zdmcgLmZsb3djaGFydFRpdGxlVGV4dHt0ZXh0LWFuY2hvcjptaWRkbGU7Zm9udC1zaXplOjE4cHg7ZmlsbDojMTcyNjMwO30jbXktc3ZnIHJlY3QudGV4dHtmaWxsOm5vbmU7c3Ryb2tlLXdpZHRoOjA7fSNteS1zdmcgLmljb24tc2hhcGUsI215LXN2ZyAuaW1hZ2Utc2hhcGV7YmFja2dyb3VuZC1jb2xvcjojZWRmMmY1O3RleHQtYWxpZ246Y2VudGVyO30jbXktc3ZnIC5pY29uLXNoYXBlIHAsI215LXN2ZyAuaW1hZ2Utc2hhcGUgcHtiYWNrZ3JvdW5kLWNvbG9yOiNlZGYyZjU7cGFkZGluZzoycHg7fSNteS1zdmcgLmljb24tc2hhcGUgLmxhYmVsIHJlY3QsI215LXN2ZyAuaW1hZ2Utc2hhcGUgLmxhYmVsIHJlY3R7b3BhY2l0eTowLjU7YmFja2dyb3VuZC1jb2xvcjojZWRmMmY1O2ZpbGw6I2VkZjJmNTt9I215LXN2ZyAubGFiZWwtaWNvbntkaXNwbGF5OmlubGluZS1ibG9jaztoZWlnaHQ6MWVtO292ZXJmbG93OnZpc2libGU7dmVydGljYWwtYWxpZ246LTAuMTI1ZW07fSNteS1zdmcgLm5vZGUgLmxhYmVsLWljb24gcGF0aHtmaWxsOmN1cnJlbnRDb2xvcjtzdHJva2U6cmV2ZXJ0O3N0cm9rZS13aWR0aDpyZXZlcnQ7fSNteS1zdmcgLm5vZGUgLm5lby1ub2Rle3N0cm9rZTojNjA3OThhO30jbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLm5vZGUgcmVjdCwjbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLmNsdXN0ZXIgcmVjdCwjbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLm5vZGUgcG9seWdvbntzdHJva2U6dXJsKCNteS1zdmctZ3JhZGllbnQpO2ZpbHRlcjpkcm9wLXNoYWRvdyggMXB4IDJweCAycHggcmdiYSgxODUsMTg1LDE4NSwxKSk7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0uc3dpbWxhbmUuY2x1c3RlciByZWN0e2ZpbHRlcjpub25lO30jbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLm5vZGUgcGF0aHtzdHJva2U6dXJsKCNteS1zdmctZ3JhZGllbnQpO3N0cm9rZS13aWR0aDoxcHg7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0ubm9kZSAub3V0ZXItcGF0aHtmaWx0ZXI6ZHJvcC1zaGFkb3coIDFweCAycHggMnB4IHJnYmEoMTg1LDE4NSwxODUsMSkpO30jbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLm5vZGUgLm5lby1saW5lIHBhdGh7c3Ryb2tlOiM2MDc5OGE7ZmlsdGVyOm5vbmU7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0ubm9kZSBjaXJjbGV7c3Ryb2tlOnVybCgjbXktc3ZnLWdyYWRpZW50KTtmaWx0ZXI6ZHJvcC1zaGFkb3coIDFweCAycHggMnB4IHJnYmEoMTg1LDE4NSwxODUsMSkpO30jbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLm5vZGUgY2lyY2xlIC5zdGF0ZS1zdGFydHtmaWxsOiMwMDAwMDA7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0uaWNvbi1zaGFwZSAuaWNvbntmaWxsOnVybCgjbXktc3ZnLWdyYWRpZW50KTtmaWx0ZXI6ZHJvcC1zaGFkb3coIDFweCAycHggMnB4IHJnYmEoMTg1LDE4NSwxODUsMSkpO30jbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLmljb24tc2hhcGUgLmljb24tbmVvIHBhdGh7c3Ryb2tlOnVybCgjbXktc3ZnLWdyYWRpZW50KTtmaWx0ZXI6ZHJvcC1zaGFkb3coIDFweCAycHggMnB4IHJnYmEoMTg1LDE4NSwxODUsMSkpO30jbXktc3ZnIDpyb290ey0tbWVybWFpZC1mb250LWZhbWlseToidHJlYnVjaGV0IG1zIix2ZXJkYW5hLGFyaWFsLHNhbnMtc2VyaWY7fTwvc3R5bGU+PGc+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCIgY2xhc3M9Im1hcmtlciBmbG93Y2hhcnQtdjIiIHZpZXdCb3g9IjAgMCAxMCAxMCIgcmVmWD0iNSIgcmVmWT0iNSIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iOCIgbWFya2VySGVpZ2h0PSI4IiBvcmllbnQ9ImF1dG8iPjxwYXRoIGQ9Ik0gMCAwIEwgMTAgNSBMIDAgMTAgeiIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMTsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50U3RhcnQiIGNsYXNzPSJtYXJrZXIgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTAgMTAiIHJlZlg9IjQuNSIgcmVmWT0iNSIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iOCIgbWFya2VySGVpZ2h0PSI4IiBvcmllbnQ9ImF1dG8iPjxwYXRoIGQ9Ik0gMCA1IEwgMTAgMTAgTCAxMCAwIHoiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDE7IHN0cm9rZS1kYXNoYXJyYXk6IDEsIDA7Ii8+PC9tYXJrZXI+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZC1tYXJnaW4iIGNsYXNzPSJtYXJrZXIgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTEuNSAxNCIgcmVmWD0iMTEuNSIgcmVmWT0iNyIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iMTAuNSIgbWFya2VySGVpZ2h0PSIxNCIgb3JpZW50PSJhdXRvIj48cGF0aCBkPSJNIDAgMCBMIDExLjUgNyBMIDAgMTQgeiIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMDsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50U3RhcnQtbWFyZ2luIiBjbGFzcz0ibWFya2VyIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDExLjUgMTQiIHJlZlg9IjEiIHJlZlk9IjciIG1hcmtlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgbWFya2VyV2lkdGg9IjExLjUiIG1hcmtlckhlaWdodD0iMTQiIG9yaWVudD0iYXV0byI+PHBvbHlnb24gcG9pbnRzPSIwLDcgMTEuNSwxNCAxMS41LDAiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDA7IHN0cm9rZS1kYXNoYXJyYXk6IDEsIDA7Ii8+PC9tYXJrZXI+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1jaXJjbGVFbmQiIGNsYXNzPSJtYXJrZXIgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTAgMTAiIHJlZlg9IjExIiByZWZZPSI1IiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSIxMSIgbWFya2VySGVpZ2h0PSIxMSIgb3JpZW50PSJhdXRvIj48Y2lyY2xlIGN4PSI1IiBjeT0iNSIgcj0iNSIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMTsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLWNpcmNsZVN0YXJ0IiBjbGFzcz0ibWFya2VyIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDEwIDEwIiByZWZYPSItMSIgcmVmWT0iNSIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iMTEiIG1hcmtlckhlaWdodD0iMTEiIG9yaWVudD0iYXV0byI+PGNpcmNsZSBjeD0iNSIgY3k9IjUiIHI9IjUiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDE7IHN0cm9rZS1kYXNoYXJyYXk6IDEsIDA7Ii8+PC9tYXJrZXI+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1jaXJjbGVFbmQtbWFyZ2luIiBjbGFzcz0ibWFya2VyIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDEwIDEwIiByZWZZPSI1IiByZWZYPSIxMi4yNSIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iMTQiIG1hcmtlckhlaWdodD0iMTQiIG9yaWVudD0iYXV0byI+PGNpcmNsZSBjeD0iNSIgY3k9IjUiIHI9IjUiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDA7IHN0cm9rZS1kYXNoYXJyYXk6IDEsIDA7Ii8+PC9tYXJrZXI+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1jaXJjbGVTdGFydC1tYXJnaW4iIGNsYXNzPSJtYXJrZXIgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTAgMTAiIHJlZlg9Ii0yIiByZWZZPSI1IiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSIxNCIgbWFya2VySGVpZ2h0PSIxNCIgb3JpZW50PSJhdXRvIj48Y2lyY2xlIGN4PSI1IiBjeT0iNSIgcj0iNSIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMDsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLWNyb3NzRW5kIiBjbGFzcz0ibWFya2VyIGNyb3NzIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDExIDExIiByZWZYPSIxMiIgcmVmWT0iNS4yIiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSIxMSIgbWFya2VySGVpZ2h0PSIxMSIgb3JpZW50PSJhdXRvIj48cGF0aCBkPSJNIDEsMSBsIDksOSBNIDEwLDEgbCAtOSw5IiBjbGFzcz0iYXJyb3dNYXJrZXJQYXRoIiBzdHlsZT0ic3Ryb2tlLXdpZHRoOiAyOyBzdHJva2UtZGFzaGFycmF5OiAxLCAwOyIvPjwvbWFya2VyPjxtYXJrZXIgaWQ9Im15LXN2Z19mbG93Y2hhcnQtdjItY3Jvc3NTdGFydCIgY2xhc3M9Im1hcmtlciBjcm9zcyBmbG93Y2hhcnQtdjIiIHZpZXdCb3g9IjAgMCAxMSAxMSIgcmVmWD0iLTEiIHJlZlk9IjUuMiIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iMTEiIG1hcmtlckhlaWdodD0iMTEiIG9yaWVudD0iYXV0byI+PHBhdGggZD0iTSAxLDEgbCA5LDkgTSAxMCwxIGwgLTksOSIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMjsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLWNyb3NzRW5kLW1hcmdpbiIgY2xhc3M9Im1hcmtlciBjcm9zcyBmbG93Y2hhcnQtdjIiIHZpZXdCb3g9IjAgMCAxNSAxNSIgcmVmWD0iMTcuNyIgcmVmWT0iNy41IiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSIxMiIgbWFya2VySGVpZ2h0PSIxMiIgb3JpZW50PSJhdXRvIj48cGF0aCBkPSJNIDEsMSBMIDE0LDE0IE0gMSwxNCBMIDE0LDEiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDIuNTsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLWNyb3NzU3RhcnQtbWFyZ2luIiBjbGFzcz0ibWFya2VyIGNyb3NzIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDE1IDE1IiByZWZYPSItMy41IiByZWZZPSI3LjUiIG1hcmtlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgbWFya2VyV2lkdGg9IjEyIiBtYXJrZXJIZWlnaHQ9IjEyIiBvcmllbnQ9ImF1dG8iPjxwYXRoIGQ9Ik0gMSwxIEwgMTQsMTQgTSAxLDE0IEwgMTQsMSIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMi41OyBzdHJva2UtZGFzaGFycmF5OiAxLCAwOyIvPjwvbWFya2VyPjxnIGNsYXNzPSJyb290Ij48ZyBjbGFzcz0iY2x1c3RlcnMiPjxnIGNsYXNzPSJjbHVzdGVyIiBpZD0ibXktc3ZnLVJFR0lPTiIgZGF0YS1sb29rPSJjbGFzc2ljIj48cmVjdCBzdHlsZT0iIiB4PSIzMDAuMzU5Mzc1IiB5PSI4IiB3aWR0aD0iMjMxNC40MDYyNSIgaGVpZ2h0PSI5NDIuNDA4OTk2NTgyMDMxMiIvPjxnIGNsYXNzPSJjbHVzdGVyLWxhYmVsIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMzQ4LjkwNjI1LCA4KSI+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5BenVyZTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiByZWdpb248L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gKzwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiB2aXJ0dWFsPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IG5ldHdvcms8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJjbHVzdGVyIiBpZD0ibXktc3ZnLUFLUyIgZGF0YS1sb29rPSJjbGFzc2ljIj48cmVjdCBzdHlsZT0iIiB4PSIzMjUuMzU5Mzc1IiB5PSIyOCIgd2lkdGg9IjIyNjQuNDA2MjUiIGhlaWdodD0iNjE4LjI5OTk5NTQyMjM2MzMiLz48ZyBjbGFzcz0iY2x1c3Rlci1sYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTMzNywgMjgpIj48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPkF6dXJlPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEt1YmVybmV0ZXM8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gU2VydmljZTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBjbHVzdGVyPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0iY2x1c3RlciIgaWQ9Im15LXN2Zy1OQVRTQ0wiIGRhdGEtbG9vaz0iY2xhc3NpYyI+PHJlY3Qgc3R5bGU9IiIgeD0iMTQ5Ni42MDkzNzUiIHk9IjQ4IiB3aWR0aD0iNzI5LjIxODc1IiBoZWlnaHQ9IjI4MC4zOTk5OTc3MTExODE2NCIvPjxnIGNsYXNzPSJjbHVzdGVyLWxhYmVsIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNzY2LjYwOTM3NSwgNDgpIj48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPk5BVFM8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gY2x1c3RlcjwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiAtPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEhlbG08L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gY2hhcnQ8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJjbHVzdGVyIiBpZD0ibXktc3ZnLUFQSVBPRCIgZGF0YS1sb29rPSJjbGFzc2ljIj48cmVjdCBzdHlsZT0iIiB4PSIxMTMzLjMxMjUiIHk9IjM0OC4zOTk5OTc3MTExODE2NCIgd2lkdGg9IjY3My4yODEyNSIgaGVpZ2h0PSIxNDYuNjk5OTk4ODU1NTkwODIiLz48ZyBjbGFzcz0iY2x1c3Rlci1sYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTM3Mi4xMzI4MTI1LCAzNDguMzk5OTk3NzExMTgxNjQpIj48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPlJFU1Q8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gQVBJPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IERlcGxveW1lbnQ8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gLTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBHbzwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImNsdXN0ZXIiIGlkPSJteS1zdmctSFVHIiBkYXRhLWxvb2s9ImNsYXNzaWMiPjxyZWN0IHN0eWxlPSIiIHg9IjYxMi4zNDM3NSIgeT0iMzY4LjI5OTk5NzMyOTcxMTkiIHdpZHRoPSI0NzAuOTY4NzUiIGhlaWdodD0iMjU3Ljk5OTk5ODA5MjY1MTM3Ii8+PGcgY2xhc3M9ImNsdXN0ZXItbGFiZWwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDcxOC45Mjk2ODc1LCAzNjguMjk5OTk3MzI5NzExOSkiPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+SFVHPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IC08L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gR2F0ZXdheTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBBUEk8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gaW1wbGVtZW50YXRpb248L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjwvZz48ZyBjbGFzcz0iZWRnZVBhdGhzIj48cGF0aCBkPSJNMTk1LjQwNiwyNDUuNkwyMDQuMTUyLDI0NS42QzIxMi44OTgsMjQ1LjYsMjMwLjM5MSwyNDUuNiwyNDcuODgzLDI0NS42QzI2NS4zNzUsMjQ1LjYsMjgyLjg2NywyNDUuNiwyOTUuNzgsMjQ1LjZDMzA4LjY5MywyNDUuNiwzMTcuMDI2LDI0NS42LDMzOS4wNzUsMjc5LjY2QzM2MS4xMjMsMzEzLjcxOSwzOTYuODg3LDM4MS44MzksNDE0Ljc2OSw0MTUuODk5TDQzMi42NTEsNDQ5Ljk1OCIgaWQ9Im15LXN2Zy1MX1VBX0xCXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfVUFfTEJfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TVRrMUxqUXdOakkxTENKNUlqb3lORFV1TlRrNU9UazRORGMwTVRJeE1YMHNleUo0SWpveU5EY3VPRGd5T0RFeU5Td2llU0k2TWpRMUxqVTVPVGs1T0RRM05ERXlNVEY5TEhzaWVDSTZNekF3TGpNMU9UTTNOU3dpZVNJNk1qUTFMalU1T1RrNU9EUTNOREV5TVRGOUxIc2llQ0k2TXpJMUxqTTFPVE0zTlN3aWVTSTZNalExTGpVNU9UazVPRFEzTkRFeU1URjlMSHNpZUNJNk5ETTBMalV4TURjNE1UVTNNVEF5TWprMkxDSjVJam8wTlRNdU5EazVPVGs0TURreU5qVXhNemQ5WFE9PSIgZGF0YS1sb29rPSJjbGFzc2ljIiBtYXJrZXItZW5kPSJ1cmwoI215LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRFbmQpIi8+PHBhdGggZD0iTTE5NS4yNzMsNTkyLjRMMjA0LjA0Miw1OTIuNEMyMTIuODEsNTkyLjQsMjMwLjM0Niw1OTIuNCwyNDcuODYxLDU5Mi40QzI2NS4zNzUsNTkyLjQsMjgyLjg2Nyw1OTIuNCwyOTUuNzgsNTkyLjRDMzA4LjY5Myw1OTIuNCwzMTcuMDI2LDU5Mi40LDMzMy4xNTUsNTgzLjUxNEMzNDkuMjg1LDU3NC42MjgsMzczLjIxLDU1Ni44NTcsMzg1LjE3Myw1NDcuOTcxTDM5Ny4xMzYsNTM5LjA4NSIgaWQ9Im15LXN2Zy1MX1VCX0xCXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfVUJfTEJfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TVRrMUxqSTNNelF6TnpVc0lua2lPalU1TWk0ek9UazVPVFU0TURNNE16TjlMSHNpZUNJNk1qUTNMamc0TWpneE1qVXNJbmtpT2pVNU1pNHpPVGs1T1RVNE1ETTRNek45TEhzaWVDSTZNekF3TGpNMU9UTTNOU3dpZVNJNk5Ua3lMak01T1RrNU5UZ3dNemd6TTMwc2V5SjRJam96TWpVdU16VTVNemMxTENKNUlqbzFPVEl1TXprNU9UazFPREF6T0RNemZTeDdJbmdpT2pRd01DNHpORFkyT0RJek1EWXlOamd3Tml3aWVTSTZOVE0yTGpZNU9UazVOVEEwTURnNU16WjlYUT09IiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNNzgyLjk4Niw0NjIuM0w3OTIuMDMzLDQ1Ny4yQzgwMS4wNzksNDUyLjEsODE5LjE3Myw0NDEuOSw4MzMuMTA4LDQzNi44Qzg0Ny4wNDQsNDMxLjcsODU2LjgyMyw0MzEuNyw4NjEuNzEyLDQzMS43TDg2Ni42MDIsNDMxLjciIGlkPSJteS1zdmctTF9HV19SVEFQSV8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX0dXX1JUQVBJXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk56Z3lMams0TmpNM01ESTFNRFk0T0Rnc0lua2lPalEyTWk0eU9UazVPVGN6TWprM01URTVmU3g3SW5naU9qZ3pOeTR5TmpVMk1qVXNJbmtpT2pRek1TNDJPVGs1T1RZNU5EZ3lOREl5ZlN4N0luZ2lPamczTUM0Mk1ERTFOakkxTENKNUlqbzBNekV1TmprNU9UazJPVFE0TWpReU1uMWQiIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik03NzkuMjExLDUyNy45TDc4OC44ODYsNTMzLjczM0M3OTguNTYyLDUzOS41NjcsODE3LjkxNCw1NTEuMjMzLDgzMS4wOSw1NTcuMDY3Qzg0NC4yNjYsNTYyLjksODUxLjI2Niw1NjIuOSw4NTQuNzY2LDU2Mi45TDg1OC4yNjYsNTYyLjkiIGlkPSJteS1zdmctTF9HV19SVEtDXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfR1dfUlRLQ18wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZOemM1TGpJeE1EVTJPREV4TlRFMU5Td2llU0k2TlRJM0xqZzVPVGs1TlRnd016Z3pNMzBzZXlKNElqbzRNemN1TWpZMU5qSTFMQ0o1SWpvMU5qSXVPRGs1T1RrMU9EQXpPRE16ZlN4N0luZ2lPamcyTWk0eU5qVTJNalVzSW5raU9qVTJNaTQ0T1RrNU9UVTRNRE00TXpOOVhRPT0iIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik0xMzk5LjQyMiw0MjAuNjUzTDE0MDcuNTIxLDQxOS45MTFDMTQxNS42Miw0MTkuMTY5LDE0MzEuODE4LDQxNy42ODQsMTQ0OC4wMTYsNDE2Ljk0MkMxNDY0LjIxNCw0MTYuMiwxNDgwLjQxMSw0MTYuMiwxNDk4LjU1OSw0MTYuMkMxNTE2LjcwNiw0MTYuMiwxNTM2LjgwMiw0MTYuMiwxNTQ2Ljg1LDQxNi4yTDE1NTYuODk4LDQxNi4yIiBpZD0ibXktc3ZnLUxfQVVUSF9QT09MXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfQVVUSF9QT09MXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk1UTTVPUzQwTWpFNE56VXNJbmtpT2pReU1DNDJOVEk1TURrd05UTTVNVGcyZlN4N0luZ2lPakUwTkRndU1ERTFOakkxTENKNUlqbzBNVFl1TVRrNU9UazJPVFE0TWpReU1uMHNleUo0SWpveE5EazJMall3T1RNM05Td2llU0k2TkRFMkxqRTVPVGs1TmprME9ESTBNako5TEhzaWVDSTZNVFUyTUM0NE9UZzBNemMxTENKNUlqbzBNVFl1TVRrNU9UazJPVFE0TWpReU1uMWQiIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik0xMDU4LjMxMyw1NjIuOUwxMDYyLjQ3OSw1NjIuOUMxMDY2LjY0Niw1NjIuOSwxMDc0Ljk3OSw1NjIuOSwxMDgzLjMxMyw1NjIuOUMxMDkxLjY0Niw1NjIuOSwxMDk5Ljk3OSw1NjIuOSwxMTA4LjMxMyw1NjIuOUMxMTE2LjY0Niw1NjIuOSwxMTI0Ljk3OSw1NjIuOSwxMTUzLjQwNSw1NjIuOUMxMTgxLjgzMSw1NjIuOSwxMjMwLjM0OSw1NjIuOSwxMjgyLjc5OSw1NjIuOUMxMzM1LjI1LDU2Mi45LDEzOTEuNjMzLDU2Mi45LDE0MjcuOTIzLDU2Mi45QzE0NjQuMjE0LDU2Mi45LDE0ODAuNDExLDU2Mi45LDE0OTUuNjM5LDU2Mi45QzE1MTAuODY3LDU2Mi45LDE1MjUuMTI1LDU2Mi45LDE1MzIuMjU0LDU2Mi45TDE1MzkuMzgzLDU2Mi45IiBpZD0ibXktc3ZnLUxfUlRLQ19LQ18wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX1JUS0NfS0NfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TVRBMU9DNHpNVEkxTENKNUlqbzFOakl1T0RrNU9UazFPREF6T0RNemZTeDdJbmdpT2pFd09ETXVNekV5TlN3aWVTSTZOVFl5TGpnNU9UazVOVGd3TXpnek0zMHNleUo0SWpveE1UQTRMak14TWpVc0lua2lPalUyTWk0NE9UazVPVFU0TURNNE16TjlMSHNpZUNJNk1URXpNeTR6TVRJMUxDSjVJam8xTmpJdU9EazVPVGsxT0RBek9ETXpmU3g3SW5naU9qRXlOemd1T0RZM01UZzNOU3dpZVNJNk5UWXlMamc1T1RrNU5UZ3dNemd6TTMwc2V5SjRJam94TkRRNExqQXhOVFl5TlN3aWVTSTZOVFl5TGpnNU9UazVOVGd3TXpnek0zMHNleUo0SWpveE5EazJMall3T1RNM05Td2llU0k2TlRZeUxqZzVPVGs1TlRnd016Z3pNMzBzZXlKNElqb3hOVFF6TGpNNE1qZ3hNalVzSW5raU9qVTJNaTQ0T1RrNU9UVTRNRE00TXpOOVhRPT0iIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik0xMzk5LjQyMiw0NDQuODE0TDE0MDcuNTIxLDQ0NS42OTVDMTQxNS42Miw0NDYuNTc2LDE0MzEuODE4LDQ0OC4zMzgsMTQ0OC4wMTYsNDQ5LjIxOUMxNDY0LjIxNCw0NTAuMSwxNDgwLjQxMSw0NTAuMSwxNTA2LjI5Miw0NjMuMDQxQzE1MzIuMTcyLDQ3NS45ODIsMTU2Ny43MzYsNTAxLjg2NCwxNTg1LjUxNyw1MTQuODA1TDE2MDMuMjk5LDUyNy43NDYiIGlkPSJteS1zdmctTF9BVVRIX0tDXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfQVVUSF9LQ18wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZNVE01T1M0ME1qRTROelVzSW5raU9qUTBOQzQ0TVRNNU5Ua3dOems1TkRkOUxIc2llQ0k2TVRRME9DNHdNVFUyTWpVc0lua2lPalExTUM0d09UazVPVFkxTmpZM056STBObjBzZXlKNElqb3hORGsyTGpZd09UTTNOU3dpZVNJNk5EVXdMakE1T1RrNU5qVTJOamMzTWpRMmZTeDdJbmdpT2pFMk1EWXVOVE15T1RFeU9UYzNOVEkyTml3aWVTSTZOVE13TGpBNU9UazVOalUyTmpjM01qVjlYUT09IiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNMTc4MS41OTQsOTUuMDQ1TDE3ODUuNzYsOTQuNTIxQzE3ODkuOTI3LDkzLjk5NywxNzk4LjI2LDkyLjk0OCwxODE3LjUyMiw5Mi40MjRDMTgzNi43ODQsOTEuOSwxODY2Ljk3NCw5MS45LDE4OTcuMTY0LDk0LjM4MUMxOTI3LjM1NCw5Ni44NjIsMTk1Ny41NDQsMTAxLjgyNSwxOTcyLjYzOSwxMDQuMzA2TDE5ODcuNzM0LDEwNi43ODciIGlkPSJteS1zdmctTF9PUF9BQ0NUQV8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX09QX0FDQ1RBXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk1UYzRNUzQxT1RNM05Td2llU0k2T1RVdU1EUTFNekU1TkRRek1URTRNbjBzZXlKNElqb3hPREEyTGpVNU16YzFMQ0o1SWpvNU1TNDRPVGs1T1RrMk1UZzFNekF5TjMwc2V5SjRJam94T0RrM0xqRTJOREEyTWpVc0lua2lPamt4TGpnNU9UazVPVFl4T0RVek1ESTNmU3g3SW5naU9qRTVPRGN1TnpNME16YzFMQ0o1SWpveE1EWXVOemcyT1RjeE9ERTROVEEzTXpSOVhRPT0iIGRhdGEtbG9vaz0iY2xhc3NpYyIvPjxwYXRoIGQ9Ik0xNzE1Ljk1OCwxMzUuNEwxNzMxLjA2NCwxNDEuMDMzQzE3NDYuMTcsMTQ2LjY2NywxNzc2LjM4MiwxNTcuOTMzLDE4MDYuNTgzLDE2My41NjdDMTgzNi43ODQsMTY5LjIsMTg2Ni45NzQsMTY5LjIsMTg5OS42OCwxNzUuNTE3QzE5MzIuMzg3LDE4MS44MzMsMTk2Ny42MSwxOTQuNDY3LDE5ODUuMjIxLDIwMC43ODNMMjAwMi44MzIsMjA3LjEiIGlkPSJteS1zdmctTF9PUF9BQ0NUQl8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX09QX0FDQ1RCXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk1UY3hOUzQ1TlRneE9EQTVPVFkxTkRNeUxDSjVJam94TXpVdU16azVPVGs1TmpFNE5UTXdNamQ5TEhzaWVDSTZNVGd3Tmk0MU9UTTNOU3dpZVNJNk1UWTVMakU1T1RrNU9EZzFOVFU1TURneWZTeDdJbmdpT2pFNE9UY3VNVFkwTURZeU5Td2llU0k2TVRZNUxqRTVPVGs1T0RnMU5UVTVNRGd5ZlN4N0luZ2lPakl3TURJdU9ETXlNalU0TkRJMk1qRTFNeXdpZVNJNk1qQTNMakE1T1RrNU9EUTNOREV5TVRGOVhRPT0iIGRhdGEtbG9vaz0iY2xhc3NpYyIvPjxwYXRoIGQ9Ik0xNzQyLjMwNSw0MDIuMjEzTDE3NTMuMDIsNDAwLjU2MUMxNzYzLjczNCwzOTguOTA5LDE3ODUuMTY0LDM5NS42MDQsMTgxMC45NzQsMzYxLjkzNkMxODM2Ljc4NCwzMjguMjY3LDE4NjYuOTc0LDI2NC4yMzMsMTkwMC4xMDIsMjI1LjI3M0MxOTMzLjIzMSwxODYuMzEyLDE5NjkuMjk4LDE3Mi40MjUsMTk4Ny4zMzEsMTY1LjQ4MUwyMDA1LjM2NSwxNTguNTM3IiBpZD0ibXktc3ZnLUxfUE9PTF9BQ0NUQV8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX1BPT0xfQUNDVEFfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TVRjME1pNHpNRFEyT0RjMUxDSjVJam8wTURJdU1qRXpORFUxTlRFeE1URTJOWDBzZXlKNElqb3hPREEyTGpVNU16YzFMQ0o1SWpvek9USXVNams1T1RrM016STVOekV4T1gwc2V5SjRJam94T0RrM0xqRTJOREEyTWpVc0lua2lPakl3TUM0eE9UazVPVGc0TlRVMU9UQTRNbjBzZXlKNElqb3lNREE1TGpBNU56VXpPVFF6TWpBMk1UVXNJbmtpT2pFMU55NHdPVGs1T1RnME56UXhNakV4ZlYwPSIgZGF0YS1sb29rPSJjbGFzc2ljIiBtYXJrZXItZW5kPSJ1cmwoI215LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRFbmQpIi8+PHBhdGggZD0iTTE3NDIuMzA1LDQxNi4yTDE3NTMuMDIsNDE2LjJDMTc2My43MzQsNDE2LjIsMTc4NS4xNjQsNDE2LjIsMTgxMC45NzQsMzkzLjMzM0MxODM2Ljc4NCwzNzAuNDY3LDE4NjYuOTc0LDMyNC43MzMsMTg5Ni41MSwyOTkuMDAyQzE5MjYuMDQ2LDI3My4yNzEsMTk1NC45MjksMjY3LjU0MiwxOTY5LjM3LDI2NC42NzdMMTk4My44MTEsMjYxLjgxMyIgaWQ9Im15LXN2Zy1MX1BPT0xfQUNDVEJfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9QT09MX0FDQ1RCXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk1UYzBNaTR6TURRMk9EYzFMQ0o1SWpvME1UWXVNVGs1T1RrMk9UUTRNalF5TW4wc2V5SjRJam94T0RBMkxqVTVNemMxTENKNUlqbzBNVFl1TVRrNU9UazJPVFE0TWpReU1uMHNleUo0SWpveE9EazNMakUyTkRBMk1qVXNJbmtpT2pJM09DNDVPVGs1T1Rnd09USTJOVEV6TjMwc2V5SjRJam94T1RnM0xqY3pORE0zTlN3aWVTSTZNall4TGpBek5EVTBOalk0TmpjME5qaDlYUT09IiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNMjIwMC44MjgsMTI0LjNMMjIwNC45OTUsMTI0LjNDMjIwOS4xNjEsMTI0LjMsMjIxNy40OTUsMTI0LjMsMjIzNS41NjgsMTI0LjNDMjI1My42NDEsMTI0LjMsMjI4MS40NTMsMTI0LjMsMjMwOC42NjgsMTMwLjg3NEMyMzM1Ljg4MywxMzcuNDQ4LDIzNjIuNSwxNTAuNTk2LDIzNzUuODA4LDE1Ny4xNjlMMjM4OS4xMTcsMTYzLjc0MyIgaWQ9Im15LXN2Zy1MX0FDQ1RBX0RJU0tfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tZG90dGVkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfQUNDVEFfRElTS18wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZNakl3TUM0NE1qZ3hNalVzSW5raU9qRXlOQzR5T1RrNU9Ua3lNemN3TmpBMU5YMHNleUo0SWpveU1qSTFMamd5T0RFeU5Td2llU0k2TVRJMExqSTVPVGs1T1RJek56QTJNRFUxZlN4N0luZ2lPakl6TURrdU1qWTFOakkxTENKNUlqb3hNalF1TWprNU9UazVNak0zTURZd05UVjlMSHNpZUNJNk1qTTVNaTQzTURNeE1qVXNJbmtpT2pFMk5TNDFNVFEzT1RFek9UTTRNekU0ZlYwPSIgZGF0YS1sb29rPSJjbGFzc2ljIiBtYXJrZXItZW5kPSJ1cmwoI215LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRFbmQpIi8+PHBhdGggZD0iTTIyMDAuODI4LDIzOS45TDIyMDQuOTk1LDIzOS45QzIyMDkuMTYxLDIzOS45LDIyMTcuNDk1LDIzOS45LDIyMzUuNTY4LDIzOS45QzIyNTMuNjQxLDIzOS45LDIyODEuNDUzLDIzOS45LDIzMDguNjc4LDIzMi43NzFDMjMzNS45MDMsMjI1LjY0MiwyMzYyLjU0LDIxMS4zODQsMjM3NS44NTgsMjA0LjI1NUwyMzg5LjE3NywxOTcuMTI2IiBpZD0ibXktc3ZnLUxfQUNDVEJfRElTS18wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1kb3R0ZWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9BQ0NUQl9ESVNLXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk1qSXdNQzQ0TWpneE1qVXNJbmtpT2pJek9TNDRPVGs1T1RjM01URXhPREUyTkgwc2V5SjRJam95TWpJMUxqZ3lPREV5TlN3aWVTSTZNak01TGpnNU9UazVOemN4TVRFNE1UWTBmU3g3SW5naU9qSXpNRGt1TWpZMU5qSTFMQ0o1SWpveU16a3VPRGs1T1RrM056RXhNVGd4TmpSOUxIc2llQ0k2TWpNNU1pNDNNRE14TWpVc0lua2lPakU1TlM0eU16ZzNOek0yT1RBeE1qZzJmVjA9IiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNMTc1OS44Miw1NjIuOUwxNzY3LjYxNiw1NjIuOUMxNzc1LjQxMSw1NjIuOSwxNzkxLjAwMyw1NjIuOSwxODEzLjg5Myw1NjIuOUMxODM2Ljc4NCw1NjIuOSwxODY2Ljk3NCw1NjIuOSwxOTEwLjE4Niw2MDcuMDZDMTk1My4zOTcsNjUxLjIyLDIwMDkuNjMsNzM5LjUzOSwyMDM3Ljc0Nyw3ODMuNjk5TDIwNjUuODY0LDgyNy44NTkiIGlkPSJteS1zdmctTF9LQ19LQ0RCXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfS0NfS0NEQl8wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZNVGMxT1M0NE1qQXpNVEkxTENKNUlqbzFOakl1T0RrNU9UazFPREF6T0RNemZTeDdJbmdpT2pFNE1EWXVOVGt6TnpVc0lua2lPalUyTWk0NE9UazVPVFU0TURNNE16TjlMSHNpZUNJNk1UZzVOeTR4TmpRd05qSTFMQ0o1SWpvMU5qSXVPRGs1T1RrMU9EQXpPRE16ZlN4N0luZ2lPakl3TmpVdU9EWXpOakU0T1RNMk1qSTJMQ0o1SWpvNE1qY3VPRFU0TnpreU5EazVNVGN6ZlYwPSIgZGF0YS1sb29rPSJjbGFzc2ljIi8+PHBhdGggZD0iTTE3NDIuMzA1LDQzNi4wMzlMMTc1My4wMiw0MzguMzgyQzE3NjMuNzM0LDQ0MC43MjYsMTc4NS4xNjQsNDQ1LjQxMywxODEwLjk3NCw0NDcuNzU2QzE4MzYuNzg0LDQ1MC4xLDE4NjYuOTc0LDQ1MC4xLDE5MDguOTI1LDQ4OC4yNkMxOTUwLjg3Nyw1MjYuNDIsMjAwNC41OSw2MDIuNzQsMjAzMS40NDYsNjQwLjlMMjA1OC4zMDMsNjc5LjA2IiBpZD0ibXktc3ZnLUxfUE9PTF9LVl8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX1BPT0xfS1ZfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TVRjME1pNHpNRFEyT0RjMUxDSjVJam8wTXpZdU1ETTROalEzT0RZMk5qa3lOVFI5TEhzaWVDSTZNVGd3Tmk0MU9UTTNOU3dpZVNJNk5EVXdMakE1T1RrNU5qVTJOamMzTWpRMmZTeDdJbmdpT2pFNE9UY3VNVFkwTURZeU5Td2llU0k2TkRVd0xqQTVPVGs1TmpVMk5qYzNNalEyZlN4N0luZ2lPakl3TmpBdU5qQTBPREkzT0RNNE9EZ3pMQ0o1SWpvMk9ESXVNek13TnpBNE56RXlNVEUwTlgxZCIgZGF0YS1sb29rPSJjbGFzc2ljIiBtYXJrZXItZW5kPSJ1cmwoI215LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRFbmQpIi8+PHBhdGggZD0iTTU2Mi4zNDQsNDk1LjFMNTY2LjUxLDQ5NS4xQzU3MC42NzcsNDk1LjEsNTc5LjAxLDQ5NS4xLDU4Ni42NzcsNDk1LjFDNTk0LjM0NCw0OTUuMSw2MDEuMzQ0LDQ5NS4xLDYwNC44NDQsNDk1LjFMNjA4LjM0NCw0OTUuMSIgaWQ9Im15LXN2Zy1MX0xCX0hVR18wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX0xCX0hVR18wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZOVFl5TGpNME16YzFMQ0o1SWpvME9UVXVNRGs1T1RrMk5UWTJOemN5TkRaOUxIc2llQ0k2TlRnM0xqTTBNemMxTENKNUlqbzBPVFV1TURrNU9UazJOVFkyTnpjeU5EWjlMSHNpZUNJNk5qRXlMak0wTXpjMUxDSjVJam8wT1RVdU1EazVPVGsyTlRZMk56Y3lORFo5TEhzaWVDSTZOak0zTGpNME16YzFMQ0o1SWpvME9UVXVNRGs1T1RrMk5UWTJOemN5TkRaOVhRPT0iIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik0xMDQ5Ljk3Nyw0MzEuN0wxMDU1LjUzMyw0MzEuN0MxMDYxLjA4OSw0MzEuNywxMDcyLjIwMSw0MzEuNywxMDgxLjkyMyw0MzEuN0MxMDkxLjY0Niw0MzEuNywxMDk5Ljk3OSw0MzEuNywxMTA3LjY0Niw0MzEuN0MxMTE1LjMxMyw0MzEuNywxMTIyLjMxMyw0MzEuNywxMTI1LjgxMyw0MzEuN0wxMTI5LjMxMyw0MzEuNyIgaWQ9Im15LXN2Zy1MX1JUQVBJX0FQSVBPRF8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX1JUQVBJX0FQSVBPRF8wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZNVEEwT1M0NU56WTFOakkxTENKNUlqbzBNekV1TmprNU9UazJPVFE0TWpReU1uMHNleUo0SWpveE1EZ3pMak14TWpVc0lua2lPalF6TVM0Mk9UazVPVFk1TkRneU5ESXlmU3g3SW5naU9qRXhNRGd1TXpFeU5Td2llU0k2TkRNeExqWTVPVGs1TmprME9ESTBNako5TEhzaWVDSTZNVEV6TXk0ek1USTFMQ0o1SWpvME16RXVOams1T1RrMk9UUTRNalF5TW4wc2V5SjRJam94TVRVNExqTXhNalVzSW5raU9qUXpNUzQyT1RrNU9UWTVORGd5TkRJeWZWMD0iIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVscyI+PGcgY2xhc3M9ImVkZ2VMYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjQ3Ljg4MjgxMjUsIDI0NS41OTk5OTg0NzQxMjExKSI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX1VBX0xCXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xMCkiPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0iIiB4PSItMjcuNDc2NTYyNSIgeT0iLTEiIHdpZHRoPSI1NC45NTMxMjUiIGhlaWdodD0iMjIiLz48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5IVFRQUzwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjQ3Ljg4MjgxMjUsIDU5Mi4zOTk5OTU4MDM4MzMpIj48ZyBjbGFzcz0ibGFiZWwiIGRhdGEtaWQ9IkxfVUJfTEJfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTEwKSI+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSIiIHg9Ii0yNy40NzY1NjI1IiB5PSItMSIgd2lkdGg9IjU0Ljk1MzEyNSIgaGVpZ2h0PSIyMiIvPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPkhUVFBTPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVsIj48ZyBjbGFzcz0ibGFiZWwiIGRhdGEtaWQ9IkxfR1dfUlRBUElfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgMCkiPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSIvPjwvdGV4dD48L2c+PC9nPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9HV19SVEtDXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIDApIj48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiLz48L3RleHQ+PC9nPjwvZz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVsIj48ZyBjbGFzcz0ibGFiZWwiIGRhdGEtaWQ9IkxfQVVUSF9QT09MXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIDApIj48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiLz48L3RleHQ+PC9nPjwvZz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVsIj48ZyBjbGFzcz0ibGFiZWwiIGRhdGEtaWQ9IkxfUlRLQ19LQ18wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAwKSI+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIi8+PC90ZXh0PjwvZz48L2c+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTQ0OC4wMTU2MjUsIDQ1MC4wOTk5OTY1NjY3NzI0NikiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9BVVRIX0tDXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xMCkiPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0iIiB4PSItMjMuNTkzNzUiIHk9Ii0xIiB3aWR0aD0iNDcuMTg3NSIgaGVpZ2h0PSIyMiIvPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPkpXS1M8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9PUF9BQ0NUQV8wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAwKSI+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIi8+PC90ZXh0PjwvZz48L2c+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX09QX0FDQ1RCXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIDApIj48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiLz48L3RleHQ+PC9nPjwvZz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVsIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxODk3LjE2NDA2MjUsIDIwMC4xOTk5OTg4NTU1OTA4MikiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9QT09MX0FDQ1RBXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xMCkiPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0iIiB4PSItNTQuODU5Mzc1IiB5PSItMSIgd2lkdGg9IjEwOS43MTg3NSIgaGVpZ2h0PSIyMiIvPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPnRlbmFudDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBBPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGNyZWRzPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVsIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxODk3LjE2NDA2MjUsIDI3OC45OTk5OTgwOTI2NTEzNykiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9QT09MX0FDQ1RCXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xMCkiPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0iIiB4PSItNTQuNzI2NTYyNSIgeT0iLTEiIHdpZHRoPSIxMDkuNDUzMTI1IiBoZWlnaHQ9IjIyIi8+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+dGVuYW50PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEI8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gY3JlZHM8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIzMDkuMjY1NjI1LCAxMjQuMjk5OTk5MjM3MDYwNTUpIj48ZyBjbGFzcz0ibGFiZWwiIGRhdGEtaWQ9IkxfQUNDVEFfRElTS18wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMTApIj48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9IiIgeD0iLTU4LjQzNzUiIHk9Ii0xIiB3aWR0aD0iMTE2Ljg3NSIgaGVpZ2h0PSIyMiIvPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPkF6dXJlPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IERpc2s8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gUFZDPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVsIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyMzA5LjI2NTYyNSwgMjM5Ljg5OTk5NzcxMTE4MTY0KSI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX0FDQ1RCX0RJU0tfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTEwKSI+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSIiIHg9Ii01OC40Mzc1IiB5PSItMSIgd2lkdGg9IjExNi44NzUiIGhlaWdodD0iMjIiLz48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5BenVyZTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBEaXNrPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IFBWQzwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX0tDX0tDREJfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgMCkiPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSIvPjwvdGV4dD48L2c+PC9nPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE4OTcuMTY0MDYyNSwgNDUwLjA5OTk5NjU2Njc3MjQ2KSI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX1BPT0xfS1ZfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTEwKSI+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSIiIHg9Ii02NS41NzAzMTI1IiB5PSItMSIgd2lkdGg9IjEzMS4xNDA2MjUiIGhlaWdodD0iMjIiLz48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5Xb3JrbG9hZDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBJZGVudGl0eTwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX0xCX0hVR18wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAwKSI+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIi8+PC90ZXh0PjwvZz48L2c+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX1JUQVBJX0FQSVBPRF8wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAwKSI+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIi8+PC90ZXh0PjwvZz48L2c+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48L2c+PC9nPjxnIGNsYXNzPSJub2RlcyI+PGcgY2xhc3M9Im5vZGUgZGVmYXVsdCIgaWQ9Im15LXN2Zy1mbG93Y2hhcnQtVUEtMCIgZGF0YS1sb29rPSJjbGFzc2ljIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMDEuNzAzMTI1LCAyNDUuNTk5OTk4NDc0MTIxMSkiPjxyZWN0IGNsYXNzPSJiYXNpYyBsYWJlbC1jb250YWluZXIiIHN0eWxlPSIiIHg9Ii05My43MDMxMjUiIHk9Ii0yNCIgd2lkdGg9IjE4Ny40MDYyNSIgaGVpZ2h0PSI0OCIvPjxnIGNsYXNzPSJsYWJlbCIgc3R5bGU9IiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTkpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5Db21wYW55PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEE8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gdXNlcnM8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LUxCLTEiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDU2LjM1MTU2MjUsIDQ5NS4wOTk5OTY1NjY3NzI0NikiPjxyZWN0IGNsYXNzPSJiYXNpYyBsYWJlbC1jb250YWluZXIiIHN0eWxlPSIiIHg9Ii0xMDUuOTkyMTg3NSIgeT0iLTQxLjU5OTk5ODQ3NDEyMTA5NCIgd2lkdGg9IjIxMS45ODQzNzUiIGhlaWdodD0iODMuMTk5OTk2OTQ4MjQyMTkiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0yNi41OTk5OTg0NzQxMjEwOTQpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5BenVyZTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBTdGFuZGFyZDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBMb2FkPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+QmFsYW5jZXI8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMi4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPnB1YmxpYzwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBJUCw8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gcmVnaW9uYWw8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LVVCLTIiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTAxLjcwMzEyNSwgNTkyLjM5OTk5NTgwMzgzMykiPjxyZWN0IGNsYXNzPSJiYXNpYyBsYWJlbC1jb250YWluZXIiIHN0eWxlPSIiIHg9Ii05My41NzAzMTI1IiB5PSItMjQiIHdpZHRoPSIxODcuMTQwNjI1IiBoZWlnaHQ9IjQ4Ii8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtOSkiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPkNvbXBhbnk8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gQjwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiB1c2VyczwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9Im5vZGUgZGVmYXVsdCIgaWQ9Im15LXN2Zy1mbG93Y2hhcnQtR1ctNyIgZGF0YS1sb29rPSJjbGFzc2ljIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg3MjQuODA0Njg3NSwgNDk1LjA5OTk5NjU2Njc3MjQ2KSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTg3LjQ2MDkzNzUiIHk9Ii0zMi43OTk5OTkyMzcwNjA1NSIgd2lkdGg9IjE3NC45MjE4NzUiIGhlaWdodD0iNjUuNTk5OTk4NDc0MTIxMSIvPjxnIGNsYXNzPSJsYWJlbCIgc3R5bGU9IiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTE3Ljc5OTk5OTIzNzA2MDU0NykiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPkdhdGV3YXk8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5UTFM8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gdGVybWluYXRpb248L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LVJUQVBJLTgiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoOTYwLjI4OTA2MjUsIDQzMS42OTk5OTY5NDgyNDIyKSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTg5LjY4NzUiIHk9Ii0yNCIgd2lkdGg9IjE3OS4zNzUiIGhlaWdodD0iNDgiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC05KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+SFRUUFJvdXRlPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IC92MS8qPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1SVEtDLTkiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoOTYwLjI4OTA2MjUsIDU2Mi44OTk5OTU4MDM4MzMpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItOTguMDIzNDM3NSIgeT0iLTI0IiB3aWR0aD0iMTk2LjA0Njg3NSIgaGVpZ2h0PSI0OCIvPjxnIGNsYXNzPSJsYWJlbCIgc3R5bGU9IiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTkpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5IVFRQUm91dGU8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gL2F1dGgvKjwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9Im5vZGUgZGVmYXVsdCIgaWQ9Im15LXN2Zy1mbG93Y2hhcnQtQVVUSC0xNCIgZGF0YS1sb29rPSJjbGFzc2ljIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMjc4Ljg2NzE4NzUsIDQzMS42OTk5OTY5NDgyNDIyKSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTEyMC41NTQ2ODc1IiB5PSItMjQiIHdpZHRoPSIyNDEuMTA5Mzc1IiBoZWlnaHQ9IjQ4Ii8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtOSkiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPkF1dGhOL0F1dGhaPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IG1pZGRsZXdhcmU8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LVBPT0wtMTUiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTY1MS42MDE1NjI1LCA0MTYuMTk5OTk2OTQ4MjQyMikiPjxyZWN0IGNsYXNzPSJiYXNpYyBsYWJlbC1jb250YWluZXIiIHN0eWxlPSIiIHg9Ii05MC43MDMxMjUiIHk9Ii0zMi43OTk5OTkyMzcwNjA1NSIgd2lkdGg9IjE4MS40MDYyNSIgaGVpZ2h0PSI2NS41OTk5OTg0NzQxMjExIi8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMTcuNzk5OTk5MjM3MDYwNTQ3KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+UGVyLXRlbmFudDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBOQVRTPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+Y29ubmVjdGlvbjwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBwb29sPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1LQy0yMSIgZGF0YS1sb29rPSJjbGFzc2ljIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNjUxLjYwMTU2MjUsIDU2Mi44OTk5OTU4MDM4MzMpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItMTA4LjIxODc1IiB5PSItMzIuNzk5OTk5MjM3MDYwNTUiIHdpZHRoPSIyMTYuNDM3NSIgaGVpZ2h0PSI2NS41OTk5OTg0NzQxMjExIi8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMTcuNzk5OTk5MjM3MDYwNTQ3KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+S2V5Y2xvYWs8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gRGVwbG95bWVudDwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIxZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPkhlbG08L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gY2hhcnQ8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LU9QLTI1IiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE2NTEuNjAxNTYyNSwgMTExLjM5OTk5OTYxODUzMDI3KSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTEyOS45OTIxODc1IiB5PSItMjQiIHdpZHRoPSIyNTkuOTg0Mzc1IiBoZWlnaHQ9IjQ4Ii8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtOSkiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPk9wZXJhdG9yPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IC88L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gQWNjb3VudDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiByZXNvbHZlcjwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9Im5vZGUgZGVmYXVsdCIgaWQ9Im15LXN2Zy1mbG93Y2hhcnQtQUNDVEEtMjYiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjA5NC4yODEyNSwgMTI0LjI5OTk5OTIzNzA2MDU1KSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTEwNi41NDY4NzUiIHk9Ii0zMi43OTk5OTkyMzcwNjA1NSIgd2lkdGg9IjIxMy4wOTM3NSIgaGVpZ2h0PSI2NS41OTk5OTg0NzQxMjExIi8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMTcuNzk5OTk5MjM3MDYwNTQ3KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+TkFUUzwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBBY2NvdW50PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEE8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5KZXRTdHJlYW08L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gS1Y8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gYnVja2V0PC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1BQ0NUQi0yNyIgZGF0YS1sb29rPSJjbGFzc2ljIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyMDk0LjI4MTI1LCAyMzkuODk5OTk3NzExMTgxNjQpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItMTA2LjU0Njg3NSIgeT0iLTMyLjc5OTk5OTIzNzA2MDU1IiB3aWR0aD0iMjEzLjA5Mzc1IiBoZWlnaHQ9IjY1LjU5OTk5ODQ3NDEyMTEiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xNy43OTk5OTkyMzcwNjA1NDcpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5OQVRTPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEFjY291bnQ8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gQjwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIxZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPkpldFN0cmVhbTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBLVjwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBidWNrZXQ8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LURJU0stMzciIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjQ3OC43MzQzNzUsIDE3OC41OTk5OTg0NzQxMjExKSI+PHBhdGggZD0iTTAsMTQuNDgwMzI4MjEzNzU5NzMgYTg2LjAzMTI1LDE0LjQ4MDMyODIxMzc1OTczIDAsMCwwIDE3Mi4wNjI1LDAgYTg2LjAzMTI1LDE0LjQ4MDMyODIxMzc1OTczIDAsMCwwIC0xNzIuMDYyNSwwIGwwLDQ3LjQ4MDMyODIxMzc1OTczNCBhODYuMDMxMjUsMTQuNDgwMzI4MjEzNzU5NzMgMCwwLDAgMTcyLjA2MjUsMCBsMCwtNDcuNDgwMzI4MjEzNzU5NzM0IiBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIG91dGVyLXBhdGgiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC04Ni4wMzEyNSwgLTM4LjIyMDQ5MjMyMDYzOTU5KSIvPjxnIGNsYXNzPSJsYWJlbCIgc3R5bGU9IiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgMCkiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPkF6dXJlPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IE1hbmFnZWQ8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gRGlza3M8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LUtDREItNDEiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjA5NC4yODEyNSwgODcwLjk5MjQ4MTIzMTY4OTUpIj48cGF0aCBkPSJNMCwxMi43NDQzNDcwODAwOTA2OTMgYTY0Ljk5MjE4NzUsMTIuNzQ0MzQ3MDgwMDkwNjkzIDAsMCwwIDEyOS45ODQzNzUsMCBhNjQuOTkyMTg3NSwxMi43NDQzNDcwODAwOTA2OTMgMCwwLDAgLTEyOS45ODQzNzUsMCBsMCw2My4zNDQzNDU1NTQyMTE3ODUgYTY0Ljk5MjE4NzUsMTIuNzQ0MzQ3MDgwMDkwNjkzIDAsMCwwIDEyOS45ODQzNzUsMCBsMCwtNjMuMzQ0MzQ1NTU0MjExNzg1IiBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIG91dGVyLXBhdGgiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC02NC45OTIxODc1LCAtNDQuNDE2NTE5ODU3MTk2NTgpIi8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtOC43OTk5OTkyMzcwNjA1NDcpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5BenVyZTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBEYXRhYmFzZTwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIxZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPmZvcjwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBQb3N0Z3JlU1FMPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1LVi00MyIgZGF0YS1sb29rPSJjbGFzc2ljIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyMDk0LjI4MTI1LCA3MjguOTM3OTgwNjUxODU1NSkiPjxwYXRoIGQ9Ik0wLDE0Ljg5NTQxNzU3MTg2ODg0MiBhOTIuMTMyODEyNSwxNC44OTU0MTc1NzE4Njg4NDIgMCwwLDAgMTg0LjI2NTYyNSwwIGE5Mi4xMzI4MTI1LDE0Ljg5NTQxNzU3MTg2ODg0MiAwLDAsMCAtMTg0LjI2NTYyNSwwIGwwLDY1LjQ5NTQxNjA0NTk4OTk0IGE5Mi4xMzI4MTI1LDE0Ljg5NTQxNzU3MTg2ODg0MiAwLDAsMCAxODQuMjY1NjI1LDAgbDAsLTY1LjQ5NTQxNjA0NTk4OTk0IiBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIG91dGVyLXBhdGgiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC05Mi4xMzI4MTI1LCAtNDcuNjQzMTI1NTk0ODYzODEpIi8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtOC43OTk5OTkyMzcwNjA1NDcpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5BenVyZTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBLZXk8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gVmF1bHQ8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj50ZW5hbnRfaWQ8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gLTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBOQVRTPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGNyZWRzPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48L2c+PC9nPjwvZz48ZGVmcz48ZmlsdGVyIGlkPSJteS1zdmctZHJvcC1zaGFkb3ciIGhlaWdodD0iMTMwJSIgd2lkdGg9IjEzMCUiPjxmZURyb3BTaGFkb3cgZHg9IjQiIGR5PSI0IiBzdGREZXZpYXRpb249IjAiIGZsb29kLW9wYWNpdHk9IjAuMDYiIGZsb29kLWNvbG9yPSIjMDAwMDAwIi8+PC9maWx0ZXI+PC9kZWZzPjxkZWZzPjxmaWx0ZXIgaWQ9Im15LXN2Zy1kcm9wLXNoYWRvdy1zbWFsbCIgaGVpZ2h0PSIxNTAlIiB3aWR0aD0iMTUwJSI+PGZlRHJvcFNoYWRvdyBkeD0iMiIgZHk9IjIiIHN0ZERldmlhdGlvbj0iMCIgZmxvb2Qtb3BhY2l0eT0iMC4wNiIgZmxvb2QtY29sb3I9IiMwMDAwMDAiLz48L2ZpbHRlcj48L2RlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJteS1zdmctZ3JhZGllbnQiIGdyYWRpZW50VW5pdHM9Im9iamVjdEJvdW5kaW5nQm94IiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzYwNzk4YSIgc3RvcC1vcGFjaXR5PSIxIi8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSJoc2woMjAyLjUsIDAlLCA4NC41MDk4MDM5MjE2JSkiIHN0b3Atb3BhY2l0eT0iMSIvPjwvbGluZWFyR3JhZGllbnQ+PC9zdmc+"><figcaption>Diagram 1</figcaption><details><summary>View Mermaid source</summary><pre><code class="language-mermaid">flowchart LR
+    UA[Company A users] -- HTTPS --&gt; LB
+    UB[Company B users] -- HTTPS --&gt; LB
+
+    subgraph REGION[Azure region + virtual network]
+        LB[Azure Standard Load Balancer\npublic IP, regional]
+
+        subgraph AKS[Azure Kubernetes Service cluster]
+            LB --&gt; HUG
+
+            subgraph HUG[HUG - Gateway API implementation]
+                GW[Gateway\nTLS termination]
+                RTAPI[HTTPRoute /v1/*]
+                RTKC[HTTPRoute /auth/*]
+                GW --&gt; RTAPI
+                GW --&gt; RTKC
+            end
+
+            subgraph APIPOD[REST API Deployment - Go]
+                AUTH[AuthN/AuthZ middleware]
+                POOL[Per-tenant NATS connection pool]
+                AUTH --&gt; POOL
+            end
+            RTAPI --&gt; APIPOD
+            RTKC --&gt; KC
+
+            KC[Keycloak Deployment\nHelm chart]
+
+            AUTH -- JWKS --&gt; KC
+
+            subgraph NATSCL[NATS cluster - Helm chart]
+                OP[Operator / Account resolver]
+                ACCTA[NATS Account A\nJetStream KV bucket]
+                ACCTB[NATS Account B\nJetStream KV bucket]
+                OP --- ACCTA
+                OP --- ACCTB
+            end
+            POOL -- tenant A creds --&gt; ACCTA
+            POOL -- tenant B creds --&gt; ACCTB
+            ACCTA -. Azure Disk PVC .-&gt; DISK[(Azure Managed Disks)]
+            ACCTB -. Azure Disk PVC .-&gt; DISK
+        end
+
+        KC --- KCDB[(Azure Database\nfor PostgreSQL)]
+        POOL -- Workload Identity --&gt; KV[(Azure Key Vault\ntenant_id -&gt; NATS creds)]
+    end</code></pre></details></figure>
+<div class="source-block" data-source-block="10"
+data-source-sha256="0a62d485060eef8d81e7d3f5e65872a92df0f4599aa9a6092b78eed63a74963c">
+<p>Users never connect to NATS or Keycloak's admin interface directly;
+all external traffic enters through the Azure Standard Load Balancer and
+is handed to HUG, the in-cluster Kubernetes Gateway API implementation.
+HUG's <code>Gateway</code> resource terminates TLS, and its
+<code>HTTPRoute</code> resources route by path to the API's Service or
+Keycloak's Service. Both HUG's control plane and its HAProxy data plane
+run as pods inside AKS; the Load Balancer only exposes HUG's data-plane
+Service, never the API, Keycloak, or NATS Services directly. The API is
+the sole holder of NATS credentials and is the only trust boundary
+between a tenant's HTTP request and that tenant's data. Keycloak, NATS,
+and HUG all run as in-cluster workloads deployed from their official
+Helm charts. The Load Balancer, Azure Database for PostgreSQL, and Azure
+Key Vault are Azure-managed dependencies outside the AKS cluster itself,
+but all within the same region and virtual network.</p>
+</div>
+<section id="4-proposed-design" class="source-block"
+data-source-block="11"
+data-source-sha256="cb43280d884b7bd10ddfe1c903a3a3ffc221ebb65bc3295cbb6d512812e2ddb1">
+<h2>4. Proposed design</h2>
+</section>
+<section id="how-it-works" class="source-block" data-source-block="12"
+data-source-sha256="e248d7da23aef6704ac43f3f639e0b91f6c326e9ecb982e008905e4785a6b4ed">
+<h3>How it works</h3>
+</section>
+<div class="source-block" data-source-block="13"
+data-source-sha256="956066432a71f4601dbd8bbdcff6efa41d3f3ad0950699caa9bef0a1be182d59">
+<p>A user at Company A signs in through Keycloak (the in-cluster OIDC
+identity provider), reaching it through the Azure Standard Load Balancer
+and HUG's <code>/auth/*</code> HTTPRoute, and gets an access token
+carrying a <code>tenant_id</code> claim and a <code>sub</code> (user id)
+claim. The user calls <code>POST /v1/items</code> through the same Load
+Balancer. HUG's <code>/v1/*</code> HTTPRoute sends the request to the
+API's Service, which verifies the token's signature against Keycloak's
+JWKS endpoint, reads <code>tenant_id</code> from the verified claims
+(never from anything the client supplies directly), and uses it to fetch
+that tenant's NATS user credentials from Azure Key Vault. The API opens
+(or reuses a cached) NATS connection authenticated as tenant A's
+account, generates a server-side ULID as the item ID, and writes the
+JSON payload into that tenant's JetStream Key-Value bucket under that
+ID. It returns <code>201</code> with the item. A
+<code>GET /v1/items</code> from a Company B user, authenticated with a
+token carrying <code>tenant_id=B</code>, can only ever resolve
+credentials for account B, so it lists keys from B's bucket and never
+sees A's data, regardless of what path or body the client sends.</p>
+</div>
+<section id="components-and-responsibilities" class="source-block"
+data-source-block="14"
+data-source-sha256="ec9a76783795a31c5a8fa78eb007e1288ed67056f6e893afc753006cc7f2e898">
+<h3>Components and responsibilities</h3>
+</section>
+<div class="source-block" data-source-block="15"
+data-source-sha256="76925c676ab1b7ca8c74c4f5825b2d4f2ee0b3ca0eb1f6538b1fdef52e8f9d71">
+<ul>
+<li><strong>REST API service (Go).</strong> A standalone application
+built independently and deployed as its own Kubernetes
+Deployment/Service in AKS (not part of the NATS or Keycloak Helm
+releases). Owns HTTP handling, OIDC token verification, mapping verified
+claims to a tenant, and translating CRUD requests into JetStream KV
+operations. Does not own identity (delegates to Keycloak) and does not
+own NATS account provisioning.</li>
+<li><strong>AuthN/AuthZ middleware.</strong> Owns verifying the bearer
+token and extracting <code>tenant_id</code> and <code>sub</code>.
+Rejects any request where <code>tenant_id</code> is missing or
+unverifiable. Does not own authorization beyond tenant scoping; all
+users within a tenant have equal access to that tenant's data (see
+Invariants).</li>
+<li><strong>Per-tenant NATS connection pool.</strong> Owns caching one
+NATS connection per tenant, keyed strictly by the verified
+<code>tenant_id</code>, with a bounded TTL. Does not own credential
+issuance.</li>
+<li><strong>Keycloak (in-cluster, official Helm chart).</strong> Owns
+user authentication, login/consent flows, and issuing OIDC tokens with a
+<code>tenant_id</code> claim (see Naming and identity). Backed by Azure
+Database for PostgreSQL Flexible Server for its own state (realms,
+users, sessions). Does not own tenant data or NATS credentials.</li>
+<li><strong>Azure Key Vault (credential store).</strong> Owns securely
+storing each tenant's NATS user JWT and seed, outside the cluster. The
+API reads from it using Azure AD Workload Identity (a federated identity
+bound to the API's Kubernetes ServiceAccount, no static cloud
+credentials in the pod). Does not own request-time authorization.</li>
+<li><strong>NATS cluster (Accounts + JetStream, official Helm chart,
+in-cluster).</strong> Owns the actual isolation boundary: each tenant is
+a separate NATS Account with its own JetStream KV bucket, backed by
+Azure Managed Disks (Azure Disk CSI driver) for JetStream's file store.
+Does not own HTTP-facing concerns.</li>
+<li><strong>HUG (HAProxy Unified Gateway, in-cluster, official Helm
+chart).</strong> Owns TLS termination (via its <code>Gateway</code>
+resource) and routing external HTTPS traffic, by path (via
+<code>HTTPRoute</code> resources), to the API's Service and to
+Keycloak's public Service. Does not route external traffic directly to
+NATS or to Keycloak's admin console, since no <code>HTTPRoute</code>
+targets them.</li>
+<li><strong>Azure Standard Load Balancer (regional, outside the
+cluster).</strong> Owns exposing HUG's data-plane Service on a public IP
+in the region. Does not do any path-based routing itself; that is
+entirely owned by HUG.</li>
+<li><strong>Tenant provisioning flow.</strong> Owns creating a new NATS
+Account, its JetStream KV bucket, its credentials (written to Key
+Vault), and the corresponding tenant identity in Keycloak when a company
+signs up. Not covered in detail here (see section 13).</li>
+</ul>
+</div>
+<section id="decisions" class="source-block role-decisions"
+data-source-block="16"
+data-source-sha256="5a6a5f0f1903f8ea343148136e7bb0710d2555ca216504d9bf9d9b532157aa00">
+<h3>Decisions</h3>
+</section>
+<div class="source-block" data-source-block="17"
+data-source-sha256="66d3f0d5557729c3b3ab04dc27c1235f6d8923aa7ad098cd3feed443505ec6ef">
+<p>We use a JetStream <strong>Key-Value bucket</strong> per tenant, not
+a plain stream consumed by a worker, as the storage for items. A plain
+JetStream stream is built for ordered, ack-once consumption; it does not
+offer get/list/delete by arbitrary key, which the requirement (create,
+list, read, delete individual records) needs directly. KV buckets are
+built on streams internally, so this still satisfies "NATS as the
+queue/storage layer," while giving native random-access semantics. We
+rejected keeping a plain stream and building a separate index, because
+that index would become a second source of truth that isolation and
+consistency logic would need to protect separately.</p>
+</div>
+<div class="source-block" data-source-block="18"
+data-source-sha256="f3507e92cf84785b8098eebfdb345d2c2fa527bea2eec92f7d0073f2d25cef9c">
+<p>We use <strong>NATS Accounts per tenant</strong> rather than a single
+shared account with a subject-prefix convention. The subject-prefix
+approach is cheaper to operate (one account, no credential issuing
+pipeline) but isolation lives entirely in API code: one wrong string
+interpolation in a subject or bucket name and one tenant's request
+touches another tenant's data. With per-tenant accounts, isolation is
+enforced by the NATS server itself; a coding bug in tenant resolution
+can, at worst, cause the API to fail to find credentials (an error), not
+to open the wrong tenant's connection with the wrong tenant's
+credentials. The cost is operational: every new tenant requires an
+account-creation step, and credential rotation is a real process to
+build (see section 12).</p>
+</div>
+<div class="source-block" data-source-block="19"
+data-source-sha256="985c625ec1b3c7176c110b2046954d77f1052813cc3e8de41570f8f66b2c6a24">
+<p>We use <strong>Keycloak</strong> as a self-hosted OIDC identity
+provider, deployed in AKS via its official Helm chart, rather than the
+originally requested Auth0. Auth0 does not offer a self-hostable,
+Helm-deployable product; substituting Keycloak is the closest match to
+"IdP deployed inside the AKS cluster." This means we now own Keycloak's
+uptime, patching, and backups, which a SaaS IdP would otherwise have
+carried (see section 11).</p>
+</div>
+<div class="source-block" data-source-block="20"
+data-source-sha256="5b31ba41ffe24b0bd2133c65119817f6070ab0057f411f4db6aaf272ef5eb473">
+<p>We back Keycloak with <strong>Azure Database for PostgreSQL Flexible
+Server</strong> (a managed service outside the cluster) rather than
+running PostgreSQL in-cluster. Identity data (users, sessions, realm
+config) is the one dataset in this system we cannot afford to lose or
+fail to back up correctly; a managed database gives us point-in-time
+restore and automated backups without building that operational
+capability ourselves. The cost is one more Azure resource to provision
+and network to the cluster.</p>
+</div>
+<div class="source-block" data-source-block="21"
+data-source-sha256="98b63cc13e3c85b42c1750860fb8a4649b38478279b51d2b3e528a1c8fad3a91">
+<p>We use <strong>Azure Key Vault with Azure AD Workload
+Identity</strong> as the credential store for NATS tenant credentials,
+rather than a Kubernetes Secret or a self-hosted Vault instance. This
+keeps NATS credentials outside the cluster's etcd, avoids running
+another stateful in-cluster service, and lets us grant the API's
+Kubernetes ServiceAccount Key Vault access without embedding any static
+Azure credential in the pod or its image.</p>
+</div>
+<div class="source-block" data-source-block="22"
+data-source-sha256="10ac4c257d8a2016c2b99dcceb2fd072584880d96665ea5d45580d2befa2c563">
+<p>We front both Keycloak and the REST API with <strong>HUG</strong>, an
+in-cluster implementation of the Kubernetes Gateway API, exposed through
+a plain Azure Standard Load Balancer, rather than Azure Application
+Gateway. This keeps routing configuration as native Kubernetes resources
+(<code>Gateway</code>, <code>HTTPRoute</code>) managed the same way as
+the rest of the cluster, and follows the Gateway API's role separation
+between the <code>Gateway</code> (infrastructure-owned) and
+<code>HTTPRoute</code> (route-owner-managed) objects, which the older
+Ingress API does not have. The cost is that we now run and operate the
+gateway's data plane (HAProxy pods) ourselves inside AKS, instead of
+delegating TLS termination and edge routing to a fully managed Azure
+PaaS resource; HUG's own availability is bounded by AKS pod scheduling
+and node capacity like any other in-cluster workload, not by a separate
+Azure SLA. We also lose Application Gateway's built-in WAF_v2 option; an
+equivalent web application firewall in front of HUG is called out as an
+open question rather than assumed.</p>
+</div>
+<section id="5-invariants-and-requirements" class="source-block"
+data-source-block="23"
+data-source-sha256="a564a89ef16d655f45f32b2298c33c4d79e1b4129c3a882f233e5c6d85b55fc2">
+<h2>5. Invariants and requirements</h2>
+</section>
+<section id="invariants" class="source-block role-invariants"
+data-source-block="24"
+data-source-sha256="41701f368993e3f63ab599cb3ebcf32756d56c298bf06612195e918bf86cd6b4">
+<h3>Invariants</h3>
+</section>
+<div class="source-block" data-source-block="25"
+data-source-sha256="3ac93a6eecbe03e83856e2d2c45c39c31c978996b982a1ab4640a08034d31489">
+<ul>
+<li><code>INV-1</code>: A request only ever reads, writes, or deletes
+data in the NATS account and KV bucket belonging to the
+<code>tenant_id</code> asserted by the cryptographically verified access
+token. No code path derives the target account or bucket from a
+client-supplied tenant ID, header, or path segment.</li>
+<li><code>INV-2</code>: Every stored item has a server-generated ULID
+assigned at create time. The API never accepts a client-supplied item ID
+for create.</li>
+<li><code>INV-3</code>: A NATS connection or credential belonging to
+tenant X is never used to serve a request whose verified
+<code>tenant_id</code> is not X, even if a cache lookup races with
+another request.</li>
+<li><code>INV-4</code>: Isolation is at the tenant level, not the user
+level. Any authenticated user of tenant X can create, list, read, and
+delete any item belonging to tenant X.</li>
+</ul>
+</div>
+<section id="requirements" class="source-block role-requirements"
+data-source-block="26"
+data-source-sha256="d58a3741c408d72bf8e99cb9c99f055d7cabeda3c3b4d006597446e8412a7e76">
+<h3>Requirements</h3>
+</section>
+<div class="source-block" data-source-block="27"
+data-source-sha256="b21d2a3054023822f40e11da4c6c4c805fe421d4f5099932d837cc6421b92488">
+<ul>
+<li>List responses are paginated; no endpoint returns an unbounded
+result set in one response.</li>
+<li>Every write (create, delete) is acknowledged by JetStream before the
+API returns success to the client.</li>
+<li>The API rejects any request without a valid bearer token before it
+does any NATS work.</li>
+</ul>
+</div>
+<section id="6-interfaces-and-data" class="source-block"
+data-source-block="28"
+data-source-sha256="c031b53bb441f0ffee3273a73ce9f61efab706f92df0957046bc404cf8ffd544">
+<h2>6. Interfaces and data</h2>
+</section>
+<div class="source-block" data-source-block="29"
+data-source-sha256="e730f7dd2b9ff9fd814c90db5e6a0a6b6138584608d8d0840459c9314495c4b5">
+<p>All endpoints require
+<code>Authorization: Bearer &lt;OIDC access token&gt;</code>.</p>
+</div>
+<div class="source-block" data-source-block="30"
+data-source-sha256="bd99372adca2e7b63e8852e432c817cd9176d31542788557e3f82dfb0d28ae24">
+<ul>
+<li><code>POST /v1/items</code> — body: arbitrary JSON object (subject
+to a max payload size, see section 8). Returns
+<code>201 {id, created_at, data}</code>.</li>
+<li><code>GET /v1/items?cursor=&amp;limit=</code> — Returns
+<code>200 {items: [{id, created_at}], next_cursor}</code>. Does not
+inline full payloads, to keep list responses small; clients fetch
+individual items via <code>GET /v1/items/{id}</code>.</li>
+<li><code>GET /v1/items/{id}</code> — Returns
+<code>200 {id, created_at, data}</code> or <code>404</code> if the ID
+does not exist in the caller's tenant bucket (including when it exists
+only in a different tenant's bucket).</li>
+<li><code>DELETE /v1/items/{id}</code> — Returns <code>204</code> on
+success, <code>404</code> if not found in the caller's tenant
+bucket.</li>
+<li>Errors use a consistent JSON body:
+<code>{"error": "&lt;short_code&gt;", "message": "&lt;human readable&gt;"}</code>.</li>
+</ul>
+</div>
+<section id="naming-and-identity" class="source-block"
+data-source-block="31"
+data-source-sha256="8d3d7b7a1af98b0dfa8eb94237680e19b796bb68dc456be15450d239907cc0ab">
+<h3>Naming and identity</h3>
+</section>
+<div class="source-block" data-source-block="32"
+data-source-sha256="d644dee5435d2f6ff0584331ecc7ab5e532c8870960944911e3376b5ec65386d">
+<ul>
+<li><strong>Item ID</strong>: a ULID generated by the API at create
+time. Time-sortable, collision-resistant, carries no tenant or user
+information. If ULID generation fails (should not happen in practice),
+the create request fails with <code>500</code> rather than falling back
+to a client-supplied or non-unique value.</li>
+<li><strong>Tenant ID</strong>: since Keycloak is self-hosted and under
+our control, each user is created with a <code>tenant_id</code> custom
+attribute at provisioning time, and a Keycloak protocol mapper copies
+that attribute into a <code>tenant_id</code> claim on every issued
+access token. The API only trusts the value from the verified token
+claim, never a client-supplied one. If the claim is absent (for example,
+a user provisioned without the attribute), the request is rejected with
+<code>403</code> and no NATS operation is attempted. Tenant ID is never
+re-derived later from stored data; if a tenant's ID changes in Keycloak
+after data already exists, that is a tenant migration event out of scope
+for this design (see section 13).</li>
+<li><strong>User ID</strong>: the token's <code>sub</code> claim,
+recorded only for audit logging. It does not affect authorization (see
+<code>INV-4</code>).</li>
+</ul>
+</div>
+<section id="7-failure-behavior-and-lifecycle"
+class="source-block role-failures" data-source-block="33"
+data-source-sha256="caf163a2a6ae29594c9aceec85019732d86f557465622ee179014fdfedcee686">
+<h2>7. Failure behavior and lifecycle</h2>
+</section>
+<div class="source-block" data-source-block="34"
+data-source-sha256="3c092bce758060411df70c3aeff10036d061be58f8336675f1443620ddb36f26">
+<ul>
+<li><strong>Keycloak/JWKS unreachable</strong>: the API serves requests
+using its cached JWKS up to a 1 hour TTL. If no valid cache exists and
+the fetch fails, the API returns <code>503</code> rather than accepting
+unverifiable tokens. A Keycloak pod restart alone does not cause this,
+since the API talks to Keycloak's ClusterIP Service, which routes to any
+healthy replica.</li>
+<li><strong>Keycloak's PostgreSQL unavailable</strong>: new logins and
+token issuance fail at Keycloak, but access tokens already issued and
+cached in the API's JWKS cache continue to verify, so
+already-authenticated users are unaffected until their token
+expires.</li>
+<li><strong>Tenant not yet provisioned or Key Vault miss</strong>: the
+API returns <code>503 {"error": "tenant_not_provisioned"}</code>. It
+does not create a bucket or account on the fly from a request path.</li>
+<li><strong>Azure Key Vault unavailable or throttled</strong>: cached
+tenant NATS connections keep serving requests. A cache-miss lookup (new
+tenant, or evicted TTL entry) fails with <code>503</code> until Key
+Vault is reachable again.</li>
+<li><strong>NATS connection drops mid-request</strong>: the in-flight
+request fails with <code>502</code>. Reads, lists, and deletes are safe
+to retry. A create retried by the client produces a second item with a
+new ID (accepted; list is not content-deduplicated), because an ID is
+only returned after JetStream acknowledges the write.</li>
+<li><strong>NATS pod rescheduled or Azure Disk PVC temporarily
+unavailable</strong>: in-flight requests to the affected account fail
+with <code>502</code>; JetStream's own replication (if the stream is
+configured with multiple replicas) or the pod's PVC reattachment on a
+new node restores availability without operator intervention. A
+single-replica JetStream store with a lost disk needs a restore from
+Azure Disk snapshot, which is a data-loss risk if snapshots are
+infrequent (see Open questions).</li>
+<li><strong>API or Keycloak backend unhealthy</strong>: HUG stops
+routing to individual API or Keycloak pods that fail their Kubernetes
+readiness probes, so single-pod failures do not cause client-visible
+errors as long as at least one healthy replica remains behind the
+<code>HTTPRoute</code>. If every pod behind a route is unhealthy, HUG
+returns <code>502</code> to the client.</li>
+<li><strong>HUG pod unhealthy or evicted</strong>: since HUG's data
+plane runs as regular AKS pods, running multiple HUG replicas behind the
+Load Balancer means one HUG pod failing does not remove external access;
+a single-replica HUG deployment would turn any HUG pod restart into a
+brief full outage (see Open questions).</li>
+<li><strong>Azure Standard Load Balancer or regional outage</strong>:
+because the solution is single-region, an outage of the Load Balancer or
+of the Azure region removes all external access to both the API and
+Keycloak; there is no cross-region failover (see section 11 and section
+13).</li>
+<li><strong>Startup</strong>: the API does not accept traffic (fails
+readiness probe, which also removes it from HUG's healthy backend set)
+until it has successfully fetched Keycloak's JWKS at least once and
+confirmed connectivity to the NATS operator/resolver.</li>
+<li><strong>Shutdown</strong>: the API stops accepting new connections,
+waits up to 10 seconds for in-flight requests to complete (matching the
+Kubernetes pod termination grace period), and calls <code>Drain()</code>
+on open NATS connections rather than closing them abruptly, so pending
+KV writes are flushed.</li>
+</ul>
+</div>
+<section id="8-security-privacy-and-operations" class="source-block"
+data-source-block="35"
+data-source-sha256="d373a802adb9444e8d300217a0222856fa057b13255436c0f4709f894158a5f1">
+<h2>8. Security, privacy, and operations</h2>
+</section>
+<div class="source-block" data-source-block="36"
+data-source-sha256="f0921a7ef5ade973c9f9226b168fe4d7400219f35d41246b04df83efdf91419a">
+<ul>
+<li><strong>Trust boundary</strong>: the API service is the only
+component that holds NATS credentials. End users authenticate only to
+Keycloak and the API; they never receive NATS credentials, never reach
+Keycloak's admin console, and never connect to NATS directly. HUG only
+defines <code>HTTPRoute</code> resources for the API's
+<code>/v1/*</code> routes and Keycloak's public auth endpoints; NATS
+ports and Keycloak's admin port have no <code>HTTPRoute</code> and are
+only reachable inside the cluster.</li>
+<li><strong>Network isolation inside the cluster</strong>: a Kubernetes
+<code>NetworkPolicy</code> restricts inbound connections to the NATS
+pods to only the API's pod selector (and NATS's own inter-node traffic),
+so no other in-cluster workload can reach NATS even on the internal
+network.</li>
+<li><strong>Authorization</strong>: enforced once, in the AuthN/AuthZ
+middleware, from the verified token's <code>tenant_id</code> claim
+(<code>INV-1</code>). Downstream code receives an already-resolved
+tenant context and cannot override it from request input.</li>
+<li><strong>Cloud credentials</strong>: the API authenticates to Azure
+Key Vault using Azure AD Workload Identity, federating its Kubernetes
+ServiceAccount token to a scoped Azure AD identity. No Azure credential
+is stored in the pod, its image, or a Kubernetes Secret.</li>
+<li><strong>Sensitive data</strong>: item payloads are opaque JSON and
+may contain tenant-sensitive data. We recommend enabling JetStream's
+at-rest encryption for the KV buckets, with the encryption key itself
+stored in Azure Key Vault; this design defers detailed
+key-management/rotation procedure to the security/infra team (see Open
+questions).</li>
+<li><strong>Shared limits</strong>: each tenant account has a JetStream
+storage quota (<code>max_bytes</code> on its KV bucket, backed by an
+Azure Managed Disk sized to the AKS node's attach limits) and a per-item
+payload size limit (default 1 MiB, matching NATS's default max message
+size). At the storage quota, further writes are rejected but existing
+data stays readable; raising the quota is an operational (not code)
+change. The API also applies a per-tenant request rate limit to protect
+the shared NATS cluster from one noisy tenant affecting others; at that
+limit, requests get <code>429</code>. AKS node pool CPU/memory capacity
+is a cluster-wide shared limit; Kubernetes resource requests/limits on
+the API, Keycloak, and NATS pods keep one component from starving the
+others.</li>
+<li><strong>Operational dependency</strong>: Azure Key Vault is a hard
+dependency for onboarding new tenants and for cache-miss lookups. If it
+is unavailable, tenants with an already-cached NATS connection are
+unaffected; new connections or newly provisioned tenants fail with
+<code>503</code>. Azure Database for PostgreSQL is a hard dependency for
+Keycloak logins (see section 7).</li>
+</ul>
+</div>
+<section id="9-acceptance-criteria"
+class="source-block role-acceptance-criteria" data-source-block="37"
+data-source-sha256="6d76b4820d002f28fcf60404f54b3b5893667240dd3e86def26e97bd7b6ad68d">
+<h2>9. Acceptance criteria</h2>
+</section>
+<div class="source-block" data-source-block="38"
+data-source-sha256="6e07c61a9f9f4034be34df8b6d46173e1ac240ee52052ecd4476021ac08f4510">
+<ul>
+<li><code>AC-1</code>: A user authenticated for tenant A creates an item
+and receives <code>201</code> with a server-generated ID; the item
+appears in tenant A's list and is not visible in tenant B's list.</li>
+<li><code>AC-2</code>: A request with a valid IdP token but no
+resolvable <code>tenant_id</code> is rejected with <code>403</code>
+before any NATS call is made.</li>
+<li><code>AC-3</code>: A <code>GET</code> or <code>DELETE</code> for an
+item ID that exists only in another tenant's bucket returns
+<code>404</code>, not <code>403</code> or <code>200</code>.</li>
+<li><code>AC-4</code>: Under concurrent requests from two tenants, no
+NATS connection keyed for tenant A is ever used to serve a request whose
+verified tenant is B.</li>
+<li><code>AC-5</code>: When a tenant's KV bucket is at its storage
+quota, a create request fails with a documented error code and existing
+items in that tenant remain readable via list and read.</li>
+</ul>
+</div>
+<section id="10-test-approach" class="source-block"
+data-source-block="39"
+data-source-sha256="c12e936da26b05f551bb9244d0b3c7384b2d3d340c374095d6baea0e971a43de">
+<h2>10. Test approach</h2>
+</section>
+<div class="source-block" data-source-block="40"
+data-source-sha256="90af45e9260afce716130e22703b6965da86a7c683fcb2d1e452eb04944c47b2">
+<ul>
+<li>Unit tests on the AuthN/AuthZ middleware cover claim extraction and
+rejection paths (<code>INV-1</code>, <code>AC-2</code>).</li>
+<li>Unit tests on the connection pool cover cache keying and TTL expiry
+using fake credentials for two tenants (<code>INV-3</code>,
+<code>AC-4</code>).</li>
+<li>Integration tests run an embedded/local NATS server with two
+provisioned tenant accounts and drive the real HTTP API to prove
+cross-tenant reads/deletes 404 and lists never mix (<code>INV-1</code>,
+<code>INV-2</code>, <code>AC-1</code>, <code>AC-3</code>).</li>
+<li>A fault-injection test drops the NATS connection mid-request and
+asserts the documented <code>502</code> and safe-retry behavior (section
+7).</li>
+<li>A quota test fills a tenant's bucket to its configured
+<code>max_bytes</code> and asserts writes fail while reads keep working
+(<code>AC-5</code>).</li>
+</ul>
+</div>
+<section id="11-risks-and-tradeoffs" class="source-block role-risks"
+data-source-block="41"
+data-source-sha256="1285aaa4ffd2e9469718aff3ada6282e941a59e9a8b79073a130a46b00ce69bd">
+<h2>11. Risks and tradeoffs</h2>
+</section>
+<div class="source-block" data-source-block="42"
+data-source-sha256="202d64ee2df611a2805e290386a48a87a8964cdd85b40e021a7003d75f6220ef">
+<ul>
+<li>Per-tenant NATS Accounts require building an account-provisioning
+and credential-rotation pipeline before the first real tenant onboards;
+this is real upfront work traded for a stronger isolation guarantee than
+subject-prefixing would give.</li>
+<li>Substituting self-hosted Keycloak for the originally requested Auth0
+means we now own identity infrastructure uptime, security patching, and
+backups (via Azure Database for PostgreSQL) that a SaaS IdP would
+otherwise carry. This is a direct consequence of the "everything inside
+one AKS cluster" requirement.</li>
+<li>All components (NATS, Keycloak, the API, and now HUG) share one AKS
+cluster; a cluster-level incident (control plane outage, bad cluster
+upgrade, cluster-wide network policy misconfiguration) affects identity,
+storage, API, and ingress simultaneously, with no independent failure
+domain. Mitigating this with a multi-cluster or multi-region setup is
+out of scope (section 13) but should be revisited before this is relied
+on for production traffic at scale.</li>
+<li>Choosing HUG over Azure Application Gateway moves the
+internet-facing edge from a managed Azure PaaS resource into an
+in-cluster workload we operate ourselves (upgrades, HA configuration,
+and capacity planning for the HAProxy data plane are now our
+responsibility) and drops Application Gateway's built-in WAF_v2 option;
+a replacement WAF strategy, if needed, is an open question.</li>
+<li>JetStream KV deletes leave tombstones by default, which count
+against a bucket's storage until compacted; we recommend configuring
+<code>history=1</code> on tenant buckets to bound this, but that is an
+operational config choice, not enforced by this design.</li>
+</ul>
+</div>
+<section id="12-open-questions" class="source-block role-open-questions"
+data-source-block="43"
+data-source-sha256="9a814093a20806bc5a44c69acb6ee4c27c516199b03238efaf23de1e8b4e534d">
+<h2>12. Open questions</h2>
+</section>
+<div class="source-block" data-source-block="44"
+data-source-sha256="09b041c9732ed03e17c390bea36c7e63efc66fcafd1984f415104c992b60f696">
+<ul>
+<li>What is the default per-tenant KV storage quota, and is it uniform
+or tier-based? Recommended default: 1 GiB per tenant, adjustable later.
+Does not block starting work.</li>
+<li>Who owns building the tenant provisioning flow (NATS account
+creation, Key Vault credential write, Keycloak user/attribute setup)
+referenced in section 4 and section 11? Recommended default: treat it as
+a prerequisite workstream tracked separately, stubbed here with a manual
+provisioning script for the first tenants. Blocks production launch, not
+the API implementation itself.</li>
+<li>How many replicas does each JetStream stream/KV bucket use, and how
+often are the backing Azure Managed Disks snapshotted? Recommended
+default: 3 replicas per tenant bucket for production tenants (tolerates
+one NATS pod/node loss without data loss) plus daily Azure Disk
+snapshots as a second line of defense; single-replica is acceptable only
+for early, non-production tenants. Blocks production launch.</li>
+<li>Is a single Keycloak replica acceptable at this stage, or does
+launch require a clustered Keycloak (multiple replicas behind the
+in-cluster Service)? Recommended default: start with 2 replicas for
+basic availability; defer full multi-node cache tuning. Does not block
+starting work.</li>
+<li>With Application Gateway's WAF_v2 no longer in the path, is a web
+application firewall required in front of HUG from day one (for example,
+HAProxy's own WAF module, or Azure Front Door/WAF placed ahead of the
+Load Balancer), or is it acceptable to launch without one? Recommended
+default: add a WAF layer before general availability, since both
+endpoints are internet-facing from launch; acceptable to defer past an
+initial internal/pilot launch. Blocks general-availability launch, not
+initial development.</li>
+<li>How many HUG replicas run behind the Load Balancer, and how is its
+own configuration (Gateway/HTTPRoute reconciliation) kept highly
+available? Recommended default: at least 2 HUG replicas with a
+<code>PodDisruptionBudget</code>, matching the availability bar set for
+the API and Keycloak. Does not block starting work.</li>
+<li>Given the solution is single-region, what is the acceptable downtime
+if the region is impaired (no cross-region failover exists per section
+13)? Recommended default: accept region-level downtime as a known
+limitation for this phase and revisit multi-region only if a concrete
+availability target requires it. Does not block starting work, but
+should be confirmed with whoever owns the availability commitment.</li>
+</ul>
+</div>
+<section id="13-out-of-scope" class="source-block"
+data-source-block="45"
+data-source-sha256="c22168596a4b1b1829bac627abf17561e31167099a31c6893f97bddab585a496">
+<h2>13. Out of scope</h2>
+</section>
+<div class="source-block" data-source-block="46"
+data-source-sha256="5036dccf8b7c8728b0afb74c370944d14386e391a3d58e2f309848c50102b56e">
+<ul>
+<li>Tenant self-service signup and the automated NATS
+account/credential/Keycloak-user provisioning pipeline (assumed to exist
+as a prerequisite).</li>
+<li>Any asynchronous worker or pub/sub notification when an item is
+created (this design only covers the synchronous CRUD path).</li>
+<li>Billing, metering, or per-tenant usage reporting.</li>
+<li>Multi-region or multi-cluster deployment, and disaster recovery
+across regions.</li>
+<li>AKS cluster sizing, node pool topology, and autoscaling
+configuration.</li>
+<li>Keycloak realm theming, branding, or advanced flows (MFA, social
+login) beyond issuing a token with a <code>tenant_id</code> claim.</li>
+<li>An admin/support API for cross-tenant access.</li>
+<li>Tenant ID migration (what happens if a company's tenant ID changes
+after data already exists).</li>
+</ul>
+</div>
+
+    </main>
+  </div>
+  <footer class="document-footer">Generated from /Users/marcocella/projects/nats-saas/docs/nats-tenant-queue-api/design.md by blueprint/html-doc@1. Edit the Markdown source, then regenerate.</footer>
+</body>
+</html>

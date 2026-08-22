@@ -1,0 +1,1358 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+  <meta name="document-kind" content="design">
+  <meta name="source-path" content="docs/keycloak-operator/design.md">
+  <meta name="source-sha256" content="ca53ebcffc29eed1c5924d7071ffd89619858f8c047580f255b249200182bbfd">
+  <meta name="generator" content="blueprint/html-doc@1">
+  <title>Deploying Keycloak on AKS via the official Keycloak Operator</title>
+  <style>:root {
+  color-scheme: light;
+  --paper: #f7f9fb;
+  --surface: #ffffff;
+  --surface-soft: #edf2f5;
+  --ink: #172630;
+  --muted: #526773;
+  --line: #ccd8df;
+  --line-strong: #8fa5b3;
+  --accent: #385e75;
+  --accent-soft: #dbe5ec;
+  --focus: #176b93;
+  --risk: #6b4f28;
+  --risk-soft: #f3ecdf;
+  --radius: 12px;
+  --shadow: 0 16px 42px rgb(31 54 68 / 10%);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--paper); }
+a { color: var(--accent); text-underline-offset: 0.16em; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible, summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 10;
+  left: 1rem;
+  top: 1rem;
+  padding: .65rem .9rem;
+  background: var(--ink);
+  color: white;
+  transform: translateY(-180%);
+}
+.skip-link:focus { transform: translateY(0); }
+
+.document-header {
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(145deg, #e5edf2 0%, #f7f9fb 70%);
+}
+.document-header__inner,
+.page-shell,
+.document-footer {
+  width: min(1180px, calc(100% - 2rem));
+  margin-inline: auto;
+}
+.document-header__inner { padding: 3.8rem 0 3rem; }
+.eyebrow {
+  margin: 0 0 .8rem;
+  color: var(--accent);
+  font-size: .78rem;
+  font-weight: 750;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.document-title {
+  max-width: 900px;
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.25rem, 5vw, 4.6rem);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -.035em;
+}
+.metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem 1.25rem;
+  margin: 1.6rem 0 0;
+  color: var(--muted);
+  font-size: .88rem;
+}
+.metadata dt { font-weight: 700; color: var(--ink); }
+.metadata dd { margin: 0; overflow-wrap: anywhere; }
+.metadata__item { display: grid; grid-template-columns: auto 1fr; gap: .35rem; }
+
+.page-shell {
+  display: grid;
+  grid-template-columns: minmax(190px, 250px) minmax(0, 1fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+  padding-block: 3rem 5rem;
+}
+.toc {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  padding: 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgb(255 255 255 / 78%);
+}
+.toc-title { margin: 0 0 .75rem; font: 750 .78rem/1.2 Inter, sans-serif; letter-spacing: .09em; text-transform: uppercase; }
+.toc ol { list-style: none; padding: 0; margin: 0; }
+.toc li + li { margin-top: .34rem; }
+.toc li[data-level="3"] { padding-left: .8rem; font-size: .88rem; }
+.toc a { display: block; color: var(--muted); text-decoration: none; line-height: 1.35; }
+.toc a:hover { color: var(--ink); }
+
+.document-content {
+  min-width: 0;
+  padding: clamp(1.4rem, 4vw, 3.8rem);
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) + 4px);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.source-block { min-width: 0; }
+.source-block > :first-child { margin-top: 0; }
+.source-block > :last-child { margin-bottom: 0; }
+.source-block + .source-block { margin-top: 1rem; }
+.source-block:has(> h1), .source-block:has(> h2) { margin-top: 3.7rem; }
+.source-block:first-child { margin-top: 0; }
+h1, h2, h3, h4 { color: var(--ink); line-height: 1.2; scroll-margin-top: 1.5rem; }
+.document-content h1 { font: 500 clamp(2rem, 5vw, 3.2rem)/1.08 Georgia, serif; letter-spacing: -.025em; }
+.document-content h2 { padding-top: .4rem; font: 500 clamp(1.7rem, 3vw, 2.3rem)/1.15 Georgia, serif; letter-spacing: -.018em; }
+.document-content h3 { font-size: 1.12rem; }
+.document-content h4 { font-size: 1rem; }
+p, ul, ol, blockquote, pre, table, figure { margin-block: 1rem; }
+blockquote {
+  margin-inline: 0;
+  padding: .8rem 1rem;
+  border-left: 4px solid var(--line-strong);
+  background: var(--surface-soft);
+  color: #314854;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+.role-requirements, .role-acceptance-criteria, .role-invariants,
+.role-decisions, .role-risks, .role-open-questions {
+  margin-top: 1.25rem;
+  padding: 1rem 1.2rem;
+  border-left: 4px solid var(--line-strong);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--surface-soft);
+}
+.role-risks, .role-open-questions { border-left-color: var(--risk); background: var(--risk-soft); }
+code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+code { padding: .12em .32em; border-radius: 4px; background: var(--surface-soft); font-size: .9em; overflow-wrap: anywhere; }
+pre {
+  max-width: 100%;
+  overflow: auto;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #132630;
+  color: #edf4f7;
+  line-height: 1.48;
+}
+pre code { padding: 0; background: transparent; color: inherit; }
+.table-wrap { max-width: 100%; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+th, td { padding: .68rem .75rem; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { background: var(--surface-soft); font-weight: 720; }
+tbody tr:nth-child(even) { background: #f9fbfc; }
+.diagram {
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fbfcfd;
+}
+.diagram img { display: block; width: 100%; height: auto; max-height: 650px; object-fit: contain; }
+.diagram figcaption { margin-top: .75rem; color: var(--muted); font-size: .86rem; }
+.diagram details { margin-top: .8rem; }
+.diagram summary { cursor: pointer; color: var(--accent); font-weight: 650; }
+.diagram details pre { max-height: 18rem; }
+.document-footer { padding: 0 0 3rem; color: var(--muted); font-size: .82rem; }
+
+@media (max-width: 760px) {
+  .document-header__inner { padding: 2.7rem 0 2.2rem; }
+  .page-shell { grid-template-columns: 1fr; gap: 1.2rem; padding-top: 1.25rem; }
+  .toc { position: static; max-height: none; }
+  .document-content { padding: 1.25rem; border-radius: var(--radius); }
+  .source-block:has(> h1), .source-block:has(> h2) { margin-top: 2.7rem; }
+}
+
+@media print {
+  :root { background: white; font-size: 10.5pt; }
+  @page { size: auto; margin: 16mm; }
+  .skip-link, .toc { display: none; }
+  .document-header { background: white; }
+  .document-header__inner, .page-shell, .document-footer { width: 100%; }
+  .document-header__inner { padding: 0 0 12mm; }
+  .document-title { font-size: 28pt; }
+  .page-shell { display: block; padding: 0; }
+  .document-content { padding: 0; border: 0; box-shadow: none; }
+  h1, h2, h3, h4 { break-after: avoid-page; }
+  table, figure, pre, blockquote { break-inside: avoid; }
+  thead { display: table-header-group; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .document-footer { padding: 10mm 0 0; }
+}
+</style>
+</head>
+<body>
+  <a class="skip-link" href="#document-content">Skip to document</a>
+  <header class="document-header">
+    <div class="document-header__inner">
+      <p class="eyebrow">Technical design</p>
+      <p class="document-title">Deploying Keycloak on AKS via the official Keycloak Operator</p>
+      <dl class="metadata">
+        <div class="metadata__item"><dt>Status</dt><dd>Implementation guide — companion to `docs/nats-tenant-queue-api/design.md` (section 4, which specifies Keycloak backed by Azure Database for PostgreSQL Flexible Server), `docs/terraform-infra/design.md` (which provisions the AKS cluster, Workload Identity, Key Vault, and the PostgreSQL Flexible Server itself), and `docs/haproxy-unified-gateway/deployment.md` (which routes `/auth/*` to Keycloak&#x27;s Service). **Deviation from `docs/nats-tenant-queue-api/design.md`:** that design names Keycloak&#x27;s &quot;official Helm chart&quot; as the deployment mechanism (sections 3, 4, 9); this document instead uses the **official Keycloak Operator** (a separate, CRD-based official distribution channel, not the Helm chart) per this feature&#x27;s requirement. Nothing else about that design&#x27;s decisions changes — same Keycloak, same Azure Database for PostgreSQL Flexible Server backing store, same HUG-fronted routing. **This is a POC configuration**, matching `docs/haproxy-unified-gateway/deployment.md` section 9: Keycloak runs HTTP-only, no TLS anywhere between the internet and Keycloak&#x27;s pods.</dd></div>
+        <div class="metadata__item"><dt>Source</dt><dd>docs/keycloak-operator/design.md</dd></div>
+        <div class="metadata__item"><dt>SHA-256</dt><dd><code>ca53ebcffc29eed1c5924d7071ffd89619858f8c047580f255b249200182bbfd</code></dd></div>
+      </dl>
+    </div>
+  </header>
+  <div class="page-shell">
+    <nav class="toc" aria-label="Document contents"><p class="toc-title">Contents</p><ol><li data-level="2"><a href="#1-purpose-and-scope">1. Purpose and scope</a></li><li data-level="2"><a href="#2-prerequisites">2. Prerequisites</a></li><li data-level="2"><a href="#3-architecture">3. Architecture</a></li><li data-level="2"><a href="#4-provision-keycloak-s-database-role-and-key-vault-access">4. Provision Keycloak&#x27;s database, role, and Key Vault access</a></li><li data-level="2"><a href="#5-install-the-keycloak-operator">5. Install the Keycloak Operator</a></li><li data-level="2"><a href="#6-package-the-app-layer-resources-as-a-helm-chart">6. Package the app-layer resources as a Helm chart</a></li><li data-level="2"><a href="#7-db-tls-mode-and-the-azure-postgresql-certificate-chain">7. db-tls-mode and the Azure PostgreSQL certificate chain</a></li><li data-level="2"><a href="#8-the-keycloak-custom-resource-chart-template">8. The Keycloak custom resource — chart template</a></li><li data-level="2"><a href="#9-hug-s-httproute-chart-template-and-installing-the-chart">9. HUG&#x27;s HTTPRoute — chart template, and installing the chart</a></li><li data-level="2"><a href="#10-scaling-and-availability">10. Scaling and availability</a></li><li data-level="2"><a href="#11-upgrade-and-rollback">11. Upgrade and rollback</a></li><li data-level="2"><a href="#12-uninstall">12. Uninstall</a></li><li data-level="2"><a href="#13-troubleshooting">13. Troubleshooting</a></li><li data-level="2"><a href="#14-references">14. References</a></li></ol></nav>
+    <main id="document-content" class="document-content" data-source-block-count="80">
+<section
+id="deploying-keycloak-on-aks-via-the-official-keycloak-operator"
+class="source-block" data-source-block="1"
+data-source-sha256="cc6f4c9b33685965697e1217beddad4063c1ce32321f4f01ae8c96f3ee6b944a">
+<h1>Deploying Keycloak on AKS via the official Keycloak Operator</h1>
+</section>
+<div class="source-block" data-source-block="2"
+data-source-sha256="7f8bcaf5dd876829572037e47212d28d17ffaae33df159bc4195cc59f2b7247c">
+<blockquote>
+<p><strong>Status:</strong> Implementation guide — companion to
+<code>docs/nats-tenant-queue-api/design.md</code> (section 4, which
+specifies Keycloak backed by Azure Database for PostgreSQL Flexible
+Server), <code>docs/terraform-infra/design.md</code> (which provisions
+the AKS cluster, Workload Identity, Key Vault, and the PostgreSQL
+Flexible Server itself), and
+<code>docs/haproxy-unified-gateway/deployment.md</code> (which routes
+<code>/auth/*</code> to Keycloak's Service). <strong>Deviation from
+<code>docs/nats-tenant-queue-api/design.md</code>:</strong> that design
+names Keycloak's "official Helm chart" as the deployment mechanism
+(sections 3, 4, 9); this document instead uses the <strong>official
+Keycloak Operator</strong> (a separate, CRD-based official distribution
+channel, not the Helm chart) per this feature's requirement. Nothing
+else about that design's decisions changes — same Keycloak, same Azure
+Database for PostgreSQL Flexible Server backing store, same HUG-fronted
+routing. <strong>This is a POC configuration</strong>, matching
+<code>docs/haproxy-unified-gateway/deployment.md</code> section 9:
+Keycloak runs HTTP-only, no TLS anywhere between the internet and
+Keycloak's pods.</p>
+</blockquote>
+</div>
+<section id="1-purpose-and-scope" class="source-block"
+data-source-block="3"
+data-source-sha256="db3a8d501ceec1109dd89bbc3ba1ac8dc2c00ab333e64ec529a5345b309fb0f9">
+<h2>1. Purpose and scope</h2>
+</section>
+<div class="source-block" data-source-block="4"
+data-source-sha256="17985be67d968d03b3a51f10be51ccb94cc9748f8418ab348e25780eae4dc2cb">
+<p><code>docs/nats-tenant-queue-api/design.md</code> assumes an
+in-cluster Keycloak reachable at a ClusterIP Service and backed by Azure
+Database for PostgreSQL Flexible Server.
+<code>docs/terraform-infra/design.md</code> provisions the AKS cluster
+(with Workload Identity and its OIDC issuer already enabled) and the
+PostgreSQL Flexible Server itself, but stops at the point where
+<code>kubectl</code> and Helm take over (its own section 13, "Out of
+scope") — it provisions no Keycloak database, no Keycloak database role,
+and no Key Vault access path for a Keycloak pod. This document is the
+missing implementation step: installing the Keycloak Operator,
+provisioning a least-privilege database and role for Keycloak on the
+existing Flexible Server, wiring that credential into the cluster via
+the Key Vault Secrets Store CSI driver and Workload Identity (the same
+trust boundary <code>docs/terraform-infra/design.md</code> already
+commits to for the REST API), trusting Azure's PostgreSQL TLS
+certificate chain, and creating the <code>Keycloak</code> custom
+resource itself.</p>
+</div>
+<div class="source-block" data-source-block="5"
+data-source-sha256="2ee8c5cbd323a6f49bd98770f834f810c624c99ad15842395b710e8abefe2927">
+<p>In scope: installing the Keycloak Operator (CRDs + controller) into
+the <code>keycloak</code> namespace, provisioning a dedicated
+<code>keycloak</code> database/role on the shared PostgreSQL Flexible
+Server, sourcing that credential from Key Vault into the cluster, the
+<code>Keycloak</code> custom resource's database/HTTP/hostname/proxy
+configuration, TLS trust for the outbound PostgreSQL connection, and
+verifying the deployment. Out of scope: provisioning AKS, the VNet, Key
+Vault, or the PostgreSQL Flexible Server itself
+(<code>docs/terraform-infra/design.md</code>), HUG's installation and
+the <code>HTTPRoute</code> that fronts Keycloak
+(<code>docs/haproxy-unified-gateway/deployment.md</code> — this document
+only updates that route's backend reference, see section 9),
+realm/client configuration and the <code>tenant_id</code> protocol
+mapper (<code>docs/nats-tenant-queue-api/design.md</code> section 13
+tracks that as a separate tenant-provisioning workstream), and TLS
+termination in front of Keycloak (POC scope, see the status banner
+above).</p>
+</div>
+<section id="2-prerequisites" class="source-block" data-source-block="6"
+data-source-sha256="146a8db925637858b6347ea35a83548ea40f03f0dfae60012ee67a9eb621a992">
+<h2>2. Prerequisites</h2>
+</section>
+<div class="source-block" data-source-block="7"
+data-source-sha256="65727fc6b50c60ad85e40a29bf17372e528ed65227b32c68ee2cfe649c974d5a">
+<ul>
+<li>An AKS cluster with Workload Identity and its OIDC issuer enabled
+(<code>docs/terraform-infra/design.md</code>, <code>modules/aks</code>),
+<code>kubectl</code> context pointed at it, and cluster-admin access —
+installing the Operator's CRDs needs it.</li>
+<li>The Azure Database for PostgreSQL Flexible Server already
+provisioned (<code>docs/terraform-infra/design.md</code>,
+<code>modules/postgresql</code>), its private FQDN (Terraform output
+<code>postgres_fqdn</code>), and network access to it: either from
+inside the VNet, or a temporary entry in
+<code>postgres_firewall_allowed_cidrs</code> for the workstation running
+the one-time setup in section 4.</li>
+<li>The PostgreSQL admin credential, already written to Key Vault by
+Terraform (<code>docs/terraform-infra/design.md</code> section 4,
+Decisions) — needed once, to create Keycloak's own database and
+role.</li>
+<li>The Azure Key Vault from
+<code>docs/terraform-infra/design.md</code>, and permission to create
+secrets in it and role assignments against it.</li>
+<li><strong>Provisioned by extending
+<code>docs/terraform-infra/design.md</code>'s Terraform project — see
+section 4.1:</strong> the dedicated <code>keycloak</code> user-assigned
+identity, its Workload Identity federated credential, its
+<code>Key Vault Secrets User</code> role assignment, and the two Key
+Vault secrets holding Keycloak's database credential.</li>
+<li><strong>Also provisioned by Terraform, folded into
+<code>modules/aks</code> — see section 4.3:</strong> the AKS Key Vault
+Secrets Store CSI driver addon.</li>
+<li><code>kubectl</code> <strong>1.26+</strong>, <code>kustomize</code>
+(bundled with <code>kubectl apply -k</code>), and <code>psql</code> (or
+<code>az postgres flexible-server</code> connect helpers) for the
+one-time database setup.</li>
+<li>Helm <strong>3.7+</strong> and <a
+href="https://github.com/helmfile/helmfile">Helmfile</a>
+<strong>0.150+</strong> with the <code>helm-diff</code> plugin, the same
+floor <code>docs/haproxy-unified-gateway/deployment.md</code> section 2
+sets for HUG — this document's ServiceAccount,
+<code>SecretProviderClass</code>, <code>Keycloak</code> CR, and
+<code>HTTPRoute</code> are packaged as one local Helm chart deployed via
+Helmfile (section 6).</li>
+<li>Operator/Keycloak version pinned in this document:
+<strong>26.7.2</strong> (<code>keycloak/keycloak-k8s-resources</code>,
+current at time of writing). Re-check the <a
+href="https://github.com/keycloak/keycloak-k8s-resources/releases">releases
+page</a> before following these steps against a newer release.</li>
+</ul>
+</div>
+<section id="3-architecture" class="source-block" data-source-block="8"
+data-source-sha256="67f8af6358b424b68bc81905bcb91e42bac9a8c54bc1b0686a352cd86dd580f9">
+<h2>3. Architecture</h2>
+</section>
+<figure class="diagram source-block" data-source-sha256="33896125e40a0ad1813095e24f012dad246d47d65854a2a734bb18543b050cf4" data-source-block="9"><img alt="Diagram 1 showing HUG Gateway\nHTTPRoute: keycloak-route\n/auth/* -- docs/haproxy-unified-gateway/deployment.md, AKS cluster, namespace: keycloak, Service: keycloak-service\nport 8080, HTTP only, Keycloak pod A, Keycloak pod B, ServiceAccount: keycloak\nazure.workload.identity/use: true, SecretProviderClass: keycloak-db\nsyncs Key Vault" src="data:image/svg+xml;base64,PHN2ZyBpZD0ibXktc3ZnIiB3aWR0aD0iMTAwJSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgY2xhc3M9ImZsb3djaGFydCIgc3R5bGU9Im1heC13aWR0aDogMTg4NC4wMnB4OyBiYWNrZ3JvdW5kLWNvbG9yOiB0cmFuc3BhcmVudDsiIHZpZXdCb3g9IjAgMCAxODg0LjAxNTYyNSA4NDkuMTQ1Mzg1NzQyMTg3NSIgcm9sZT0iZ3JhcGhpY3MtZG9jdW1lbnQgZG9jdW1lbnQiIGFyaWEtcm9sZWRlc2NyaXB0aW9uPSJmbG93Y2hhcnQtdjIiPjxzdHlsZT4jbXktc3Zne2ZvbnQtZmFtaWx5OkludGVyLHVpLXNhbnMtc2VyaWYsc3lzdGVtLXVpLHNhbnMtc2VyaWY7Zm9udC1zaXplOjE2cHg7ZmlsbDojMTcyNjMwO31Aa2V5ZnJhbWVzIGVkZ2UtYW5pbWF0aW9uLWZyYW1le2Zyb217c3Ryb2tlLWRhc2hvZmZzZXQ6MDt9fUBrZXlmcmFtZXMgZGFzaHt0b3tzdHJva2UtZGFzaG9mZnNldDowO319I215LXN2ZyAuZWRnZS1hbmltYXRpb24tc2xvd3tzdHJva2UtZGFzaGFycmF5OjksNSFpbXBvcnRhbnQ7c3Ryb2tlLWRhc2hvZmZzZXQ6OTAwO2FuaW1hdGlvbjpkYXNoIDUwcyBsaW5lYXIgaW5maW5pdGU7c3Ryb2tlLWxpbmVjYXA6cm91bmQ7fSNteS1zdmcgLmVkZ2UtYW5pbWF0aW9uLWZhc3R7c3Ryb2tlLWRhc2hhcnJheTo5LDUhaW1wb3J0YW50O3N0cm9rZS1kYXNob2Zmc2V0OjkwMDthbmltYXRpb246ZGFzaCAyMHMgbGluZWFyIGluZmluaXRlO3N0cm9rZS1saW5lY2FwOnJvdW5kO30jbXktc3ZnIC5lcnJvci1pY29ue2ZpbGw6I2Y3ZjlmYjt9I215LXN2ZyAuZXJyb3ItdGV4dHtmaWxsOiMwODA2MDQ7c3Ryb2tlOiMwODA2MDQ7fSNteS1zdmcgLmVkZ2UtdGhpY2tuZXNzLW5vcm1hbHtzdHJva2Utd2lkdGg6MXB4O30jbXktc3ZnIC5lZGdlLXRoaWNrbmVzcy10aGlja3tzdHJva2Utd2lkdGg6My41cHg7fSNteS1zdmcgLmVkZ2UtcGF0dGVybi1zb2xpZHtzdHJva2UtZGFzaGFycmF5OjA7fSNteS1zdmcgLmVkZ2UtdGhpY2tuZXNzLWludmlzaWJsZXtzdHJva2Utd2lkdGg6MDtmaWxsOm5vbmU7fSNteS1zdmcgLmVkZ2UtcGF0dGVybi1kYXNoZWR7c3Ryb2tlLWRhc2hhcnJheTozO30jbXktc3ZnIC5lZGdlLXBhdHRlcm4tZG90dGVke3N0cm9rZS1kYXNoYXJyYXk6Mjt9I215LXN2ZyAubWFya2Vye2ZpbGw6IzUyNmE3OTtzdHJva2U6IzUyNmE3OTt9I215LXN2ZyAubWFya2VyLmNyb3Nze3N0cm9rZTojNTI2YTc5O30jbXktc3ZnIHN2Z3tmb250LWZhbWlseTpJbnRlcix1aS1zYW5zLXNlcmlmLHN5c3RlbS11aSxzYW5zLXNlcmlmO2ZvbnQtc2l6ZToxNnB4O30jbXktc3ZnIHB7bWFyZ2luOjA7fSNteS1zdmcgLmxhYmVse2ZvbnQtZmFtaWx5OkludGVyLHVpLXNhbnMtc2VyaWYsc3lzdGVtLXVpLHNhbnMtc2VyaWY7Y29sb3I6IzE3MjYzMDt9I215LXN2ZyAuY2x1c3Rlci1sYWJlbCB0ZXh0e2ZpbGw6IzA4MDYwNDt9I215LXN2ZyAuY2x1c3Rlci1sYWJlbCBzcGFue2NvbG9yOiMwODA2MDQ7fSNteS1zdmcgLmNsdXN0ZXItbGFiZWwgc3BhbiBwe2JhY2tncm91bmQtY29sb3I6dHJhbnNwYXJlbnQ7fSNteS1zdmcgLmxhYmVsIHRleHQsI215LXN2ZyBzcGFue2ZpbGw6IzE3MjYzMDtjb2xvcjojMTcyNjMwO30jbXktc3ZnIC5ub2RlIHJlY3QsI215LXN2ZyAubm9kZSBjaXJjbGUsI215LXN2ZyAubm9kZSBlbGxpcHNlLCNteS1zdmcgLm5vZGUgcG9seWdvbiwjbXktc3ZnIC5ub2RlIHBhdGh7ZmlsbDojZGJlNWVjO3N0cm9rZTojNjA3OThhO3N0cm9rZS13aWR0aDoxcHg7fSNteS1zdmcgLnJvdWdoLW5vZGUgLmxhYmVsIHRleHQsI215LXN2ZyAubm9kZSAubGFiZWwgdGV4dCwjbXktc3ZnIC5pbWFnZS1zaGFwZSAubGFiZWwsI215LXN2ZyAuaWNvbi1zaGFwZSAubGFiZWx7dGV4dC1hbmNob3I6bWlkZGxlO30jbXktc3ZnIC5ub2RlIC5rYXRleCBwYXRoe2ZpbGw6IzAwMDtzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MXB4O30jbXktc3ZnIC5yb3VnaC1ub2RlIC5sYWJlbCwjbXktc3ZnIC5ub2RlIC5sYWJlbCwjbXktc3ZnIC5pbWFnZS1zaGFwZSAubGFiZWwsI215LXN2ZyAuaWNvbi1zaGFwZSAubGFiZWx7dGV4dC1hbGlnbjpjZW50ZXI7fSNteS1zdmcgLm5vZGUuY2xpY2thYmxle2N1cnNvcjpwb2ludGVyO30jbXktc3ZnIC5yb290IC5hbmNob3IgcGF0aHtmaWxsOiM1MjZhNzkhaW1wb3J0YW50O3N0cm9rZS13aWR0aDowO3N0cm9rZTojNTI2YTc5O30jbXktc3ZnIC5hcnJvd2hlYWRQYXRoe2ZpbGw6IzA4MDYwNDt9I215LXN2ZyAuZWRnZVBhdGggLnBhdGh7c3Ryb2tlOiM1MjZhNzk7c3Ryb2tlLXdpZHRoOjFweDt9I215LXN2ZyAuZmxvd2NoYXJ0LWxpbmt7c3Ryb2tlOiM1MjZhNzk7ZmlsbDpub25lO30jbXktc3ZnIC5lZGdlTGFiZWx7YmFja2dyb3VuZC1jb2xvcjojZWRmMmY1O3RleHQtYWxpZ246Y2VudGVyO30jbXktc3ZnIC5lZGdlTGFiZWwgcHtiYWNrZ3JvdW5kLWNvbG9yOiNlZGYyZjU7fSNteS1zdmcgLmVkZ2VMYWJlbCByZWN0e29wYWNpdHk6MC41O2JhY2tncm91bmQtY29sb3I6I2VkZjJmNTtmaWxsOiNlZGYyZjU7fSNteS1zdmcgLmxhYmVsQmtne2JhY2tncm91bmQtY29sb3I6cmdiYSgyMzcsIDI0MiwgMjQ1LCAwLjUpO30jbXktc3ZnIC5jbHVzdGVyIHJlY3R7ZmlsbDojZjdmOWZiO3N0cm9rZTpoc2woMjEwLCAwJSwgODcuNjQ3MDU4ODIzNSUpO3N0cm9rZS13aWR0aDoxcHg7fSNteS1zdmcgLmNsdXN0ZXIgdGV4dHtmaWxsOiMwODA2MDQ7fSNteS1zdmcgLmNsdXN0ZXIgc3Bhbntjb2xvcjojMDgwNjA0O30jbXktc3ZnIGRpdi5tZXJtYWlkVG9vbHRpcHtwb3NpdGlvbjphYnNvbHV0ZTt0ZXh0LWFsaWduOmNlbnRlcjttYXgtd2lkdGg6MjAwcHg7cGFkZGluZzoycHg7Zm9udC1mYW1pbHk6SW50ZXIsdWktc2Fucy1zZXJpZixzeXN0ZW0tdWksc2Fucy1zZXJpZjtmb250LXNpemU6MTJweDtiYWNrZ3JvdW5kOiNmN2Y5ZmI7Ym9yZGVyOjFweCBzb2xpZCBoc2woMjEwLCAwJSwgODcuNjQ3MDU4ODIzNSUpO2JvcmRlci1yYWRpdXM6MnB4O3BvaW50ZXItZXZlbnRzOm5vbmU7ei1pbmRleDoxMDA7fSNteS1zdmcgLmZsb3djaGFydFRpdGxlVGV4dHt0ZXh0LWFuY2hvcjptaWRkbGU7Zm9udC1zaXplOjE4cHg7ZmlsbDojMTcyNjMwO30jbXktc3ZnIHJlY3QudGV4dHtmaWxsOm5vbmU7c3Ryb2tlLXdpZHRoOjA7fSNteS1zdmcgLmljb24tc2hhcGUsI215LXN2ZyAuaW1hZ2Utc2hhcGV7YmFja2dyb3VuZC1jb2xvcjojZWRmMmY1O3RleHQtYWxpZ246Y2VudGVyO30jbXktc3ZnIC5pY29uLXNoYXBlIHAsI215LXN2ZyAuaW1hZ2Utc2hhcGUgcHtiYWNrZ3JvdW5kLWNvbG9yOiNlZGYyZjU7cGFkZGluZzoycHg7fSNteS1zdmcgLmljb24tc2hhcGUgLmxhYmVsIHJlY3QsI215LXN2ZyAuaW1hZ2Utc2hhcGUgLmxhYmVsIHJlY3R7b3BhY2l0eTowLjU7YmFja2dyb3VuZC1jb2xvcjojZWRmMmY1O2ZpbGw6I2VkZjJmNTt9I215LXN2ZyAubGFiZWwtaWNvbntkaXNwbGF5OmlubGluZS1ibG9jaztoZWlnaHQ6MWVtO292ZXJmbG93OnZpc2libGU7dmVydGljYWwtYWxpZ246LTAuMTI1ZW07fSNteS1zdmcgLm5vZGUgLmxhYmVsLWljb24gcGF0aHtmaWxsOmN1cnJlbnRDb2xvcjtzdHJva2U6cmV2ZXJ0O3N0cm9rZS13aWR0aDpyZXZlcnQ7fSNteS1zdmcgLm5vZGUgLm5lby1ub2Rle3N0cm9rZTojNjA3OThhO30jbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLm5vZGUgcmVjdCwjbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLmNsdXN0ZXIgcmVjdCwjbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLm5vZGUgcG9seWdvbntzdHJva2U6dXJsKCNteS1zdmctZ3JhZGllbnQpO2ZpbHRlcjpkcm9wLXNoYWRvdyggMXB4IDJweCAycHggcmdiYSgxODUsMTg1LDE4NSwxKSk7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0uc3dpbWxhbmUuY2x1c3RlciByZWN0e2ZpbHRlcjpub25lO30jbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLm5vZGUgcGF0aHtzdHJva2U6dXJsKCNteS1zdmctZ3JhZGllbnQpO3N0cm9rZS13aWR0aDoxcHg7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0ubm9kZSAub3V0ZXItcGF0aHtmaWx0ZXI6ZHJvcC1zaGFkb3coIDFweCAycHggMnB4IHJnYmEoMTg1LDE4NSwxODUsMSkpO30jbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLm5vZGUgLm5lby1saW5lIHBhdGh7c3Ryb2tlOiM2MDc5OGE7ZmlsdGVyOm5vbmU7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0ubm9kZSBjaXJjbGV7c3Ryb2tlOnVybCgjbXktc3ZnLWdyYWRpZW50KTtmaWx0ZXI6ZHJvcC1zaGFkb3coIDFweCAycHggMnB4IHJnYmEoMTg1LDE4NSwxODUsMSkpO30jbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLm5vZGUgY2lyY2xlIC5zdGF0ZS1zdGFydHtmaWxsOiMwMDAwMDA7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0uaWNvbi1zaGFwZSAuaWNvbntmaWxsOnVybCgjbXktc3ZnLWdyYWRpZW50KTtmaWx0ZXI6ZHJvcC1zaGFkb3coIDFweCAycHggMnB4IHJnYmEoMTg1LDE4NSwxODUsMSkpO30jbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLmljb24tc2hhcGUgLmljb24tbmVvIHBhdGh7c3Ryb2tlOnVybCgjbXktc3ZnLWdyYWRpZW50KTtmaWx0ZXI6ZHJvcC1zaGFkb3coIDFweCAycHggMnB4IHJnYmEoMTg1LDE4NSwxODUsMSkpO30jbXktc3ZnIDpyb290ey0tbWVybWFpZC1mb250LWZhbWlseToidHJlYnVjaGV0IG1zIix2ZXJkYW5hLGFyaWFsLHNhbnMtc2VyaWY7fTwvc3R5bGU+PGc+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCIgY2xhc3M9Im1hcmtlciBmbG93Y2hhcnQtdjIiIHZpZXdCb3g9IjAgMCAxMCAxMCIgcmVmWD0iNSIgcmVmWT0iNSIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iOCIgbWFya2VySGVpZ2h0PSI4IiBvcmllbnQ9ImF1dG8iPjxwYXRoIGQ9Ik0gMCAwIEwgMTAgNSBMIDAgMTAgeiIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMTsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50U3RhcnQiIGNsYXNzPSJtYXJrZXIgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTAgMTAiIHJlZlg9IjQuNSIgcmVmWT0iNSIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iOCIgbWFya2VySGVpZ2h0PSI4IiBvcmllbnQ9ImF1dG8iPjxwYXRoIGQ9Ik0gMCA1IEwgMTAgMTAgTCAxMCAwIHoiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDE7IHN0cm9rZS1kYXNoYXJyYXk6IDEsIDA7Ii8+PC9tYXJrZXI+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZC1tYXJnaW4iIGNsYXNzPSJtYXJrZXIgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTEuNSAxNCIgcmVmWD0iMTEuNSIgcmVmWT0iNyIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iMTAuNSIgbWFya2VySGVpZ2h0PSIxNCIgb3JpZW50PSJhdXRvIj48cGF0aCBkPSJNIDAgMCBMIDExLjUgNyBMIDAgMTQgeiIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMDsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50U3RhcnQtbWFyZ2luIiBjbGFzcz0ibWFya2VyIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDExLjUgMTQiIHJlZlg9IjEiIHJlZlk9IjciIG1hcmtlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgbWFya2VyV2lkdGg9IjExLjUiIG1hcmtlckhlaWdodD0iMTQiIG9yaWVudD0iYXV0byI+PHBvbHlnb24gcG9pbnRzPSIwLDcgMTEuNSwxNCAxMS41LDAiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDA7IHN0cm9rZS1kYXNoYXJyYXk6IDEsIDA7Ii8+PC9tYXJrZXI+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1jaXJjbGVFbmQiIGNsYXNzPSJtYXJrZXIgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTAgMTAiIHJlZlg9IjExIiByZWZZPSI1IiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSIxMSIgbWFya2VySGVpZ2h0PSIxMSIgb3JpZW50PSJhdXRvIj48Y2lyY2xlIGN4PSI1IiBjeT0iNSIgcj0iNSIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMTsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLWNpcmNsZVN0YXJ0IiBjbGFzcz0ibWFya2VyIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDEwIDEwIiByZWZYPSItMSIgcmVmWT0iNSIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iMTEiIG1hcmtlckhlaWdodD0iMTEiIG9yaWVudD0iYXV0byI+PGNpcmNsZSBjeD0iNSIgY3k9IjUiIHI9IjUiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDE7IHN0cm9rZS1kYXNoYXJyYXk6IDEsIDA7Ii8+PC9tYXJrZXI+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1jaXJjbGVFbmQtbWFyZ2luIiBjbGFzcz0ibWFya2VyIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDEwIDEwIiByZWZZPSI1IiByZWZYPSIxMi4yNSIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iMTQiIG1hcmtlckhlaWdodD0iMTQiIG9yaWVudD0iYXV0byI+PGNpcmNsZSBjeD0iNSIgY3k9IjUiIHI9IjUiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDA7IHN0cm9rZS1kYXNoYXJyYXk6IDEsIDA7Ii8+PC9tYXJrZXI+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1jaXJjbGVTdGFydC1tYXJnaW4iIGNsYXNzPSJtYXJrZXIgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTAgMTAiIHJlZlg9Ii0yIiByZWZZPSI1IiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSIxNCIgbWFya2VySGVpZ2h0PSIxNCIgb3JpZW50PSJhdXRvIj48Y2lyY2xlIGN4PSI1IiBjeT0iNSIgcj0iNSIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMDsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLWNyb3NzRW5kIiBjbGFzcz0ibWFya2VyIGNyb3NzIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDExIDExIiByZWZYPSIxMiIgcmVmWT0iNS4yIiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSIxMSIgbWFya2VySGVpZ2h0PSIxMSIgb3JpZW50PSJhdXRvIj48cGF0aCBkPSJNIDEsMSBsIDksOSBNIDEwLDEgbCAtOSw5IiBjbGFzcz0iYXJyb3dNYXJrZXJQYXRoIiBzdHlsZT0ic3Ryb2tlLXdpZHRoOiAyOyBzdHJva2UtZGFzaGFycmF5OiAxLCAwOyIvPjwvbWFya2VyPjxtYXJrZXIgaWQ9Im15LXN2Z19mbG93Y2hhcnQtdjItY3Jvc3NTdGFydCIgY2xhc3M9Im1hcmtlciBjcm9zcyBmbG93Y2hhcnQtdjIiIHZpZXdCb3g9IjAgMCAxMSAxMSIgcmVmWD0iLTEiIHJlZlk9IjUuMiIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iMTEiIG1hcmtlckhlaWdodD0iMTEiIG9yaWVudD0iYXV0byI+PHBhdGggZD0iTSAxLDEgbCA5LDkgTSAxMCwxIGwgLTksOSIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMjsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLWNyb3NzRW5kLW1hcmdpbiIgY2xhc3M9Im1hcmtlciBjcm9zcyBmbG93Y2hhcnQtdjIiIHZpZXdCb3g9IjAgMCAxNSAxNSIgcmVmWD0iMTcuNyIgcmVmWT0iNy41IiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSIxMiIgbWFya2VySGVpZ2h0PSIxMiIgb3JpZW50PSJhdXRvIj48cGF0aCBkPSJNIDEsMSBMIDE0LDE0IE0gMSwxNCBMIDE0LDEiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDIuNTsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLWNyb3NzU3RhcnQtbWFyZ2luIiBjbGFzcz0ibWFya2VyIGNyb3NzIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDE1IDE1IiByZWZYPSItMy41IiByZWZZPSI3LjUiIG1hcmtlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgbWFya2VyV2lkdGg9IjEyIiBtYXJrZXJIZWlnaHQ9IjEyIiBvcmllbnQ9ImF1dG8iPjxwYXRoIGQ9Ik0gMSwxIEwgMTQsMTQgTSAxLDE0IEwgMTQsMSIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMi41OyBzdHJva2UtZGFzaGFycmF5OiAxLCAwOyIvPjwvbWFya2VyPjxnIGNsYXNzPSJyb290Ij48ZyBjbGFzcz0iY2x1c3RlcnMiPjxnIGNsYXNzPSJjbHVzdGVyIiBpZD0ibXktc3ZnLUFLUyIgZGF0YS1sb29rPSJjbGFzc2ljIj48cmVjdCBzdHlsZT0iIiB4PSI4IiB5PSI4IiB3aWR0aD0iMTYyNi4xMDkzNzUiIGhlaWdodD0iNjEwLjU1NDA3NzE0ODQzNzUiLz48ZyBjbGFzcz0iY2x1c3Rlci1sYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNzc5LjE3OTY4NzUsIDgpIj48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPkFLUzwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBjbHVzdGVyPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0iY2x1c3RlciIgaWQ9Im15LXN2Zy1OU09QIiBkYXRhLWxvb2s9ImNsYXNzaWMiPjxyZWN0IHN0eWxlPSIiIHg9IjI4IiB5PSIyNDguNDAwMDAxNTI1ODc4OSIgd2lkdGg9IjI2My44NTkzNzUiIGhlaWdodD0iMTMzLjE5OTk5Njk0ODI0MjIiLz48ZyBjbGFzcz0iY2x1c3Rlci1sYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNjEuNzY1NjI1LCAyNDguNDAwMDAxNTI1ODc4OSkiPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+bmFtZXNwYWNlOjwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBrZXljbG9hazwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIxZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPm9wZXJhdG9yLDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBzYW1lPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IG5hbWVzcGFjZTwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImNsdXN0ZXIiIGlkPSJteS1zdmctTlNLQyIgZGF0YS1sb29rPSJjbGFzc2ljIj48cmVjdCBzdHlsZT0iIiB4PSIzMTEuODU5Mzc1IiB5PSIzMyIgd2lkdGg9IjEwMTguNTMxMjUiIGhlaWdodD0iNTYwLjU1NDA3NzE0ODQzNzUiLz48ZyBjbGFzcz0iY2x1c3Rlci1sYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNzQzLjUwNzgxMjUsIDMzKSI+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5uYW1lc3BhY2U6PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGtleWNsb2FrPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImVkZ2VQYXRocyI+PHBhdGggZD0iTTUzOC4wNDcsMTc2LjRMNTM4LjA0NywxODIuNEM1MzguMDQ3LDE4OC40LDUzOC4wNDcsMjAwLjQsNTM4LjA0NywyMTIuNEM1MzguMDQ3LDIyNC40LDUzOC4wNDcsMjM2LjQsNTM4LjA0NywyNDcuMzY3QzUzOC4wNDcsMjU4LjMzMyw1MzguMDQ3LDI2OC4yNjcsNTM4LjA0NywyNzMuMjMzTDUzOC4wNDcsMjc4LjIiIGlkPSJteS1zdmctTF9IVUdfU1ZDXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfSFVHX1NWQ18wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZOVE00TGpBME5qZzNOU3dpZVNJNk1UYzJMalF3TURBd01UVXlOVGczT0RsOUxIc2llQ0k2TlRNNExqQTBOamczTlN3aWVTSTZNakV5TGpRd01EQXdNVFV5TlRnM09EbDlMSHNpZUNJNk5UTTRMakEwTmpnM05Td2llU0k2TWpRNExqUXdNREF3TVRVeU5UZzNPRGw5TEhzaWVDSTZOVE00TGpBME5qZzNOU3dpZVNJNk1qZ3lMakl3TURBd01EYzJNamt6T1RRMWZWMD0iIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik01MzMuMTIyLDM0Ny44TDUzMi4yNzYsMzUzLjQzM0M1MzEuNDMsMzU5LjA2Nyw1MjkuNzM5LDM3MC4zMzMsNTI4Ljg5MywzODEuOTY3QzUyOC4wNDcsMzkzLjYsNTI4LjA0Nyw0MDUuNiw1MzQuODI5LDQyMi42MTJDNTQxLjYxMiw0MzkuNjI0LDU1NS4xNzcsNDYxLjY0Nyw1NjEuOTU5LDQ3Mi42NTlMNTY4Ljc0MSw0ODMuNjcxIiBpZD0ibXktc3ZnLUxfU1ZDX1BPREFfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9TVkNfUE9EQV8wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZOVE16TGpFeU1UazFNREEzTmpjNU5URXNJbmtpT2pNME55NDNPVGs1T1RreU16Y3dOakExTlgwc2V5SjRJam8xTWpndU1EUTJPRGMxTENKNUlqb3pPREV1TlRrNU9UazRORGMwTVRJeE1YMHNleUo0SWpvMU1qZ3VNRFEyT0RjMUxDSjVJam8wTVRjdU5UazVPVGs0TkRjME1USXhNWDBzZXlKNElqbzFOekF1T0RNNU1EVTBOalUwTmpRME1Td2llU0k2TkRnM0xqQTNOekF6TnpneE1USTNPVE45WFE9PSIgZGF0YS1sb29rPSJjbGFzc2ljIiBtYXJrZXItZW5kPSJ1cmwoI215LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRFbmQpIi8+PHBhdGggZD0iTTU5Mi42MDgsMzQ3LjhMNjAxLjk3OCwzNTMuNDMzQzYxMS4zNDksMzU5LjA2Nyw2MzAuMDkxLDM3MC4zMzMsNjM5LjQ2MSwzODEuOTY3QzY0OC44MzIsMzkzLjYsNjQ4LjgzMiw0MDUuNiw2NjcuODc1LDQyMi44NDFDNjg2LjkxNyw0NDAuMDgxLDcyNS4wMDMsNDYyLjU2Miw3NDQuMDQ2LDQ3My44MDNMNzYzLjA4OCw0ODUuMDQ0IiBpZD0ibXktc3ZnLUxfU1ZDX1BPREJfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9TVkNfUE9EQl8wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZOVGt5TGpZd056Y3pNamN4TXpZM056RXNJbmtpT2pNME55NDNPVGs1T1RreU16Y3dOakExTlgwc2V5SjRJam8yTkRndU9ETXlNRE14TWpVc0lua2lPak00TVM0MU9UazVPVGcwTnpReE1qRXhmU3g3SW5naU9qWTBPQzQ0TXpJd016RXlOU3dpZVNJNk5ERTNMalU1T1RrNU9EUTNOREV5TVRGOUxIc2llQ0k2TnpZMkxqVXpNekF5TmpFd056RXpNakVzSW5raU9qUTROeTR3Tnpjd016YzRNVEV5TnpremZWMD0iIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik0xMTY3LjQ2OCwxNTguOEwxMTY0Ljc5NCwxNjcuNzMzQzExNjIuMTE5LDE3Ni42NjcsMTE1Ni43NzEsMTk0LjUzMywxMTU0LjA5NiwyMDkuNDY3QzExNTEuNDIyLDIyNC40LDExNTEuNDIyLDIzNi40LDExNTEuNDIyLDI0NS45QzExNTEuNDIyLDI1NS40LDExNTEuNDIyLDI2Mi40LDExNTEuNDIyLDI2NS45TDExNTEuNDIyLDI2OS40IiBpZD0ibXktc3ZnLUxfU1BDX1NFQ18wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX1NQQ19TRUNfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TVRFMk55NDBOamd3T1RRd05EUXdNREl6TENKNUlqb3hOVGd1TnprNU9UazVNak0zTURZd05UVjlMSHNpZUNJNk1URTFNUzQwTWpFNE56VXNJbmtpT2pJeE1pNDBNREF3TURFMU1qVTROemc1ZlN4N0luZ2lPakV4TlRFdU5ESXhPRGMxTENKNUlqb3lORGd1TkRBd01EQXhOVEkxT0RjNE9YMHNleUo0SWpveE1UVXhMalF5TVRnM05Td2llU0k2TWpjekxqUXdNREF3TVRVeU5UZzNPRGw5WFE9PSIgZGF0YS1sb29rPSJjbGFzc2ljIiBtYXJrZXItZW5kPSJ1cmwoI215LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRFbmQpIi8+PHBhdGggZD0iTTEwODguNDg5LDM1Ni42TDEwODIuMTg1LDM2MC43NjdDMTA3NS44ODIsMzY0LjkzMywxMDYzLjI3NSwzNzMuMjY3LDEwNTYuOTcxLDM4My40MzNDMTA1MC42NjgsMzkzLjYsMTA1MC42NjgsNDA1LjYsOTg4LjEyMiw0MjQuMTcyQzkyNS41NzcsNDQyLjc0NCw4MDAuNDg1LDQ2Ny44ODgsNzM3Ljk0LDQ4MC40Nkw2NzUuMzk0LDQ5My4wMzIiIGlkPSJteS1zdmctTF9TRUNfUE9EQV8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX1NFQ19QT0RBXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk1UQTRPQzQwT0RnMU1EUTVPVFUyTXprc0lua2lPak0xTmk0MU9UazVPVGcwTnpReE1qRXhmU3g3SW5naU9qRXdOVEF1TmpZM09UWTROelVzSW5raU9qTTRNUzQxT1RrNU9UZzBOelF4TWpFeGZTeDdJbmdpT2pFd05UQXVOalkzT1RZNE56VXNJbmtpT2pReE55NDFPVGs1T1RnME56UXhNakV4ZlN4N0luZ2lPalkzTVM0ME56STJOVFl5TlN3aWVTSTZORGt6TGpneU1ETTVNRFUwTXpJMk1UUTFmVjA9IiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNMTE5Mi45MjMsMzU2LjZMMTE5Ny4wOCwzNjAuNzY3QzEyMDEuMjM2LDM2NC45MzMsMTIwOS41NSwzNzMuMjY3LDEyMTMuNzA3LDM4My40MzNDMTIxNy44NjMsMzkzLjYsMTIxNy44NjMsNDA1LjYsMTE2NC4zNTQsNDIzLjc4QzExMTAuODQ2LDQ0MS45NTksMTAwMy44MjgsNDY2LjMxOSw5NTAuMzE5LDQ3OC40OThMODk2LjgxLDQ5MC42NzgiIGlkPSJteS1zdmctTF9TRUNfUE9EQl8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX1NFQ19QT0RCXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk1URTVNaTQ1TWpJNE1USTROamN3TWpVc0lua2lPak0xTmk0MU9UazVPVGcwTnpReE1qRXhmU3g3SW5naU9qRXlNVGN1T0RZek1qZ3hNalVzSW5raU9qTTRNUzQxT1RrNU9UZzBOelF4TWpFeGZTeDdJbmdpT2pFeU1UY3VPRFl6TWpneE1qVXNJbmtpT2pReE55NDFPVGs1T1RnME56UXhNakV4ZlN4N0luZ2lPamc1TWk0NU1UQXhOVFl5TlN3aWVTSTZORGt4TGpVMk5UYzFOVE14TmpjMU1qUjlYUT09IiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNNzg1LjU2NiwzNTYuNkw3NzguNjM1LDM2MC43NjdDNzcxLjcwNCwzNjQuOTMzLDc1Ny44NDIsMzczLjI2Nyw3NTAuOTExLDM4My40MzNDNzQzLjk4LDM5My42LDc0My45OCw0MDUuNiw3MjQuOTM4LDQyMi44NDFDNzA1Ljg5NSw0NDAuMDgxLDY2Ny44MSw0NjIuNTYyLDY0OC43NjcsNDczLjgwM0w2MjkuNzI0LDQ4NS4wNDQiIGlkPSJteS1zdmctTF9TQV9QT0RBXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLWRvdHRlZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX1NBX1BPREFfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TnpnMUxqVTJOalE0T1RNeE5qRTBORFlzSW5raU9qTTFOaTQxT1RrNU9UZzBOelF4TWpFeGZTeDdJbmdpT2pjME15NDVPREEwTmpnM05Td2llU0k2TXpneExqVTVPVGs1T0RRM05ERXlNVEY5TEhzaWVDSTZOelF6TGprNE1EUTJPRGMxTENKNUlqbzBNVGN1TlRrNU9UazRORGMwTVRJeE1YMHNleUo0SWpvMk1qWXVNamM1TkRjek9Ea3lPRFkzT1N3aWVTSTZORGczTGpBM056QXpOemd4TVRJM09UTjlYUT09IiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNOTE3LjY5OSwzNTYuNkw5MjQuMDAyLDM2MC43NjdDOTMwLjMwNiwzNjQuOTMzLDk0Mi45MTMsMzczLjI2Nyw5NDkuMjE2LDM4My40MzNDOTU1LjUyLDM5My42LDk1NS41Miw0MDUuNiw5MzcuNzA5LDQyMi44MjRDOTE5Ljg5OSw0NDAuMDQ4LDg4NC4yNzksNDYyLjQ5Niw4NjYuNDY5LDQ3My43Mkw4NDguNjU4LDQ4NC45NDQiIGlkPSJteS1zdmctTF9TQV9QT0RCXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLWRvdHRlZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX1NBX1BPREJfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2T1RFM0xqWTVPRGs1TlRBd05ETTJNU3dpZVNJNk16VTJMalU1T1RrNU9EUTNOREV5TVRGOUxIc2llQ0k2T1RVMUxqVXhPVFV6TVRJMUxDSjVJam96T0RFdU5UazVPVGs0TkRjME1USXhNWDBzZXlKNElqbzVOVFV1TlRFNU5UTXhNalVzSW5raU9qUXhOeTQxT1RrNU9UZzBOelF4TWpFeGZTeDdJbmdpT2pnME5TNHlOelF5T0RjMk1qRXhNVFExTENKNUlqbzBPRGN1TURjM01ETTNPREV4TWpjNU0zMWQiIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik0xMzcuMjkyLDM0Ny44TDEzMy40MDQsMzUzLjQzM0MxMjkuNTE3LDM1OS4wNjcsMTIxLjc0MSwzNzAuMzMzLDE2MC42NzYsMzgxLjk2N0MxOTkuNjEyLDM5My42LDI4NS4yNTksNDA1LjYsMzU0LjA2OSw0MjIuOTEzQzQyMi44OCw0NDAuMjI3LDQ3NC44NTMsNDYyLjg1NCw1MDAuODM5LDQ3NC4xNjdMNTI2LjgyNiw0ODUuNDgiIGlkPSJteS1zdmctTF9PUF9QT0RBXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLWRvdHRlZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX09QX1BPREFfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TVRNM0xqSTVNak0wTnpBME1qUTBNRGN5TENKNUlqb3pORGN1TnprNU9UazVNak0zTURZd05UVjlMSHNpZUNJNk1URXpMamsyTkRnME16YzFMQ0o1SWpvek9ERXVOVGs1T1RrNE5EYzBNVEl4TVgwc2V5SjRJam96TnpBdU9UQTJNalVzSW5raU9qUXhOeTQxT1RrNU9UZzBOelF4TWpFeGZTeDdJbmdpT2pVek1DNDBPVE0xT0RVMU56YzFNRE15TENKNUlqbzBPRGN1TURjM01ETTNPREV4TWpjNU0zMWQiIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik0xODcuNDkyLDM0Ny44TDE5Mi4yMjYsMzUzLjQzM0MxOTYuOTU5LDM1OS4wNjcsMjA2LjQyNywzNzAuMzMzLDI1My4zNDUsMzgxLjk2N0MzMDAuMjYzLDM5My42LDM4NC42MzIsNDA1LjYsNDY4LjI1Miw0MjMuMDUzQzU1MS44NzIsNDQwLjUwNiw2MzQuNzQ1LDQ2My40MTIsNjc2LjE4MSw0NzQuODY1TDcxNy42MTcsNDg2LjMxOCIgaWQ9Im15LXN2Zy1MX09QX1BPREJfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tZG90dGVkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfT1BfUE9EQl8wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZNVGczTGpRNU1UazFNamc0TURjMk5ERXpMQ0o1SWpvek5EY3VOems1T1RrNU1qTTNNRFl3TlRWOUxIc2llQ0k2TWpFMUxqZzVORFV6TVRJMUxDSjVJam96T0RFdU5UazVPVGs0TkRjME1USXhNWDBzZXlKNElqbzBOamtzSW5raU9qUXhOeTQxT1RrNU9UZzBOelF4TWpFeGZTeDdJbmdpT2pjeU1TNDBOekkyTlRZeU5Td2llU0k2TkRnM0xqTTROREV6T0RReE1qZzROekY5WFE9PSIgZGF0YS1sb29rPSJjbGFzc2ljIiBtYXJrZXItZW5kPSJ1cmwoI215LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRFbmQpIi8+PHBhdGggZD0iTTEyMDAuODcxLDE1OC44TDEyMDUuMzcsMTY3LjczM0MxMjA5Ljg2OCwxNzYuNjY3LDEyMTguODY2LDE5NC41MzMsMTIyMy4zNjUsMjA5LjQ2N0MxMjI3Ljg2MywyMjQuNCwxMjI3Ljg2MywyMzYuNCwxMjUwLjE0LDI0OC4yMzJDMTI3Mi40MTYsMjYwLjA2NCwxMzE2Ljk2OCwyNzEuNzI4LDEzMzkuMjQ1LDI3Ny41NkwxMzYxLjUyMSwyODMuMzkyIiBpZD0ibXktc3ZnLUxfU1BDX0NTSV8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1kb3R0ZWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9TUENfQ1NJXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk1USXdNQzQ0TnpFd05UazVPRGd3TmprNUxDSjVJam94TlRndU56azVPVGs1TWpNM01EWXdOVFY5TEhzaWVDSTZNVEl5Tnk0NE5qTXlPREV5TlN3aWVTSTZNakV5TGpRd01EQXdNVFV5TlRnM09EbDlMSHNpZUNJNk1USXlOeTQ0TmpNeU9ERXlOU3dpZVNJNk1qUTRMalF3TURBd01UVXlOVGczT0RsOUxIc2llQ0k2TVRNMk5TNHpPVEEyTWpVc0lua2lPakk0TkM0ME1EVTFNREV3TmpFNE1Ea3hmVjA9IiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNMTQ4Mi4yNSwzNDcuOEwxNDgyLjI1LDM1My40MzNDMTQ4Mi4yNSwzNTkuMDY3LDE0ODIuMjUsMzcwLjMzMywxNDgyLjI1LDM4MS45NjdDMTQ4Mi4yNSwzOTMuNiwxNDgyLjI1LDQwNS42LDE1MTIuNzU5LDQyMS40MjNDMTU0My4yNjcsNDM3LjI0NywxNjA0LjI4NSw0NTYuODk0LDE2MzQuNzkzLDQ2Ni43MTdMMTY2NS4zMDIsNDc2LjU0IiBpZD0ibXktc3ZnLUxfQ1NJX0tWXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfQ1NJX0tWXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk1UUTRNaTR5TlN3aWVTSTZNelEzTGpjNU9UazVPVEl6TnpBMk1EVTFmU3g3SW5naU9qRTBPREl1TWpVc0lua2lPak00TVM0MU9UazVPVGcwTnpReE1qRXhmU3g3SW5naU9qRTBPREl1TWpVc0lua2lPalF4Tnk0MU9UazVPVGcwTnpReE1qRXhmU3g3SW5naU9qRTJOamt1TVRBNU16YzFMQ0o1SWpvME56Y3VOelkyTkRBNU16RTFOVEV6TjMxZCIgZGF0YS1sb29rPSJjbGFzc2ljIiBtYXJrZXItZW5kPSJ1cmwoI215LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRFbmQpIi8+PHBhdGggZD0iTTU4NS42MjEsNTM1LjA3N0w1ODUuNjIxLDU0NC44MjNDNTg1LjYyMSw1NTQuNTY5LDU4NS42MjEsNTc0LjA2Miw1ODUuNjIxLDU4Ny45NzVDNTg1LjYyMSw2MDEuODg3LDU4NS42MjEsNjEwLjIyMSw1ODUuNjIxLDYyMS44NTRDNTg1LjYyMSw2MzMuNDg3LDU4NS42MjEsNjQ4LjQyMSw1OTIuNjAxLDY2My40MzhDNTk5LjU4MSw2NzguNDU1LDYxMy41NDEsNjkzLjU1NSw2MjAuNTIsNzAxLjEwNkw2MjcuNSw3MDguNjU2IiBpZD0ibXktc3ZnLUxfUE9EQV9QR18wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX1BPREFfUEdfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TlRnMUxqWXlNVEE1TXpjMUxDSjVJam8xTXpVdU1EYzNNRE0zT0RFeE1qYzVNMzBzZXlKNElqbzFPRFV1TmpJeE1Ea3pOelVzSW5raU9qVTVNeTQxTlRRd056Y3hORGcwTXpjMWZTeDdJbmdpT2pVNE5TNDJNakV3T1RNM05Td2llU0k2TmpFNExqVTFOREEzTnpFME9EUXpOelY5TEhzaWVDSTZOVGcxTGpZeU1UQTVNemMxTENKNUlqbzJOak11TXpVME1EYzJNemcxTkRrNGZTeDdJbmdpT2pZek1DNHlNVFUyTURNd01EVXdPREF4TENKNUlqbzNNVEV1TlRrek1qY3lPVE00TmpJeU1YMWQiIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik04MDcuMTkxLDUzNS4wNzdMODA3LjE5MSw1NDQuODIzQzgwNy4xOTEsNTU0LjU2OSw4MDcuMTkxLDU3NC4wNjIsODA3LjE5MSw1ODcuOTc1QzgwNy4xOTEsNjAxLjg4Nyw4MDcuMTkxLDYxMC4yMjEsODA3LjE5MSw2MjEuODU0QzgwNy4xOTEsNjMzLjQ4Nyw4MDcuMTkxLDY0OC40MjEsODAwLjIxMiw2NjMuNDM4Qzc5My4yMzIsNjc4LjQ1NSw3NzkuMjcyLDY5My41NTUsNzcyLjI5Miw3MDEuMTA2TDc2NS4zMTIsNzA4LjY1NiIgaWQ9Im15LXN2Zy1MX1BPREJfUEdfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9QT0RCX1BHXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk9EQTNMakU1TVRRd05qSTFMQ0o1SWpvMU16VXVNRGMzTURNM09ERXhNamM1TTMwc2V5SjRJam80TURjdU1Ua3hOREEyTWpVc0lua2lPalU1TXk0MU5UUXdOemN4TkRnME16YzFmU3g3SW5naU9qZ3dOeTR4T1RFME1EWXlOU3dpZVNJNk5qRTRMalUxTkRBM056RTBPRFF6TnpWOUxIc2llQ0k2T0RBM0xqRTVNVFF3TmpJMUxDSjVJam8yTmpNdU16VTBNRGMyTXpnMU5EazRmU3g3SW5naU9qYzJNaTQxT1RZNE9UWTVPVFE1TVRrNUxDSjVJam8zTVRFdU5Ua3pNamN5T1RNNE5qSXlNWDFkIiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbHMiPjxnIGNsYXNzPSJlZGdlTGFiZWwiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9IVUdfU1ZDXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIDApIj48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiLz48L3RleHQ+PC9nPjwvZz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVsIj48ZyBjbGFzcz0ibGFiZWwiIGRhdGEtaWQ9IkxfU1ZDX1BPREFfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgMCkiPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSIvPjwvdGV4dD48L2c+PC9nPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9TVkNfUE9EQl8wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAwKSI+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIi8+PC90ZXh0PjwvZz48L2c+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX1NQQ19TRUNfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgMCkiPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSIvPjwvdGV4dD48L2c+PC9nPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9TRUNfUE9EQV8wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAwKSI+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIi8+PC90ZXh0PjwvZz48L2c+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX1NFQ19QT0RCXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIDApIj48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiLz48L3RleHQ+PC9nPjwvZz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVsIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg3NDMuOTgwNDY4NzUsIDQxNy41OTk5OTg0NzQxMjExKSI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX1NBX1BPREFfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTEwKSI+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSIiIHg9Ii03NS4xNDg0Mzc1IiB5PSItMSIgd2lkdGg9IjE1MC4yOTY4NzUiIGhlaWdodD0iMjIiLz48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5mZWRlcmF0ZWQ8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gY3JlZGVudGlhbDwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoOTU1LjUxOTUzMTI1LCA0MTcuNTk5OTk4NDc0MTIxMSkiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9TQV9QT0RCXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xMCkiPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0iIiB4PSItNzUuMTQ4NDM3NSIgeT0iLTEiIHdpZHRoPSIxNTAuMjk2ODc1IiBoZWlnaHQ9IjIyIi8+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+ZmVkZXJhdGVkPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGNyZWRlbnRpYWw8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDMwOC4yODU3LCA0MDguODI2MjUpIj48ZyBjbGFzcz0ibGFiZWwiIGRhdGEtaWQ9IkxfT1BfUE9EQV8wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMTApIj48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9IiIgeD0iLTM5LjA0Njg3NSIgeT0iLTEiIHdpZHRoPSI3OC4wOTM3NSIgaGVpZ2h0PSIyMiIvPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPnJlY29uY2lsZXM8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQ1MC4yNTczNiwgNDE0LjkzNDE3KSI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX09QX1BPREJfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTEwKSI+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSIiIHg9Ii0zOS4wNDY4NzUiIHk9Ii0xIiB3aWR0aD0iNzguMDkzNzUiIGhlaWdodD0iMjIiLz48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5yZWNvbmNpbGVzPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVsIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMjI3Ljg2MzI4MTI1LCAyMTIuNDAwMDAxNTI1ODc4OSkiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9TUENfQ1NJXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xMCkiPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0iIiB4PSItMzQuNTg1OTM3NSIgeT0iLTEiIHdpZHRoPSI2OS4xNzE4NzUiIGhlaWdodD0iMjIiLz48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5yZWFkczwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiB2aWE8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE0ODIuMjUsIDQxNy41OTk5OTg0NzQxMjExKSI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX0NTSV9LVl8wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMTApIj48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9IiIgeD0iLTg3Ljg0Mzc1IiB5PSItMSIgd2lkdGg9IjE3NS42ODc1IiBoZWlnaHQ9IjIyIi8+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+V29ya2xvYWQ8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gSWRlbnRpdHk8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gdG9rZW48L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDU4NS42MjEwOTM3NSwgNjYzLjM1NDA3NjM4NTQ5OCkiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9QT0RBX1BHXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xOC43OTk5OTkyMzcwNjA1NDcpIj48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9IiIgeD0iLTY2Ljg3NSIgeT0iLTEiIHdpZHRoPSIxMzMuNzUiIGhlaWdodD0iMzkuNTk5OTk4NDc0MTIxMDk0Ii8+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+VExTLDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiB2ZXJpZnktc2VydmVyPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+cHJpdmF0ZTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBlbmRwb2ludDwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoODA3LjE5MTQwNjI1LCA2NjMuMzU0MDc2Mzg1NDk4KSI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX1BPREJfUEdfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTE4Ljc5OTk5OTIzNzA2MDU0NykiPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0iIiB4PSItNjYuODc1IiB5PSItMSIgd2lkdGg9IjEzMy43NSIgaGVpZ2h0PSIzOS41OTk5OTg0NzQxMjEwOTQiLz48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5UTFMsPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IHZlcmlmeS1zZXJ2ZXI8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5wcml2YXRlPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGVuZHBvaW50PC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48L2c+PGcgY2xhc3M9Im5vZGVzIj48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1IVUctMCIgZGF0YS1sb29rPSJjbGFzc2ljIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg1MzguMDQ2ODc1LCAxMTcuMjAwMDAwNzYyOTM5NDUpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItMTI5Ljc4MTI1IiB5PSItNTkuMjAwMDAwNzYyOTM5NDUiIHdpZHRoPSIyNTkuNTYyNSIgaGVpZ2h0PSIxMTguNDAwMDAxNTI1ODc4OSIvPjxnIGNsYXNzPSJsYWJlbCIgc3R5bGU9IiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTQ0LjIwMDAwMDc2MjkzOTQ1KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+SFVHPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEdhdGV3YXk8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5IVFRQUm91dGU6PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGtleWNsb2FrLXJvdXRlPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjIuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4vYXV0aC8qPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IC0tPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjMuMmVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5kb2NzL2hhcHJveHktdW5pZmllZC1nYXRlPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjQuMzAwMDAwMDAwMDAwMDAxZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPndheS9kZXBsb3ltZW50Lm1kPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1TVkMtMiIgZGF0YS1sb29rPSJjbGFzc2ljIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg1MzguMDQ2ODc1LCAzMTUpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItMTIyLjI3MzQzNzUiIHk9Ii0zMi43OTk5OTkyMzcwNjA1NSIgd2lkdGg9IjI0NC41NDY4NzUiIGhlaWdodD0iNjUuNTk5OTk4NDc0MTIxMSIvPjxnIGNsYXNzPSJsYWJlbCIgc3R5bGU9IiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTE3Ljc5OTk5OTIzNzA2MDU0NykiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPlNlcnZpY2U6PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGtleWNsb2FrLXNlcnZpY2U8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5wb3J0PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IDgwODAsPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEhUVFA8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gb25seTwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9Im5vZGUgZGVmYXVsdCIgaWQ9Im15LXN2Zy1mbG93Y2hhcnQtUE9EQS00IiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDU4NS42MjEwOTM3NSwgNTExLjA3NzAzNzgxMTI3OTMpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItODUuODUxNTYyNSIgeT0iLTI0IiB3aWR0aD0iMTcxLjcwMzEyNSIgaGVpZ2h0PSI0OCIvPjxnIGNsYXNzPSJsYWJlbCIgc3R5bGU9IiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTkpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5LZXljbG9hazwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBwb2Q8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gQTwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9Im5vZGUgZGVmYXVsdCIgaWQ9Im15LXN2Zy1mbG93Y2hhcnQtUE9EQi02IiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDgwNy4xOTE0MDYyNSwgNTExLjA3NzAzNzgxMTI3OTMpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItODUuNzE4NzUiIHk9Ii0yNCIgd2lkdGg9IjE3MS40Mzc1IiBoZWlnaHQ9IjQ4Ii8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtOSkiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPktleWNsb2FrPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IHBvZDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBCPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1TQS03IiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDg1NC43NjU2MjUsIDMxNSkiPjxyZWN0IGNsYXNzPSJiYXNpYyBsYWJlbC1jb250YWluZXIiIHN0eWxlPSIiIHg9Ii0xMjguNzczNDM3NSIgeT0iLTQxLjU5OTk5ODQ3NDEyMTA5NCIgd2lkdGg9IjI1Ny41NDY4NzUiIGhlaWdodD0iODMuMTk5OTk2OTQ4MjQyMTkiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0yNi41OTk5OTg0NzQxMjEwOTQpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5TZXJ2aWNlQWNjb3VudDo8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4ga2V5Y2xvYWs8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5henVyZS53b3JrbG9hZC5pZGVudGl0eS91c2U8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMi4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPjo8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gdHJ1ZTwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9Im5vZGUgZGVmYXVsdCIgaWQ9Im15LXN2Zy1mbG93Y2hhcnQtU1BDLTgiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTE3OS45MjE4NzUsIDExNy4yMDAwMDA3NjI5Mzk0NSkiPjxyZWN0IGNsYXNzPSJiYXNpYyBsYWJlbC1jb250YWluZXIiIHN0eWxlPSIiIHg9Ii0xMTUuNDY4NzUiIHk9Ii00MS41OTk5OTg0NzQxMjEwOTQiIHdpZHRoPSIyMzAuOTM3NSIgaGVpZ2h0PSI4My4xOTk5OTY5NDgyNDIxOSIvPjxnIGNsYXNzPSJsYWJlbCIgc3R5bGU9IiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTI2LjU5OTk5ODQ3NDEyMTA5NCkiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPlNlY3JldFByb3ZpZGVyQ2xhc3M6PC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+a2V5Y2xvYWstZGI8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMi4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPnN5bmNzPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEtleTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBWYXVsdDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBzZWNyZXRzPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1TRUMtOSIgZGF0YS1sb29rPSJjbGFzc2ljIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMTUxLjQyMTg3NSwgMzE1KSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTExNy44ODI4MTI1IiB5PSItNDEuNTk5OTk4NDc0MTIxMDk0IiB3aWR0aD0iMjM1Ljc2NTYyNSIgaGVpZ2h0PSI4My4xOTk5OTY5NDgyNDIxOSIvPjxnIGNsYXNzPSJsYWJlbCIgc3R5bGU9IiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTI2LjU5OTk5ODQ3NDEyMTA5NCkiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPlNlY3JldDo8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5rZXljbG9hay1kYi1jcmVkZW50aWFsczwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIyLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+c3luY2VkPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGJ5PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IENTSTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBkcml2ZXI8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LU9QLTIwIiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE1OS45Mjk2ODc1LCAzMTUpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItOTYuOTI5Njg3NSIgeT0iLTMyLjc5OTk5OTIzNzA2MDU1IiB3aWR0aD0iMTkzLjg1OTM3NSIgaGVpZ2h0PSI2NS41OTk5OTg0NzQxMjExIi8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMTcuNzk5OTk5MjM3MDYwNTQ3KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+S2V5Y2xvYWs8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gT3BlcmF0b3I8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5jb250cm9sbGVyPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1DU0ktMjUiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTQ4Mi4yNSwgMzE1KSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTExNi44NTkzNzUiIHk9Ii0zMi43OTk5OTkyMzcwNjA1NSIgd2lkdGg9IjIzMy43MTg3NSIgaGVpZ2h0PSI2NS41OTk5OTg0NzQxMjExIi8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMTcuNzk5OTk5MjM3MDYwNTQ3KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+S2V5PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IFZhdWx0PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IFNlY3JldHM8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gU3RvcmU8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5DU0k8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gZHJpdmVyPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IC0tPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEFLUzwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBhZGRvbjwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9Im5vZGUgZGVmYXVsdCIgaWQ9Im15LXN2Zy1mbG93Y2hhcnQtS1YtMjkiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTc3Mi41NjI1LCA1MTEuMDc3MDM3ODExMjc5MykiPjxwYXRoIGQ9Ik0wLDE1LjU4NDY5MDcwNzA4OTczIGExMDMuNDUzMTI1LDE1LjU4NDY5MDcwNzA4OTczIDAsMCwwIDIwNi45MDYyNSwwIGExMDMuNDUzMTI1LDE1LjU4NDY5MDcwNzA4OTczIDAsMCwwIC0yMDYuOTA2MjUsMCBsMCw4My43ODQ2ODc2NTUzMzE5MiBhMTAzLjQ1MzEyNSwxNS41ODQ2OTA3MDcwODk3MyAwLDAsMCAyMDYuOTA2MjUsMCBsMCwtODMuNzg0Njg3NjU1MzMxOTIiIGNsYXNzPSJiYXNpYyBsYWJlbC1jb250YWluZXIgb3V0ZXItcGF0aCIgc3R5bGU9IiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEwMy40NTMxMjUsIC01Ny40NzcwMzQ1MzQ3NTU2OSkiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xNy41OTk5OTg0NzQxMjEwOTQpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5BenVyZTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBLZXk8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gVmF1bHQ8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5kb2NzL3RlcnJhZm9ybS1pbmZyYS9kZXNpZzwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIyLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+bi5tZDwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9Im5vZGUgZGVmYXVsdCIgaWQ9Im15LXN2Zy1mbG93Y2hhcnQtUEctMzEiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNjk2LjQwNjI1LCA3NzQuNjQ5NzI2ODY3Njc1OCkiPjxwYXRoIGQ9Ik0wLDE1LjczMDQ0MTIzMDk5NzQwNSBhMTA2LjA2MjUsMTUuNzMwNDQxMjMwOTk3NDA1IDAsMCwwIDIxMi4xMjUsMCBhMTA2LjA2MjUsMTUuNzMwNDQxMjMwOTk3NDA1IDAsMCwwIC0yMTIuMTI1LDAgbDAsMTAxLjUzMDQ0NDI4Mjc1NTIxIGExMDYuMDYyNSwxNS43MzA0NDEyMzA5OTc0MDUgMCwwLDAgMjEyLjEyNSwwIGwwLC0xMDEuNTMwNDQ0MjgyNzU1MjEiIGNsYXNzPSJiYXNpYyBsYWJlbC1jb250YWluZXIgb3V0ZXItcGF0aCIgc3R5bGU9IiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEwNi4wNjI1LCAtNjYuNDk1NjYzMzcyMzc1KSIvPjxnIGNsYXNzPSJsYWJlbCIgc3R5bGU9IiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTI2LjQwMDAwMTUyNTg3ODkwNikiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPlBvc3RncmVTUUw8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gRmxleGlibGU8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gU2VydmVyPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+ZGF0YWJhc2U6PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGtleWNsb2FrPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjIuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5kb2NzL3RlcnJhZm9ybS1pbmZyYS9kZXNpZzwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIzLjJlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+bi5tZDwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PC9nPjwvZz48L2c+PGRlZnM+PGZpbHRlciBpZD0ibXktc3ZnLWRyb3Atc2hhZG93IiBoZWlnaHQ9IjEzMCUiIHdpZHRoPSIxMzAlIj48ZmVEcm9wU2hhZG93IGR4PSI0IiBkeT0iNCIgc3RkRGV2aWF0aW9uPSIwIiBmbG9vZC1vcGFjaXR5PSIwLjA2IiBmbG9vZC1jb2xvcj0iIzAwMDAwMCIvPjwvZmlsdGVyPjwvZGVmcz48ZGVmcz48ZmlsdGVyIGlkPSJteS1zdmctZHJvcC1zaGFkb3ctc21hbGwiIGhlaWdodD0iMTUwJSIgd2lkdGg9IjE1MCUiPjxmZURyb3BTaGFkb3cgZHg9IjIiIGR5PSIyIiBzdGREZXZpYXRpb249IjAiIGZsb29kLW9wYWNpdHk9IjAuMDYiIGZsb29kLWNvbG9yPSIjMDAwMDAwIi8+PC9maWx0ZXI+PC9kZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0ibXktc3ZnLWdyYWRpZW50IiBncmFkaWVudFVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM2MDc5OGEiIHN0b3Atb3BhY2l0eT0iMSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iaHNsKDIwMi41LCAwJSwgODQuNTA5ODAzOTIxNiUpIiBzdG9wLW9wYWNpdHk9IjEiLz48L2xpbmVhckdyYWRpZW50Pjwvc3ZnPg=="><figcaption>Diagram 1</figcaption><details><summary>View Mermaid source</summary><pre><code class="language-mermaid">flowchart TB
+    HUG[HUG Gateway\nHTTPRoute: keycloak-route\n/auth/* -- docs/haproxy-unified-gateway/deployment.md]
+
+    subgraph AKS[AKS cluster]
+        subgraph NSKC[namespace: keycloak]
+            HUG --&gt; SVC[Service: keycloak-service\nport 8080, HTTP only]
+            SVC --&gt; PODA[Keycloak pod A]
+            SVC --&gt; PODB[Keycloak pod B]
+            SA[ServiceAccount: keycloak\nazure.workload.identity/use: true]
+            SPC[SecretProviderClass: keycloak-db\nsyncs Key Vault secrets]
+            SEC[Secret: keycloak-db-credentials\nsynced by CSI driver]
+            SPC --&gt; SEC
+            SEC --&gt; PODA
+            SEC --&gt; PODB
+            SA -. federated credential .-&gt; PODA
+            SA -. federated credential .-&gt; PODB
+        end
+        subgraph NSOP[namespace: keycloak\noperator, same namespace]
+            OP[Keycloak Operator controller]
+            OP -. reconciles .-&gt; PODA
+            OP -. reconciles .-&gt; PODB
+        end
+        CSI[Key Vault Secrets Store\nCSI driver -- AKS addon]
+        SPC -. reads via .-&gt; CSI
+    end
+
+    CSI -- Workload Identity token --&gt; KV[(Azure Key Vault\ndocs/terraform-infra/design.md)]
+    PODA -- TLS, verify-server\nprivate endpoint --&gt; PG[(PostgreSQL Flexible Server\ndatabase: keycloak\ndocs/terraform-infra/design.md)]
+    PODB -- TLS, verify-server\nprivate endpoint --&gt; PG</code></pre></details></figure>
+<div class="source-block" data-source-block="10"
+data-source-sha256="dee43b80bc133b1ab017917a870f6c9f7ae6e3b30bd9f6e3334e3e96e197f00f">
+<p>Keycloak pods never receive a static database password in a pod spec,
+image, or hand-created Kubernetes Secret: the CSI driver mounts the Key
+Vault secret as a projected volume and, via its Secret-sync feature,
+materializes it into the <code>keycloak-db-credentials</code> Kubernetes
+Secret that the <code>Keycloak</code> CR's
+<code>db.usernameSecret</code>/<code>db.passwordSecret</code> fields
+reference — the same no-static-credential trust boundary
+<code>docs/terraform-infra/design.md</code> (<code>INV-3</code>,
+<code>AC-2</code>) already establishes for the REST API's own Key Vault
+access, just applied to a second workload identity.</p>
+</div>
+<section id="4-provision-keycloak-s-database-role-and-key-vault-access"
+class="source-block" data-source-block="11"
+data-source-sha256="39b6ccf30e6a64bdabdb7450caf616dc1ecc1b1710b9fe733848693d0cfa31cd">
+<h2>4. Provision Keycloak's database, role, and Key Vault access</h2>
+</section>
+<div class="source-block" data-source-block="12"
+data-source-sha256="740ec5c629ac7f25232dbc7bca05ee8e92202e6e3829bca06ecfc7fd64d9a2b8">
+<p><strong>Split scope.</strong> Creating the <code>keycloak</code>
+database/role on the Flexible Server (4.2 below) stays a manual
+<code>psql</code> step: Terraform never opens a connection to PostgreSQL
+itself (section 6.3 makes the same point about TLS trust), the same
+boundary <code>docs/terraform-infra/design.md</code> already respects
+for its own admin credential. Everything else is Terraform-managed: the
+dedicated user-assigned identity, its Workload Identity federated
+credential, its <code>Key Vault Secrets User</code> role assignment, and
+the two Key Vault secrets holding the role's credential (4.1 below)
+extend <code>docs/terraform-infra/design.md</code>'s root module, the
+same root-module-owns-role-assignments-and-secrets pattern it already
+uses for AKS's own Key Vault access and the PostgreSQL admin password
+(its own section 4, Decisions); enabling the CSI driver addon on AKS
+(4.3 below) extends <code>modules/aks</code> itself, since it is a
+property of the <code>azurerm_kubernetes_cluster</code> resource that
+module already owns.</p>
+</div>
+<div class="source-block" data-source-block="13"
+data-source-sha256="7828383e319d509fabb5ab7e404b5f7951c20c3dfdc61c13224f030146fe5bdd">
+<p><strong>4.1 — Identity, federated credential, role assignment, and
+Key Vault secret: Terraform.</strong> A dedicated user-assigned managed
+identity for Keycloak (not a reuse of the REST API's identity) keeps the
+two workloads' Key Vault access independently auditable and revocable,
+matching the least-privilege reasoning
+<code>docs/terraform-infra/design.md</code> section 4 already applies to
+its three-Resource-Group split. This extends
+<code>docs/terraform-infra/design.md</code>'s root module — same file,
+same <code>terraform apply</code>, ordered after
+<code>modules/aks</code> and <code>modules/key_vault</code> the same way
+the existing <code>Key Vault Secrets User</code> role assignment for AKS
+already is:</p>
+</div>
+<div class="source-block" data-source-block="14"
+data-source-sha256="ed4ec06e2e443bccf6adc99e1b7b1399cb954c16578fefd9b17c98c3222484b9">
+<pre class="hcl"><code># root module — extends docs/terraform-infra/design.md alongside the existing
+# Key Vault Secrets User role assignment for AKS
+
+resource &quot;azurerm_user_assigned_identity&quot; &quot;keycloak&quot; {
+  name                = &quot;id-keycloak&quot;
+  resource_group_name = module.resource_group_platform.name
+  location            = module.resource_group_platform.location
+}
+
+resource &quot;azurerm_federated_identity_credential&quot; &quot;keycloak&quot; {
+  name                = &quot;keycloak-workload-identity&quot;
+  resource_group_name = module.resource_group_platform.name
+  parent_id           = azurerm_user_assigned_identity.keycloak.id
+  issuer              = module.aks.oidc_issuer_url
+  subject             = &quot;system:serviceaccount:keycloak:keycloak&quot;
+  audience            = [&quot;api://AzureADTokenExchange&quot;]
+}
+
+resource &quot;azurerm_role_assignment&quot; &quot;keycloak_key_vault_secrets_user&quot; {
+  scope                = module.key_vault.id
+  role_definition_name = &quot;Key Vault Secrets User&quot;
+  principal_id         = azurerm_user_assigned_identity.keycloak.principal_id
+}
+
+resource &quot;random_password&quot; &quot;keycloak_db&quot; {
+  length  = 32
+  special = true
+}
+
+resource &quot;azurerm_key_vault_secret&quot; &quot;keycloak_db_username&quot; {
+  name         = &quot;keycloak-db-username&quot;
+  value        = &quot;keycloak&quot;
+  key_vault_id = module.key_vault.id
+}
+
+resource &quot;azurerm_key_vault_secret&quot; &quot;keycloak_db_password&quot; {
+  name         = &quot;keycloak-db-password&quot;
+  value        = random_password.keycloak_db.result
+  key_vault_id = module.key_vault.id
+}
+
+output &quot;keycloak_identity_client_id&quot; {
+  value = azurerm_user_assigned_identity.keycloak.client_id
+}</code></pre>
+</div>
+<div class="source-block" data-source-block="15"
+data-source-sha256="f00e84702aa63b39062cbd0fbb6a1a6e7b9e69b617e7c6e9ef5e0a20a4135a3b">
+<p><code>terraform apply</code> creates all five resources in one graph:
+the role assignment and federated credential both depend on
+<code>azurerm_user_assigned_identity.keycloak</code>, and
+<code>azurerm_federated_identity_credential</code> additionally depends
+on <code>module.aks</code> for the OIDC issuer URL, so Terraform orders
+everything automatically — no <code>-target</code> flag, no second
+apply. <code>keycloak_identity_client_id</code> is the value
+<code>values-keycloak-aks.yaml.gotmpl</code>'s
+<code>serviceAccount.azureClientId</code> (section 6.4) needs.
+<code>random_password</code>, not a human, generates the database
+credential now — nobody invents or types a password.</p>
+</div>
+<div class="source-block" data-source-block="16"
+data-source-sha256="9b79b5c8dbb5bf8810f6c587f80f1b108d33227d8d49a4a6154d48decd35f242">
+<p><strong>4.2 — Dedicated database and role, not the admin
+credential.</strong> Keycloak must not run against the Flexible Server's
+admin login: that login is provisioned for Terraform's own use
+(<code>docs/terraform-infra/design.md</code> section 4) and is
+unnecessarily privileged for an application connection. From a host with
+network access to the server (in-VNet, or a workstation temporarily
+added to <code>postgres_firewall_allowed_cidrs</code>), read the
+credential Terraform generated in 4.1 back out of Key Vault:</p>
+</div>
+<div class="source-block" data-source-block="17"
+data-source-sha256="7275cb11949e3336444976b24b1d24f6581f7daa707317aa0b48a6c50328e619">
+<pre class="console"><code>az keyvault secret show --vault-name &lt;key_vault_name&gt; --name postgres-admin-password --query value -o tsv
+az keyvault secret show --vault-name &lt;key_vault_name&gt; --name keycloak-db-password --query value -o tsv
+psql &quot;host=&lt;postgres_fqdn&gt; port=5432 dbname=postgres user=&lt;postgres_admin_username&gt; sslmode=verify-full&quot;</code></pre>
+</div>
+<div class="source-block" data-source-block="18"
+data-source-sha256="2db0fe63af29f33d56fd843eba43c3409c0267bc96bac96f1806178214ed091a">
+<pre class="sql"><code>CREATE ROLE keycloak WITH LOGIN PASSWORD &#39;&lt;value of keycloak-db-password above&gt;&#39;;
+CREATE DATABASE keycloak OWNER keycloak;</code></pre>
+</div>
+<div class="source-block" data-source-block="19"
+data-source-sha256="f9efdbc8dbafc4dac93deb5d4059c0c0a720e6bc89d38ff641515ae2ecdfee3d">
+<p>The role's password must match the <code>keycloak-db-password</code>
+secret exactly: Terraform already generated and stored it in 4.1, so
+this step only makes the PostgreSQL role match what is already in Key
+Vault — it does not choose the value.</p>
+</div>
+<div class="source-block" data-source-block="20"
+data-source-sha256="ecd780c1a640ede42eb1b983bfdcca9a7b8c12a69026955d2a499eb4cc3d32e4">
+<p><strong>4.3 — Enable the Key Vault Secrets Store CSI driver addon on
+AKS: Terraform.</strong> <code>azurerm_kubernetes_cluster</code> has a
+dedicated block for this addon; add it to the cluster resource
+<code>modules/aks</code> already owns
+(<code>docs/terraform-infra/design.md</code> section 4) rather than
+enabling it out-of-band with <code>az aks addon enable</code>:</p>
+</div>
+<div class="source-block" data-source-block="21"
+data-source-sha256="c060d8a063671c2b75f25178fe2d74ee9c8699795dea30eba662ae3d1e9507dd">
+<pre class="hcl"><code># modules/aks — added to the existing azurerm_kubernetes_cluster resource
+
+resource &quot;azurerm_kubernetes_cluster&quot; &quot;this&quot; {
+  # ...existing arguments (name, resource_group_name, node pools,
+  # Azure CNI Overlay, Workload Identity, OIDC issuer, Load Balancer SKU, etc.)
+
+  key_vault_secrets_provider {
+    secret_rotation_enabled  = true
+    secret_rotation_interval = &quot;2m&quot;
+  }
+}</code></pre>
+</div>
+<div class="source-block" data-source-block="22"
+data-source-sha256="f89471f54167e9e1809529132edd1344ceef406cdd826246bb21209a616023ac">
+<p>This installs the <code>secrets-store.csi.k8s.io</code> CSI driver
+plus the Azure provider <code>DaemonSet</code> cluster-wide, the same as
+<code>az aks addon enable --addon azure-keyvault-secrets-provider</code>
+would; it is additive to, and independent of, the Workload Identity
+webhook <code>modules/aks</code> already enables.
+<code>secret_rotation_enabled = true</code> keeps the synced
+<code>keycloak-db-credentials</code> Secret (section 6.2) in step if the
+Key Vault secret's value ever changes (e.g., a future credential
+rotation) without a pod restart; drop the block entirely, rather than
+setting it <code>false</code>, if the addon should stay off —
+<code>azurerm</code> has no separate on/off flag once the block is
+present.</p>
+</div>
+<section id="5-install-the-keycloak-operator" class="source-block"
+data-source-block="23"
+data-source-sha256="05d8dbfef6f79a33e781ea4134dfd5c3376ac682d2bc6e4d00eff0b81dade680">
+<h2>5. Install the Keycloak Operator</h2>
+</section>
+<div class="source-block" data-source-block="24"
+data-source-sha256="940f51e157bf4f61436398c63fcce6133abba0a6ec897c12c928567a1bb48c6a">
+<p>Namespace-scoped install (the Operator watches only its own namespace
+— least privilege, and the only namespace this POC needs it to
+reconcile):</p>
+</div>
+<div class="source-block" data-source-block="25"
+data-source-sha256="c6a3cf58250f34e466430660c610357553b947ee379335c3c80516e56a236b1b">
+<pre class="console"><code>kubectl create namespace keycloak
+kubectl apply -k &#39;github.com/keycloak/keycloak-k8s-resources/kubernetes?ref=26.7.2&#39;</code></pre>
+</div>
+<div class="source-block" data-source-block="26"
+data-source-sha256="bc7da4950eedde0dc70a5471d3f29e3cba40322221d82879e24f868151478c58">
+<p>This applies the <code>keycloaks.k8s.keycloak.org</code> and
+<code>keycloakrealmimports.k8s.keycloak.org</code> CRDs plus the
+Operator's <code>Deployment</code>, <code>ServiceAccount</code>,
+<code>Role</code>/<code>RoleBinding</code>, and RBAC, all scoped to the
+<code>keycloak</code> namespace. (A cluster-wide variant exists —
+<code>kubectl apply -k 'github.com/keycloak/keycloak-k8s-resources/kubernetes/cluster-wide?ref=26.7.2'</code>
+into a separate <code>keycloak-operator</code> namespace, watching every
+namespace — not used here, since this cluster only ever runs one
+Keycloak instance in one namespace, per
+<code>docs/nats-tenant-queue-api/design.md</code>.)</p>
+</div>
+<div class="source-block" data-source-block="27"
+data-source-sha256="e2b83fd79ff7359ca6afb51ee1dd8d4c355e7b7bdd6841c7a04af64376bed7dc">
+<p>Verify:</p>
+</div>
+<div class="source-block" data-source-block="28"
+data-source-sha256="12919c66ddd4c49d37dbd14e100ed85258e1fe925b3250a004a05fce155c4899">
+<pre class="console"><code>kubectl get pods -n keycloak -l app.kubernetes.io/name=keycloak-operator
+kubectl get crds | grep k8s.keycloak.org</code></pre>
+</div>
+<div class="source-block" data-source-block="29"
+data-source-sha256="a95db89387380acf1fbc5267fa79e51736f27c029730fe9a9a29a2ecb0f1b8ad">
+<p><strong>Helmfile alternative.</strong> The Keycloak project merged an
+official Helm chart for the Operator on 2026-08-12
+(<code>keycloak/keycloak#42079</code>), published as an OCI artifact at
+<code>oci://quay.io/keycloak/keycloak-operator-helm</code> — the same
+distribution shape
+<code>docs/haproxy-unified-gateway/deployment.md</code> already drives
+through Helmfile for HUG. This document still uses the kustomize method
+above as primary, not this chart: the chart is one week old at time of
+writing, is not yet referenced from
+<code>https://www.keycloak.org/operator/installation</code>, and its own
+follow-up release-process issue (<code>keycloak-rel#196</code>) was
+still open — meaning it may not yet be attached to a tagged, pinnable
+release the way <code>ref=26.7.2</code> is above. If it has stabilized
+by the time this is followed, this is the equivalent Helmfile release
+block:</p>
+</div>
+<div class="source-block" data-source-block="30"
+data-source-sha256="1b60f164f45fd2d77df5cfd4c213923cd333e6d3ccf5f31482fad4a196eaa928">
+<pre class="yaml"><code># helmfile.yaml
+releases:
+  - name: keycloak-operator
+    namespace: keycloak
+    createNamespace: true
+    chart: oci://quay.io/keycloak/keycloak-operator-helm
+    version: &lt;pin once confirmed published — do not float&gt;
+    values:
+      - crds:
+          enabled: true   # false if CRDs are already installed/managed separately</code></pre>
+</div>
+<div class="source-block" data-source-block="31"
+data-source-sha256="776b59ff793949b62d643e7aa960c25436bb9b15e4359caa203e92b741b48c0b">
+<pre class="console"><code>helmfile diff
+helmfile apply</code></pre>
+</div>
+<div class="source-block" data-source-block="32"
+data-source-sha256="8c4b115516eff027c51250a06ba8b4466e48d26a68ea6a024b7b98ef47ca3cba">
+<p>This needs Helm <strong>3.8+</strong> (OCI chart support), not the
+3.7+ floor <code>docs/haproxy-unified-gateway/deployment.md</code>
+section 2 lists for its own (non-OCI) chart repo. Before relying on this
+path, confirm the chart actually resolves for a specific version —
+<code>helm show chart oci://quay.io/keycloak/keycloak-operator-helm --version &lt;X&gt;</code>
+— since an unresolvable pin fails closed, not silently. Everything from
+section 6 onward (ServiceAccount, <code>SecretProviderClass</code>, the
+<code>Keycloak</code> CR, TLS trust) is identical regardless of which of
+these two methods installed the Operator.</p>
+</div>
+<section id="6-package-the-app-layer-resources-as-a-helm-chart"
+class="source-block" data-source-block="33"
+data-source-sha256="f2c48d78d4159edf4206699be3c7d50066e79d0e77364e0d7fc4baaa9aa00e37">
+<h2>6. Package the app-layer resources as a Helm chart</h2>
+</section>
+<div class="source-block" data-source-block="34"
+data-source-sha256="2fcbda6f7a57da7126931a9c32dab136326fa847f8a7222e8f515b058dbe1700">
+<p>The ServiceAccount, <code>SecretProviderClass</code>, CA trust
+<code>Secret</code>, <code>Keycloak</code> CR, and
+<code>HTTPRoute</code> (sections 6, 8, 9) are one local Helm chart,
+deployed as a single Helmfile release — the same reasoning
+<code>docs/haproxy-unified-gateway/deployment.md</code> section 4
+already gives for driving HUG through Helmfile rather than one-off
+<code>kubectl apply -f</code> calls: one <code>helmfile diff</code>
+previews every resource together before anything changes,
+<code>helm history</code>/<code>helm rollback</code> give this release a
+revision trail the Keycloak Operator's own CRDs never had (section 11),
+and there is one lifecycle to reason about instead of five
+independently-applied files. Everything the Operator itself owns (the
+CRDs, the controller, section 5) stays out of this chart — the chart's
+templates create instances of the Operator's CRDs, they do not install
+the CRDs themselves, so this release only ever succeeds after section 5
+has already run, by either of its methods.</p>
+</div>
+<div class="source-block" data-source-block="35"
+data-source-sha256="0210a7483928af1807b2db195de7a8980b5af6f09e804f03b5786f559316e6c9">
+<p>Chart layout:</p>
+</div>
+<div class="source-block" data-source-block="36"
+data-source-sha256="bd69cc03f503cdfb539ebf3d76335920cd500efede35d2d60da2817c167e998c">
+<pre><code>charts/keycloak-app/
+  Chart.yaml
+  values.yaml
+  templates/
+    serviceaccount.yaml
+    secretproviderclass.yaml
+    postgres-ca-secret.yaml
+    keycloak.yaml       # section 8
+    httproute.yaml       # section 9</code></pre>
+</div>
+<div class="source-block" data-source-block="37"
+data-source-sha256="d3fc78fe6f9baa0dd1fb25861562690d8ba372c5cb3c965380836e60ec249cb3">
+<pre class="yaml"><code># charts/keycloak-app/Chart.yaml
+apiVersion: v2
+name: keycloak-app
+description: ServiceAccount, SecretProviderClass, Keycloak CR, and HUG HTTPRoute for this system&#39;s Keycloak instance
+type: application
+version: 0.1.0</code></pre>
+</div>
+<div class="source-block" data-source-block="38"
+data-source-sha256="89ff518dc2d3511e70dd8144f032a23399ef4c3898164e0e9d9c7de2d50db8b9">
+<pre class="yaml"><code># charts/keycloak-app/values.yaml — chart defaults; environment-specific values (secrets, real
+# hostnames) are supplied by values-keycloak-aks.yaml.gotmpl below, never committed here
+namespace: keycloak
+
+serviceAccount:
+  name: keycloak
+  azureClientId: &quot;&quot;        # keycloak_identity_client_id, Terraform output, section 4.1
+
+keyVault:
+  name: &quot;&quot;                  # key_vault_name, docs/terraform-infra/design.md
+  tenantId: &quot;&quot;               # azure_tenant_id
+
+postgres:
+  host: &quot;&quot;                   # postgres_fqdn, docs/terraform-infra/design.md output
+  port: 5432
+  database: keycloak
+  caBundle: &quot;&quot;                # PEM content, section 6.3
+
+keycloak:
+  instances: 2
+  hostname: auth.natssaas.example.com
+
+hug:
+  gatewayName: hug-gateway
+  gatewayNamespace: haproxy-unified-gateway   # docs/haproxy-unified-gateway/deployment.md</code></pre>
+</div>
+<div class="source-block" data-source-block="39"
+data-source-sha256="8f51e4b10ac6631cdbe8b92e2a744d487c334b499ebd397fd7a4fd7ecede34e6">
+<p><strong>6.1 — ServiceAccount:</strong></p>
+</div>
+<div class="source-block" data-source-block="40"
+data-source-sha256="1033c865b9f3c054ab9184a6cc57286bde1c6c23c72a1aebf8c0f02d1abfaf85">
+<pre class="yaml"><code># charts/keycloak-app/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.serviceAccount.name }}
+  namespace: {{ .Values.namespace }}
+  annotations:
+    azure.workload.identity/client-id: {{ .Values.serviceAccount.azureClientId | quote }}
+  labels:
+    azure.workload.identity/use: &quot;true&quot;</code></pre>
+</div>
+<div class="source-block" data-source-block="41"
+data-source-sha256="036d5db051035b6951212971022c9d215e791cac4d4ef336fca6453083f63fd5">
+<p><strong>6.2 — <code>SecretProviderClass</code>:</strong></p>
+</div>
+<div class="source-block" data-source-block="42"
+data-source-sha256="be1f71adb159d4a763a395d45d651b29132b16b277b7865a96393affe98738dd">
+<pre class="yaml"><code># charts/keycloak-app/templates/secretproviderclass.yaml
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: keycloak-db
+  namespace: {{ .Values.namespace }}
+spec:
+  provider: azure
+  parameters:
+    usePodIdentity: &quot;false&quot;
+    useVMManagedIdentity: &quot;false&quot;
+    clientID: {{ .Values.serviceAccount.azureClientId | quote }}
+    keyvaultName: {{ .Values.keyVault.name | quote }}
+    tenantId: {{ .Values.keyVault.tenantId | quote }}
+    objects: |
+      array:
+        - |
+          objectName: keycloak-db-username
+          objectType: secret
+        - |
+          objectName: keycloak-db-password
+          objectType: secret
+  secretObjects:
+    - secretName: keycloak-db-credentials
+      type: Opaque
+      data:
+        - objectName: keycloak-db-username
+          key: username
+        - objectName: keycloak-db-password
+          key: password</code></pre>
+</div>
+<div class="source-block" data-source-block="43"
+data-source-sha256="81a7a51cb70b89abe12883cd25228840688be36feda06badc10d4fa4ddaac59a">
+<p><code>secretObjects</code> is what actually creates the
+<code>keycloak-db-credentials</code> Kubernetes <code>Secret</code> the
+<code>Keycloak</code> CR references (section 8) — a
+<code>SecretProviderClass</code> on its own only projects a volume, it
+does not sync a <code>Secret</code> by itself. The CSI driver only
+performs this sync when a pod mounting the
+<code>SecretProviderClass</code> as a volume actually starts, so the
+<code>Secret</code> does not exist until Keycloak's first pod starts
+(section 8), regardless of how early this template is applied.</p>
+</div>
+<div class="source-block" data-source-block="44"
+data-source-sha256="e76116ff5db1a2b6e08ee5302d4dda22b794d63b6d16ae39bb58df7fbfdcd867">
+<p><strong>6.3 — CA trust bundle, as a chart-templated
+<code>Secret</code>:</strong></p>
+</div>
+<div class="source-block" data-source-block="45"
+data-source-sha256="0391ead09b38503fba9fd510dcf146a9f650da15d82d07f7b874ea2699faad4d">
+<p>The bundle's <em>content</em> is still assembled outside Helm — it is
+two downloaded public root certificates, not something a template
+generates — but the resulting <code>Secret</code> object is now
+templated like everything else in this chart, rather than created with a
+one-off <code>kubectl create secret</code> imperative command:</p>
+</div>
+<div class="source-block" data-source-block="46"
+data-source-sha256="a1455f8f7b3db15c8ac9fd4810de2e3d3585e2649c3298c03ccafad99c45e74d">
+<pre class="console"><code>curl -sSL -o /tmp/digicert-global-root-g2.crt https://cacerts.digicert.com/DigiCertGlobalRootG2.crt
+curl -sSL -o /tmp/ms-rsa-root-2017.crt &quot;https://www.microsoft.com/pkiops/certs/Microsoft%20RSA%20Root%20Certificate%20Authority%202017.crt&quot;
+openssl x509 -inform der -in /tmp/digicert-global-root-g2.crt -out /tmp/digicert-global-root-g2.pem
+openssl x509 -inform der -in /tmp/ms-rsa-root-2017.crt -out /tmp/ms-rsa-root-2017.pem
+cat /tmp/digicert-global-root-g2.pem /tmp/ms-rsa-root-2017.pem &gt; azure-postgres-ca.pem</code></pre>
+</div>
+<div class="source-block" data-source-block="47"
+data-source-sha256="8b28e62aeb91f69ae8599f36afaf6356fcf818db9fcdd479593c0b3602e4dbd4">
+<pre class="yaml"><code># charts/keycloak-app/templates/postgres-ca-secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: azure-postgres-ca
+  namespace: {{ .Values.namespace }}
+type: Opaque
+stringData:
+  ca.pem: |
+{{ .Values.postgres.caBundle | indent 4 }}</code></pre>
+</div>
+<div class="source-block" data-source-block="48"
+data-source-sha256="6268d025d0286c54b09618031da77931f26cf6c3607950f8c67cb7fa434b1661">
+<p>Both root CAs are needed together in that file: Azure Database for
+PostgreSQL's certificate chain is currently mid-rotation (root CA
+rotation to <code>DigiCert Global Root G2</code> completing per-region
+through Q1 2026, per Microsoft's published schedule), so a trust store
+holding only one of the two roots risks a connection failure the moment
+a given region's chain rotates. Only the two <strong>root</strong> CAs
+go in this bundle — never an intermediate CA or an individual server
+certificate; Microsoft explicitly does not announce intermediate/server
+certificate rotations, and pinning to one breaks silently on the next
+routine rotation (<code>docs/terraform-infra/design.md</code> has no
+equivalent precedent for this, since Terraform itself never opens a TLS
+connection to PostgreSQL).</p>
+</div>
+<div class="source-block" data-source-block="49"
+data-source-sha256="863636c8a2ea7b03d728fc27e515aaa038576b76c6870f7984c30f2b41ae4c21">
+<p><strong>6.4 — Declare the release with Helmfile</strong>, alongside
+<code>azure-postgres-ca.pem</code> from 6.3:</p>
+</div>
+<div class="source-block" data-source-block="50"
+data-source-sha256="f3b12d982fcb4ecd83e52d56fc70b1cb6736b6644aae10d5a582a558e444470e">
+<pre class="yaml"><code># helmfile.yaml
+releases:
+  - name: keycloak-app
+    namespace: keycloak
+    createNamespace: true
+    chart: ./charts/keycloak-app
+    values:
+      - values-keycloak-aks.yaml.gotmpl</code></pre>
+</div>
+<div class="source-block" data-source-block="51"
+data-source-sha256="e77c5e3179ef1b3e23d97dcc234020acb7f07f6ea71afd61a65449b2fc783fac">
+<pre class="yaml"><code># values-keycloak-aks.yaml.gotmpl — the .gotmpl extension makes Helmfile render this
+# values file as a Go template before handing it to Helm, which is what makes readFile
+# available; a plain .yaml values file cannot pull in azure-postgres-ca.pem this way
+serviceAccount:
+  name: keycloak
+  azureClientId: &quot;&lt;keycloak_identity_client_id Terraform output, section 4.1&gt;&quot;
+keyVault:
+  name: &quot;&lt;key_vault_name&gt;&quot;
+  tenantId: &quot;&lt;azure_tenant_id&gt;&quot;
+postgres:
+  host: &quot;&lt;postgres_fqdn&gt;&quot;
+  caBundle: |
+{{ readFile &quot;azure-postgres-ca.pem&quot; | indent 4 }}
+keycloak:
+  instances: 2
+  hostname: auth.natssaas.example.com</code></pre>
+</div>
+<div class="source-block" data-source-block="52"
+data-source-sha256="0a89efe30c14b4271778323349817e9b2aba5083fcb6963c29a729ef061e8ebc">
+<p>Nothing is applied yet — sections 8 and 9 add this chart's remaining
+two templates (<code>keycloak.yaml</code>, <code>httproute.yaml</code>);
+the one <code>helmfile apply</code> for all five templates together is
+at the end of section 9.</p>
+</div>
+<section id="7-db-tls-mode-and-the-azure-postgresql-certificate-chain"
+class="source-block" data-source-block="53"
+data-source-sha256="68285b4fbb7bf8ed57a7c9787ade932abea883d500a5bbfd781f5c79c52ba925">
+<h2>7. <code>db-tls-mode</code> and the Azure PostgreSQL certificate
+chain</h2>
+</section>
+<div class="source-block" data-source-block="54"
+data-source-sha256="7c1f2987c8f1277b66e0895e9a49dffa9cb705f837622d95883cc842ef56f0d7">
+<p>Azure Database for PostgreSQL Flexible Server enforces TLS on every
+connection by default (<code>require_secure_transport</code> defaults to
+<code>ON</code>); Keycloak's own <code>db-tls-mode=verify-server</code>
+setting is what makes Keycloak <em>verify</em> the server's certificate
+against a trusted root, rather than merely accepting encryption from any
+presented certificate. <code>docs/terraform-infra/design.md</code> does
+not need this (Terraform's own PostgreSQL provider connections are a
+separate, already-TLS-aware code path outside this document's scope), so
+this is a Keycloak-specific addition. The <code>Keycloak</code> CR's
+<code>db</code> stanza has no dedicated TLS field for this — it is
+passed via <code>spec.additionalOptions</code>, and the trust bundle
+from section 6.3 is mounted into the pod via
+<code>spec.unsupported.podTemplate</code> (both used in the CR template
+in section 8).</p>
+</div>
+<section id="8-the-keycloak-custom-resource-chart-template"
+class="source-block" data-source-block="55"
+data-source-sha256="81dd72ce36edb11c6a9c5ce6db89bcadbc147679520963484b2340bd29ed96a3">
+<h2>8. The <code>Keycloak</code> custom resource — chart template</h2>
+</section>
+<div class="source-block" data-source-block="56"
+data-source-sha256="930856d8770ef1ef5bce9651de716a0c4ec20dbe851d4aab21f83700c5682f2a">
+<p>The fifth template in <code>charts/keycloak-app/</code> (section
+6):</p>
+</div>
+<div class="source-block" data-source-block="57"
+data-source-sha256="6792a608e0aee7bfbf67430848982d6cae0e92d2f6a87548c9674d9803c1427f">
+<pre class="yaml"><code># charts/keycloak-app/templates/keycloak.yaml
+apiVersion: k8s.keycloak.org/v2beta1
+kind: Keycloak
+metadata:
+  name: keycloak
+  namespace: {{ .Values.namespace }}
+spec:
+  instances: {{ .Values.keycloak.instances }}   # matches docs/nats-tenant-queue-api/design.md&#39;s
+                                                   # open-questions recommended default of 2
+  db:
+    vendor: postgres
+    host: {{ .Values.postgres.host | quote }}          # Terraform output from docs/terraform-infra/design.md
+    port: {{ .Values.postgres.port }}
+    database: {{ .Values.postgres.database | quote }}
+    usernameSecret:
+      name: keycloak-db-credentials  # synced by the SecretProviderClass, section 6.2
+      key: username
+    passwordSecret:
+      name: keycloak-db-credentials
+      key: password
+  additionalOptions:
+    - name: db-tls-mode
+      value: verify-server
+    - name: db-tls-trust-store-file
+      value: /opt/keycloak/certs/azure-postgres-ca/ca.pem
+    - name: http-relative-path
+      value: /auth   # Keycloak&#39;s Quarkus distribution serves at the root path (&quot;/&quot;)
+                       # by default since Keycloak 17, not the legacy &quot;/auth&quot; prefix
+                       # (https://www.keycloak.org/migration/migrating-to-quarkus);
+                       # this option is a runtime property in current Keycloak, so
+                       # the Operator can set it here without a custom image build.
+                       # It has to match the &quot;/auth&quot; PathPrefix docs/haproxy-unified-gateway/design.md
+                       # section 9&#39;s keycloak-route matches exactly, since HTTPRoute
+                       # forwards the request path unchanged (no rewrite filter is
+                       # configured) — without this option, Keycloak serves under &quot;/&quot;
+                       # while every request HUG forwards it still carries an &quot;/auth&quot;
+                       # prefix, and every one of them 404s. Setting this also shifts
+                       # Keycloak&#39;s own self-issued frontend URLs (the issuer claim on
+                       # every token, since spec.hostname.hostname above carries no
+                       # path of its own) to include &quot;/auth&quot;, so a token&#39;s issuer and
+                       # the JWKS endpoint the REST API fetches from both land under
+                       # the same prefix a client actually reaches externally.
+  http:
+    httpEnabled: true         # POC: HTTP only, no TLS — matches
+                                # docs/haproxy-unified-gateway/deployment.md section 9,
+                                # a deliberate scope decision, not an oversight; revisit
+                                # both documents together when TLS is added end-to-end
+  hostname:
+    hostname: {{ .Values.keycloak.hostname | quote }}   # matches the HTTPRoute hostname (section 9)
+    strict: true
+  proxy:
+    headers: xforwarded    # Keycloak sits behind HUG&#39;s reverse proxy (docs/haproxy-unified-gateway/deployment.md);
+                             # trusts X-Forwarded-* so issued URLs/redirects use the
+                             # external hostname, not the pod&#39;s own address
+  ingress:
+    enabled: false    # HUG&#39;s HTTPRoute owns routing (docs/haproxy-unified-gateway/deployment.md);
+                        # no in-cluster Ingress controller runs in this system, so a
+                        # Keycloak-managed Ingress object would be inert and misleading
+  unsupported:
+    podTemplate:
+      spec:
+        serviceAccountName: {{ .Values.serviceAccount.name }}   # section 6.1 — carries the
+                                                                    # Workload Identity federated
+                                                                    # credential from section 4.1
+        containers:
+          - volumeMounts:
+              - name: azure-postgres-ca
+                mountPath: /opt/keycloak/certs/azure-postgres-ca
+                readOnly: true
+              - name: keycloak-db-secrets
+                mountPath: /mnt/secrets-store
+                readOnly: true
+        volumes:
+          - name: azure-postgres-ca
+            secret:
+              secretName: azure-postgres-ca
+          - name: keycloak-db-secrets
+            csi:
+              driver: secrets-store.csi.k8s.io
+              readOnly: true
+              volumeAttributes:
+                secretProviderClass: keycloak-db</code></pre>
+</div>
+<div class="source-block" data-source-block="58"
+data-source-sha256="55766e46a86161741aa57757d8713acf654d892ebd1a18adced06509d4afbd5f">
+<p>The <code>keycloak-db-secrets</code> CSI volume mount is what
+triggers the CSI driver to perform the <code>secretObjects</code> sync
+(section 6.2) that actually creates the
+<code>keycloak-db-credentials</code> <code>Secret</code> on first pod
+startup — omitting this volume mount (relying on
+<code>db.usernameSecret</code>/<code>db.passwordSecret</code> alone)
+would leave the CR referencing a <code>Secret</code> that is never
+created. <code>spec.resources</code> and the readiness/liveness/startup
+probe tuning fields are left at Operator defaults (1700Mi request / 2Gi
+limit memory) for this POC; revisit under real load.</p>
+</div>
+<div class="source-block" data-source-block="59"
+data-source-sha256="6b1a3fba58e374d6e51d95dba005bcde826cf9132f916724a4c55ede6424a375">
+<p>The Operator names the generated <code>Service</code>
+<code>&lt;CR name&gt;-service</code> — <code>keycloak-service</code>
+here, since this CR is named <code>keycloak</code> (a literal, not
+templated from <code>.Release.Name</code>, since the chart's release is
+named <code>keycloak-app</code> — see section 9 for why the CR's own
+name, not the release name, is what fixes the Service name) — exposing
+port <code>8080</code> for HTTP (no <code>443</code>/<code>8443</code>
+entry, since <code>https</code> was never enabled). This chart's
+remaining template, <code>httproute.yaml</code>, and the release's
+actual <code>helmfile apply</code> follow in section 9.</p>
+</div>
+<section id="9-hug-s-httproute-chart-template-and-installing-the-chart"
+class="source-block" data-source-block="60"
+data-source-sha256="49a996d48c70240631c137666bcb37677ae8bf4416b46a2faf9985f8fcfa49b1">
+<h2>9. HUG's <code>HTTPRoute</code> — chart template, and installing the
+chart</h2>
+</section>
+<div class="source-block" data-source-block="61"
+data-source-sha256="feb8b68585d5093a24aa86e262edfd71a122e9cb905b3ee36706d1f142ebc5a8">
+<p><code>docs/haproxy-unified-gateway/deployment.md</code> section 7
+originally defined <code>httproute-keycloak.yaml</code> as a standalone
+file applied directly from that document, with a <code>backendRef</code>
+of <code>name: keycloak, port: 80</code> — written before this document
+fixed the actual Service name and port the Keycloak Operator produces
+(<code>keycloak-service</code>, port <code>8080</code>, section 8). That
+ownership has now moved here: since <code>keycloak-route</code> targets
+nothing but this chart's own <code>Service</code> and shares this
+chart's release lifecycle, it is this chart's fifth and last template,
+not a file applied separately from HUG's document.
+<code>docs/haproxy-unified-gateway/deployment.md</code> has been updated
+to say so (section 7) and no longer applies this file itself; the
+<code>Gateway</code> and <code>GatewayClass</code> it does still own are
+unaffected — only routing to Keycloak specifically moved.</p>
+</div>
+<div class="source-block" data-source-block="62"
+data-source-sha256="514a4fda91fe05f79cec09cdc1c45560cd933beb77072c98d89c5e5d8e8c0744">
+<pre class="yaml"><code># charts/keycloak-app/templates/httproute.yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: keycloak-route
+  namespace: {{ .Values.namespace }}
+spec:
+  parentRefs:
+    - name: {{ .Values.hug.gatewayName }}
+      namespace: {{ .Values.hug.gatewayNamespace }}
+  hostnames:
+    - {{ .Values.keycloak.hostname | quote }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /auth
+      backendRefs:
+        - name: keycloak-service
+          port: 8080</code></pre>
+</div>
+<div class="source-block" data-source-block="63"
+data-source-sha256="562c5e0912c2022a5359cba2c32787d1e9b5b280adc676da269d0844dc44a047">
+<p>No <code>ReferenceGrant</code> is needed here, unlike
+<code>docs/haproxy-unified-gateway/deployment.md</code>'s
+<code>api-route</code> (its section 7): that route's backend
+<code>Service</code> lives in a different namespace from the route
+itself, but this chart's <code>HTTPRoute</code> and the
+<code>keycloak-service</code> Service it targets are both in the
+<code>keycloak</code> namespace — only the cross-namespace
+<code>parentRef</code> to <code>hug-gateway</code> (in
+<code>haproxy-unified-gateway</code>) crosses a boundary, and that is
+already permitted by that <code>Gateway</code>'s own
+<code>allowedRoutes.namespaces.from: All</code>
+(<code>docs/haproxy-unified-gateway/deployment.md</code> section 7).</p>
+</div>
+<div class="source-block" data-source-block="64"
+data-source-sha256="c70154c3c9cafd6c041253b278b715125bf337b932e2b22b0e5a1b9519ee6d82">
+<p>Apply the whole chart and verify:</p>
+</div>
+<div class="source-block" data-source-block="65"
+data-source-sha256="7b3f5762b118c91f05ab7aa9b1ee916ee594cf5bb04d67c6e7bac267473e4a55">
+<pre class="console"><code>helmfile diff
+helmfile apply
+
+kubectl get keycloaks/keycloak -n keycloak -o go-template=&#39;{{range .status.conditions}}{{.type}}: {{.status}} — {{.message}}{{&quot;\n&quot;}}{{end}}&#39;
+kubectl get pods -n keycloak -l app=keycloak
+kubectl get svc keycloak-service -n keycloak
+kubectl get httproute keycloak-route -n keycloak -o yaml   # confirm ResolvedRefs: True</code></pre>
+</div>
+<div class="source-block" data-source-block="66"
+data-source-sha256="99d055e22b24222b0e4ac81ef50019e4f0127109506960ea62bfd62226268bf3">
+<p>A healthy deployment reports <code>Ready: True</code> and
+<code>HasErrors: False</code> in the <code>Keycloak</code> conditions
+output above.</p>
+</div>
+<section id="10-scaling-and-availability" class="source-block"
+data-source-block="67"
+data-source-sha256="d5d928103b034eb51d6845ae9019e0b3b4cf3c4de777557d58ecf959904c8cc9">
+<h2>10. Scaling and availability</h2>
+</section>
+<div class="source-block" data-source-block="68"
+data-source-sha256="fb8a349485004f8904016c521b5daf207bd570616dc5274fb50d53dc723f723d">
+<ul>
+<li><code>spec.instances: 2</code> (section 8) is the minimum for
+Keycloak itself not to be a single point of failure, matching
+<code>docs/nats-tenant-queue-api/design.md</code>'s open-questions
+recommended default; the Operator manages a <code>StatefulSet</code>,
+and its rolling update strategy restarts one pod at a time.</li>
+<li>Keycloak replicas discover each other for its distributed cache
+(Infinispan) over the cluster's Kubernetes API by default
+(<code>KC_CACHE_STACK</code> unset uses the <code>kubernetes</code>
+JGroups discovery protocol built into the Keycloak container image) — no
+separate configuration is needed for the 2-replica case here, and
+nothing in this document changes that default.</li>
+<li>No <code>PodDisruptionBudget</code> is templated in this chart
+(section 6); add one as a sixth template
+(<code>templates/poddisruptionbudget.yaml</code>, selecting
+<code>app=keycloak</code>) before this goes past POC, mirroring
+<code>docs/haproxy-unified-gateway/deployment.md</code> section 8's
+treatment of HUG's own availability.</li>
+</ul>
+</div>
+<section id="11-upgrade-and-rollback" class="source-block"
+data-source-block="69"
+data-source-sha256="0bca4762f920919877a0d302b1e8191d4a99118c57dfd8e57bfabe25ad5c51d3">
+<h2>11. Upgrade and rollback</h2>
+</section>
+<div class="source-block" data-source-block="70"
+data-source-sha256="40567f8af2daf9147b7025b5a217c61f6155e80b955bef0adff70262508ca04f">
+<p>Two independent upgrade paths, since the Operator (section 5) and
+this chart (sections 6-9) are separate releases with separate
+lifecycles:</p>
+</div>
+<div class="source-block" data-source-block="71"
+data-source-sha256="50cd2b72d657d5eeb7776a103e42f9fff84fd3d17d54576eeb4d0236494380f5">
+<ul>
+<li><strong>Operator upgrade</strong>: bump the <code>ref=</code> tag in
+the <code>kubectl apply -k</code> command (section 5) — or the
+<code>version:</code> in that section's Helmfile alternative — and
+re-run it. Always re-check the <a
+href="https://www.keycloak.org/docs/latest/upgrading/index.html">Keycloak
+upgrade guide</a> for that specific version jump first — Keycloak
+upgrades can include database schema migrations that run automatically
+on Keycloak's own startup, not something either release controls.</li>
+<li><strong>App chart upgrade</strong> (a new Keycloak image tag, a
+<code>values-keycloak-aks.yaml.gotmpl</code> change, an
+<code>instances</code> bump, and so on):</li>
+</ul>
+</div>
+<div class="source-block" data-source-block="72"
+data-source-sha256="ffa909d66c89901105f46ff3ea2ffafa1a6540f99099d2aaa6c341831da96ebc">
+<pre class="console"><code>helmfile diff
+helmfile apply
+
+helm history keycloak-app -n keycloak
+helm rollback keycloak-app &lt;REVISION&gt; -n keycloak</code></pre>
+</div>
+<div class="source-block" data-source-block="73"
+data-source-sha256="ccea6f21bb17a97462945dbc7dafca5330620eb943eedce236c566ca83f454a7">
+<p>Unlike the Operator's own CRDs, this chart's release has a real
+revision history — <code>helm rollback</code> reverts the
+ServiceAccount, <code>SecretProviderClass</code>, CA
+<code>Secret</code>, <code>Keycloak</code> CR, and
+<code>HTTPRoute</code> together, atomically, to a prior applied state.
+What it does not revert is a database schema migration Keycloak's own
+startup already ran against the shared PostgreSQL database before the
+rollback — that is server-side state no Kubernetes rollback touches;
+restoring the PostgreSQL Flexible Server from a point-in-time backup (a
+capability <code>docs/terraform-infra/design.md</code> section 4 already
+calls out as the reason it chose a managed database) is the realistic
+rollback path for anything past a trivial image-only bump. After a
+manual <code>helm rollback</code>, treat
+<code>values-keycloak-aks.yaml.gotmpl</code> the same way
+<code>docs/haproxy-unified-gateway/deployment.md</code> section 11
+treats <code>helmfile.yaml</code>'s <code>version:</code> field — revert
+it to match, so the next <code>helmfile apply</code> does not
+immediately re-upgrade over the rollback.</p>
+</div>
+<section id="12-uninstall" class="source-block" data-source-block="74"
+data-source-sha256="3855dfad6648d95e9f195f95026e5ea5182103ee1cd01f412151f3c6314b2361">
+<h2>12. Uninstall</h2>
+</section>
+<div class="source-block" data-source-block="75"
+data-source-sha256="a263e3d9de5f450f362c07f014475920ea4a6777f7eecd341e6194c0a856c23a">
+<pre class="console"><code>helmfile destroy   # removes the keycloak-app release: ServiceAccount, SecretProviderClass,
+                     # CA Secret, Keycloak CR, and HTTPRoute together
+
+kubectl delete -k &#39;github.com/keycloak/keycloak-k8s-resources/kubernetes?ref=26.7.2&#39;   # or the
+                                                                                          # Helmfile alternative&#39;s `helmfile destroy` (section 5)
+kubectl delete namespace keycloak</code></pre>
+</div>
+<div class="source-block" data-source-block="76"
+data-source-sha256="f8d5968e84d7024138086f7b3c68723cc84a39e83c64968e48a57e31f83c0c34">
+<p><code>helmfile destroy</code> for <code>keycloak-app</code> removes
+the <code>Keycloak</code> CR, which in turn removes the
+<code>StatefulSet</code>, <code>Service</code>, and generated
+<code>ConfigMap</code>s the Operator created for it — but never the
+PostgreSQL database or role from section 4.2, and never any Azure
+resource: those have no representation in this Helm release for
+<code>helm</code>/<code>helmfile</code> to track. Drop the database/role
+explicitly with <code>psql</code>
+(<code>DROP DATABASE keycloak; DROP ROLE keycloak;</code>, section 4.2)
+if this is a full teardown, not just a redeploy. The identity, federated
+credential, role assignment, and two Key Vault secrets are
+Terraform-managed (section 4.1) — remove their <code>resource</code>
+blocks from the root module and run <code>terraform apply</code> (or
+<code>terraform destroy -target</code> against just those five
+resources) to tear them down; <code>helmfile destroy</code> never
+touches them.</p>
+</div>
+<section id="13-troubleshooting" class="source-block"
+data-source-block="77"
+data-source-sha256="3aba4e2f1e9689f1af71e19fed38412b22f6e96dcc8c3d3bdc8ce5415f5cffc3">
+<h2>13. Troubleshooting</h2>
+</section>
+<div class="source-block" data-source-block="78"
+data-source-sha256="d4b3043d872e951d6273bc9d5627246cdd7391b94cd2756ab160891523f71ad8">
+<ul>
+<li><strong><code>Keycloak</code> status stuck
+<code>Ready: False</code>, <code>HasErrors: True</code></strong>:
+<code>kubectl logs -n keycloak -l app=keycloak --tail=100</code> first;
+a database connection failure (wrong host/port, or the TLS trust bundle
+from section 6.3 missing/mis-mounted) is the most common
+early-deployment cause, and shows up there as a JDBC connection error,
+not in the CR's own condition message.</li>
+<li><strong><code>Secret "keycloak-db-credentials" not found</code></strong>:
+the CSI driver only performs its <code>secretObjects</code> sync once a
+pod actually mounts the <code>SecretProviderClass</code> as a volume
+(section 6.2) — check that the pod's
+<code>unsupported.podTemplate</code> (section 8) really does mount the
+<code>keycloak-db-secrets</code> CSI volume; a <code>Keycloak</code> CR
+applied without that volume mount references a <code>Secret</code> that
+never gets created.</li>
+<li><strong>PostgreSQL connection fails with a certificate verification
+error</strong>: almost always the trust bundle (section 6.3) missing one
+of the two current root CAs, or a stale bundle from before Azure's
+certificate rotation reached this server's region — re-download both
+root certificates into <code>azure-postgres-ca.pem</code> and re-run
+<code>helmfile apply</code>; never add an intermediate CA or a pinned
+server certificate to work around this
+(<code>docs/terraform-infra/design.md</code> has no precedent here since
+it never opens a TLS connection to PostgreSQL itself).</li>
+<li><strong><code>HTTPRoute</code> <code>ResolvedRefs: False</code>
+after section 9</strong>: check <code>kubectl get svc -n keycloak</code>
+for the actual Service name and port
+(<code>keycloak-service</code>/<code>8080</code>) against what
+<code>templates/httproute.yaml</code>'s <code>backendRef</code> renders
+to — <code>helmfile diff</code> before <code>apply</code> catches a
+drifted value here before it reaches the cluster.</li>
+<li><strong><code>helmfile apply</code> fails validating
+<code>keycloak.yaml</code> against an unknown CRD</strong>: the app
+chart (sections 6-9) was applied before the Operator (section 5)
+finished registering <code>keycloaks.k8s.keycloak.org</code> — these are
+two separate releases with no <code>needs:</code> dependency wired
+between them in this document's <code>helmfile.yaml</code>, so ordering
+is the operator's responsibility, not Helmfile's; re-run
+<code>kubectl get crds | grep k8s.keycloak.org</code> (section 5) to
+confirm before retrying.</li>
+<li><strong>Workload Identity token exchange fails (Key Vault access
+denied)</strong>: check the federated credential's <code>subject</code>
+(section 4.1) matches exactly
+<code>system:serviceaccount:keycloak:keycloak</code>, and that the
+<code>keycloak</code> ServiceAccount (section 6.1) carries both the
+<code>azure.workload.identity/client-id</code> annotation and the
+<code>azure.workload.identity/use: "true"</code> label — the Workload
+Identity webhook only injects the token projection when both are
+present, the same pair <code>docs/terraform-infra/design.md</code>'s own
+<code>AC-2</code> already exercises for the REST API's
+ServiceAccount.</li>
+</ul>
+</div>
+<section id="14-references" class="source-block" data-source-block="79"
+data-source-sha256="73ff63de6bd58000d9542ebdaa849cdf6e639ba04997f644dc57ca8898233708">
+<h2>14. References</h2>
+</section>
+<div class="source-block" data-source-block="80"
+data-source-sha256="1a670805bc44a9c102426cfc9505f4fa80516051db77b9ce3a111423cd146144">
+<ul>
+<li><a rel="noopener noreferrer" href="https://www.keycloak.org/operator/installation">Keycloak
+Operator installation</a></li>
+<li><a rel="noopener noreferrer" href="https://www.keycloak.org/operator/basic-deployment">Basic
+Keycloak deployment (Operator)</a></li>
+<li><a
+href="https://www.keycloak.org/operator/advanced-configuration">Keycloak
+Operator advanced configuration</a></li>
+<li><a rel="noopener noreferrer" href="https://www.keycloak.org/server/db">Configuring the
+PostgreSQL database</a></li>
+<li><a
+href="https://www.keycloak.org/migration/migrating-to-quarkus">Migrating
+to Quarkus distribution</a> — the default context-path change from
+<code>/auth</code> to <code>/</code> this document's
+<code>http-relative-path</code> option (section 8) restores</li>
+<li><a
+href="https://github.com/keycloak/keycloak-k8s-resources">keycloak/keycloak-k8s-resources
+— source, CRDs, kustomize bases</a></li>
+<li><a
+href="https://github.com/keycloak/keycloak/pull/42079">keycloak/keycloak#42079
+— official Helm chart for the Operator (merged 2026-08-12)</a></li>
+<li><a rel="noopener noreferrer" href="https://github.com/helmfile/helmfile">Helmfile</a> —
+declarative <code>helm</code> release management; this document's
+<code>charts/keycloak-app</code> (sections 6-9) is driven the same way
+<code>docs/haproxy-unified-gateway/deployment.md</code> section 4 drives
+HUG's chart</li>
+<li><a rel="noopener noreferrer" href="https://helm.sh/docs/chart_template_guide/">Helm — chart
+template guide</a> — <code>{{ .Values.* }}</code>, <code>quote</code>,
+<code>indent</code>, and the built-in template functions used throughout
+section 6, 8, and 9's templates</li>
+<li><a
+href="https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/security-tls">Transport
+Layer Security (TLS) in Azure Database for PostgreSQL Flexible Server —
+Microsoft Learn</a></li>
+<li><a
+href="https://learn.microsoft.com/en-us/azure/aks/csi-secrets-store-driver">Azure
+Key Vault Provider for Secrets Store CSI Driver — Microsoft
+Learn</a></li>
+<li><a
+href="https://learn.microsoft.com/en-us/azure/aks/workload-identity-overview">Use
+Microsoft Entra Workload ID with AKS</a></li>
+<li><code>docs/nats-tenant-queue-api/design.md</code> — parent system
+design; section 4 specifies Keycloak backed by Azure Database for
+PostgreSQL Flexible Server</li>
+<li><code>docs/terraform-infra/design.md</code> — AKS cluster, Workload
+Identity, Key Vault, and PostgreSQL Flexible Server this document builds
+on</li>
+<li><code>docs/haproxy-unified-gateway/deployment.md</code> — HUG's
+<code>HTTPRoute</code> fronting this document's
+<code>keycloak-service</code> Service</li>
+</ul>
+</div>
+
+    </main>
+  </div>
+  <footer class="document-footer">Generated from docs/keycloak-operator/design.md by blueprint/html-doc@1. Edit the Markdown source, then regenerate.</footer>
+</body>
+</html>

@@ -1,0 +1,933 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+  <meta name="document-kind" content="design">
+  <meta name="source-path" content="docs/tenant-provisioning/design.md">
+  <meta name="source-sha256" content="bc9e736725420adb41a4e2e7619d5476c44c0b13b115e55d2f3f98772040ca4f">
+  <meta name="generator" content="blueprint/html-doc@1">
+  <title>Tenant provisioning: onboarding a new company onto Keycloak and NATS</title>
+  <style>:root {
+  color-scheme: light;
+  --paper: #f7f9fb;
+  --surface: #ffffff;
+  --surface-soft: #edf2f5;
+  --ink: #172630;
+  --muted: #526773;
+  --line: #ccd8df;
+  --line-strong: #8fa5b3;
+  --accent: #385e75;
+  --accent-soft: #dbe5ec;
+  --focus: #176b93;
+  --risk: #6b4f28;
+  --risk-soft: #f3ecdf;
+  --radius: 12px;
+  --shadow: 0 16px 42px rgb(31 54 68 / 10%);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--paper); }
+a { color: var(--accent); text-underline-offset: 0.16em; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible, summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 10;
+  left: 1rem;
+  top: 1rem;
+  padding: .65rem .9rem;
+  background: var(--ink);
+  color: white;
+  transform: translateY(-180%);
+}
+.skip-link:focus { transform: translateY(0); }
+
+.document-header {
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(145deg, #e5edf2 0%, #f7f9fb 70%);
+}
+.document-header__inner,
+.page-shell,
+.document-footer {
+  width: min(1180px, calc(100% - 2rem));
+  margin-inline: auto;
+}
+.document-header__inner { padding: 3.8rem 0 3rem; }
+.eyebrow {
+  margin: 0 0 .8rem;
+  color: var(--accent);
+  font-size: .78rem;
+  font-weight: 750;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.document-title {
+  max-width: 900px;
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.25rem, 5vw, 4.6rem);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -.035em;
+}
+.metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem 1.25rem;
+  margin: 1.6rem 0 0;
+  color: var(--muted);
+  font-size: .88rem;
+}
+.metadata dt { font-weight: 700; color: var(--ink); }
+.metadata dd { margin: 0; overflow-wrap: anywhere; }
+.metadata__item { display: grid; grid-template-columns: auto 1fr; gap: .35rem; }
+
+.page-shell {
+  display: grid;
+  grid-template-columns: minmax(190px, 250px) minmax(0, 1fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+  padding-block: 3rem 5rem;
+}
+.toc {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  padding: 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgb(255 255 255 / 78%);
+}
+.toc-title { margin: 0 0 .75rem; font: 750 .78rem/1.2 Inter, sans-serif; letter-spacing: .09em; text-transform: uppercase; }
+.toc ol { list-style: none; padding: 0; margin: 0; }
+.toc li + li { margin-top: .34rem; }
+.toc li[data-level="3"] { padding-left: .8rem; font-size: .88rem; }
+.toc a { display: block; color: var(--muted); text-decoration: none; line-height: 1.35; }
+.toc a:hover { color: var(--ink); }
+
+.document-content {
+  min-width: 0;
+  padding: clamp(1.4rem, 4vw, 3.8rem);
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) + 4px);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.source-block { min-width: 0; }
+.source-block > :first-child { margin-top: 0; }
+.source-block > :last-child { margin-bottom: 0; }
+.source-block + .source-block { margin-top: 1rem; }
+.source-block:has(> h1), .source-block:has(> h2) { margin-top: 3.7rem; }
+.source-block:first-child { margin-top: 0; }
+h1, h2, h3, h4 { color: var(--ink); line-height: 1.2; scroll-margin-top: 1.5rem; }
+.document-content h1 { font: 500 clamp(2rem, 5vw, 3.2rem)/1.08 Georgia, serif; letter-spacing: -.025em; }
+.document-content h2 { padding-top: .4rem; font: 500 clamp(1.7rem, 3vw, 2.3rem)/1.15 Georgia, serif; letter-spacing: -.018em; }
+.document-content h3 { font-size: 1.12rem; }
+.document-content h4 { font-size: 1rem; }
+p, ul, ol, blockquote, pre, table, figure { margin-block: 1rem; }
+blockquote {
+  margin-inline: 0;
+  padding: .8rem 1rem;
+  border-left: 4px solid var(--line-strong);
+  background: var(--surface-soft);
+  color: #314854;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+.role-requirements, .role-acceptance-criteria, .role-invariants,
+.role-decisions, .role-risks, .role-open-questions {
+  margin-top: 1.25rem;
+  padding: 1rem 1.2rem;
+  border-left: 4px solid var(--line-strong);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--surface-soft);
+}
+.role-risks, .role-open-questions { border-left-color: var(--risk); background: var(--risk-soft); }
+code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+code { padding: .12em .32em; border-radius: 4px; background: var(--surface-soft); font-size: .9em; overflow-wrap: anywhere; }
+pre {
+  max-width: 100%;
+  overflow: auto;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #132630;
+  color: #edf4f7;
+  line-height: 1.48;
+}
+pre code { padding: 0; background: transparent; color: inherit; }
+.table-wrap { max-width: 100%; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+th, td { padding: .68rem .75rem; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { background: var(--surface-soft); font-weight: 720; }
+tbody tr:nth-child(even) { background: #f9fbfc; }
+.diagram {
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fbfcfd;
+}
+.diagram img { display: block; width: 100%; height: auto; max-height: 650px; object-fit: contain; }
+.diagram figcaption { margin-top: .75rem; color: var(--muted); font-size: .86rem; }
+.diagram details { margin-top: .8rem; }
+.diagram summary { cursor: pointer; color: var(--accent); font-weight: 650; }
+.diagram details pre { max-height: 18rem; }
+.document-footer { padding: 0 0 3rem; color: var(--muted); font-size: .82rem; }
+
+@media (max-width: 760px) {
+  .document-header__inner { padding: 2.7rem 0 2.2rem; }
+  .page-shell { grid-template-columns: 1fr; gap: 1.2rem; padding-top: 1.25rem; }
+  .toc { position: static; max-height: none; }
+  .document-content { padding: 1.25rem; border-radius: var(--radius); }
+  .source-block:has(> h1), .source-block:has(> h2) { margin-top: 2.7rem; }
+}
+
+@media print {
+  :root { background: white; font-size: 10.5pt; }
+  @page { size: auto; margin: 16mm; }
+  .skip-link, .toc { display: none; }
+  .document-header { background: white; }
+  .document-header__inner, .page-shell, .document-footer { width: 100%; }
+  .document-header__inner { padding: 0 0 12mm; }
+  .document-title { font-size: 28pt; }
+  .page-shell { display: block; padding: 0; }
+  .document-content { padding: 0; border: 0; box-shadow: none; }
+  h1, h2, h3, h4 { break-after: avoid-page; }
+  table, figure, pre, blockquote { break-inside: avoid; }
+  thead { display: table-header-group; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .document-footer { padding: 10mm 0 0; }
+}
+</style>
+</head>
+<body>
+  <a class="skip-link" href="#document-content">Skip to document</a>
+  <header class="document-header">
+    <div class="document-header__inner">
+      <p class="eyebrow">Technical design</p>
+      <p class="document-title">Tenant provisioning: onboarding a new company onto Keycloak and NATS</p>
+      <dl class="metadata">
+        <div class="metadata__item"><dt>Status</dt><dd>Proposed for review</dd></div>
+        <div class="metadata__item"><dt>Source</dt><dd>docs/tenant-provisioning/design.md</dd></div>
+        <div class="metadata__item"><dt>SHA-256</dt><dd><code>bc9e736725420adb41a4e2e7619d5476c44c0b13b115e55d2f3f98772040ca4f</code></dd></div>
+      </dl>
+    </div>
+  </header>
+  <div class="page-shell">
+    <nav class="toc" aria-label="Document contents"><p class="toc-title">Contents</p><ol><li data-level="2"><a href="#1-executive-summary">1. Executive summary</a></li><li data-level="2"><a href="#2-context-and-scope">2. Context and scope</a></li><li data-level="2"><a href="#3-system-context">3. System context</a></li><li data-level="2"><a href="#4-proposed-design">4. Proposed design</a></li><li data-level="3"><a href="#how-it-works">How it works</a></li><li data-level="3"><a href="#components-and-responsibilities">Components and responsibilities</a></li><li data-level="3"><a href="#decisions">Decisions</a></li><li data-level="2"><a href="#5-invariants-and-requirements">5. Invariants and requirements</a></li><li data-level="3"><a href="#invariants">Invariants</a></li><li data-level="3"><a href="#requirements">Requirements</a></li><li data-level="2"><a href="#6-interfaces-and-data">6. Interfaces and data</a></li><li data-level="3"><a href="#naming-and-identity">Naming and identity</a></li><li data-level="2"><a href="#7-failure-behavior-and-lifecycle">7. Failure behavior and lifecycle</a></li><li data-level="2"><a href="#8-security-privacy-and-operations">8. Security, privacy, and operations</a></li><li data-level="2"><a href="#9-acceptance-criteria">9. Acceptance criteria</a></li><li data-level="2"><a href="#10-test-approach">10. Test approach</a></li><li data-level="2"><a href="#11-risks-and-tradeoffs">11. Risks and tradeoffs</a></li><li data-level="2"><a href="#12-open-questions">12. Open questions</a></li><li data-level="2"><a href="#13-out-of-scope">13. Out of scope</a></li></ol></nav>
+    <main id="document-content" class="document-content" data-source-block-count="45">
+<section
+id="tenant-provisioning-onboarding-a-new-company-onto-keycloak-and-nats"
+class="source-block" data-source-block="1"
+data-source-sha256="a2cb57bc87c54065063a3d4012cc93db36e3acfe0118c02cfa4f5c555ca3dfb4">
+<h1>Tenant provisioning: onboarding a new company onto Keycloak and
+NATS</h1>
+</section>
+<div class="source-block" data-source-block="2"
+data-source-sha256="f3cfda141bb0d969e973d91600064c759ac4c936fa82e9f2c3f6bb2a60fbb270">
+<blockquote>
+<p><strong>Status:</strong> Proposed for review</p>
+</blockquote>
+</div>
+<section id="1-executive-summary" class="source-block role-summary"
+data-source-block="3"
+data-source-sha256="369eedb81a8602aa50ed832662b898c91ab782d2b66611d11a6b18d8001d4703">
+<h2>1. Executive summary</h2>
+</section>
+<div class="source-block" data-source-block="4"
+data-source-sha256="7d424abd41cdaa41669012f05f4ecb39a347dfb458d1a07ac71e2f86d05f8475">
+<p>Today, when a new company wants to use this system, nothing actually
+creates its access. <code>docs/nats-tenant-queue-api/design.md</code>
+(section 13), <code>docs/keycloak-operator/design.md</code> (section 1),
+<code>docs/nats-cluster/design.md</code> (section 9), and
+<code>docs/nats-auth-middleware/design.md</code> (Out of scope) all
+assume a "tenant-provisioning workstream" exists and each explicitly
+hands off to it, but none of them specify it. A new tenant needs two
+things wired together before its users can call the API at all: a
+Keycloak identity that carries a <code>tenant_id</code> claim on every
+access token, and a NATS Account plus JetStream Key-Value bucket that
+the REST API can reach using credentials it can look up by that same
+<code>tenant_id</code>. This document specifies both halves as one
+onboarding procedure: a single idempotent script an operator runs once
+per tenant, plus a one-time realm/client setup in Keycloak that only has
+to happen once, ever. The main downside: onboarding stays a manual,
+operator-run script rather than tenant self-service, so every new tenant
+is a human running a command, not a company signing itself up.</p>
+</div>
+<section id="2-context-and-scope" class="source-block"
+data-source-block="5"
+data-source-sha256="7f27d9838429652fd04876b144f647ac2408f51de0d0db5fc261c40076a8d500">
+<h2>2. Context and scope</h2>
+</section>
+<div class="source-block" data-source-block="6"
+data-source-sha256="599cf92a69ba6a0a9650e7430ada0a71a6ea0fc4ae46dec58eb7461f12b2a713">
+<p>There is no tenant-provisioning code today.
+<code>docs/keycloak-operator/design.md</code> deploys Keycloak itself
+but stops short of any realm, client, or user configuration.
+<code>docs/nats-cluster/design.md</code> bootstraps the NATS Operator
+and <code>SYS</code> account but explicitly stops before creating any
+tenant Account. <code>docs/nats-tenant-queue-api/design.md</code>
+assumes a <code>tenant_id</code> claim and a resolvable NATS credential
+exist for every tenant the API serves, but never says how either comes
+to exist. This document fills that gap: it specifies the one-time
+Keycloak realm/client/protocol-mapper setup, the per-tenant onboarding
+script (Keycloak user creation, NATS Account and bucket creation, Azure
+Key Vault credential write), and the naming rule that ties a
+<code>tenant_id</code> value together across all three systems. In
+scope: the one-time Keycloak configuration this depends on, the
+per-tenant script's steps and ordering, the <code>tenant_id</code>
+naming rule, and failure/idempotency behavior. Out of scope: tenant
+self-service signup (a UI or public API a company would use to sign
+itself up), billing, and tenant offboarding/deletion (see section
+13).</p>
+</div>
+<section id="3-system-context" class="source-block"
+data-source-block="7"
+data-source-sha256="40793fe15cdedd8ecf4489800820100043e0c3ebe6ee96e6db9b0dc8f866fabd">
+<h2>3. System context</h2>
+</section>
+<figure class="diagram source-block" data-source-sha256="67fa7664012bbf426f8ab12c02609b303666d98a6953592f520721bf94930600" data-source-block="8"><img alt="Diagram 1 showing Operator workstation\nnsc, nats CLI, az CLI, kcadm.sh, One-time setup, section 4.1, Keycloak realm: natssaas\nclient: rest-api\nclient scope: tenant\nprotocol mapper: tenant_id, Per-tenant onboarding script, section 4.2, 1. Create Keycloak user\ntenant_id attribute, 2. nsc add account + user, 3. Create JetStream KV buc" src="data:image/svg+xml;base64,PHN2ZyBpZD0ibXktc3ZnIiB3aWR0aD0iMTAwJSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgY2xhc3M9ImZsb3djaGFydCIgc3R5bGU9Im1heC13aWR0aDogMTA2MS43OHB4OyBiYWNrZ3JvdW5kLWNvbG9yOiB0cmFuc3BhcmVudDsiIHZpZXdCb3g9IjAgMCAxMDYxLjc4MTI1IDEwOTguNTU0MDc3MTQ4NDM3NSIgcm9sZT0iZ3JhcGhpY3MtZG9jdW1lbnQgZG9jdW1lbnQiIGFyaWEtcm9sZWRlc2NyaXB0aW9uPSJmbG93Y2hhcnQtdjIiPjxzdHlsZT4jbXktc3Zne2ZvbnQtZmFtaWx5OkludGVyLHVpLXNhbnMtc2VyaWYsc3lzdGVtLXVpLHNhbnMtc2VyaWY7Zm9udC1zaXplOjE2cHg7ZmlsbDojMTcyNjMwO31Aa2V5ZnJhbWVzIGVkZ2UtYW5pbWF0aW9uLWZyYW1le2Zyb217c3Ryb2tlLWRhc2hvZmZzZXQ6MDt9fUBrZXlmcmFtZXMgZGFzaHt0b3tzdHJva2UtZGFzaG9mZnNldDowO319I215LXN2ZyAuZWRnZS1hbmltYXRpb24tc2xvd3tzdHJva2UtZGFzaGFycmF5OjksNSFpbXBvcnRhbnQ7c3Ryb2tlLWRhc2hvZmZzZXQ6OTAwO2FuaW1hdGlvbjpkYXNoIDUwcyBsaW5lYXIgaW5maW5pdGU7c3Ryb2tlLWxpbmVjYXA6cm91bmQ7fSNteS1zdmcgLmVkZ2UtYW5pbWF0aW9uLWZhc3R7c3Ryb2tlLWRhc2hhcnJheTo5LDUhaW1wb3J0YW50O3N0cm9rZS1kYXNob2Zmc2V0OjkwMDthbmltYXRpb246ZGFzaCAyMHMgbGluZWFyIGluZmluaXRlO3N0cm9rZS1saW5lY2FwOnJvdW5kO30jbXktc3ZnIC5lcnJvci1pY29ue2ZpbGw6I2Y3ZjlmYjt9I215LXN2ZyAuZXJyb3ItdGV4dHtmaWxsOiMwODA2MDQ7c3Ryb2tlOiMwODA2MDQ7fSNteS1zdmcgLmVkZ2UtdGhpY2tuZXNzLW5vcm1hbHtzdHJva2Utd2lkdGg6MXB4O30jbXktc3ZnIC5lZGdlLXRoaWNrbmVzcy10aGlja3tzdHJva2Utd2lkdGg6My41cHg7fSNteS1zdmcgLmVkZ2UtcGF0dGVybi1zb2xpZHtzdHJva2UtZGFzaGFycmF5OjA7fSNteS1zdmcgLmVkZ2UtdGhpY2tuZXNzLWludmlzaWJsZXtzdHJva2Utd2lkdGg6MDtmaWxsOm5vbmU7fSNteS1zdmcgLmVkZ2UtcGF0dGVybi1kYXNoZWR7c3Ryb2tlLWRhc2hhcnJheTozO30jbXktc3ZnIC5lZGdlLXBhdHRlcm4tZG90dGVke3N0cm9rZS1kYXNoYXJyYXk6Mjt9I215LXN2ZyAubWFya2Vye2ZpbGw6IzUyNmE3OTtzdHJva2U6IzUyNmE3OTt9I215LXN2ZyAubWFya2VyLmNyb3Nze3N0cm9rZTojNTI2YTc5O30jbXktc3ZnIHN2Z3tmb250LWZhbWlseTpJbnRlcix1aS1zYW5zLXNlcmlmLHN5c3RlbS11aSxzYW5zLXNlcmlmO2ZvbnQtc2l6ZToxNnB4O30jbXktc3ZnIHB7bWFyZ2luOjA7fSNteS1zdmcgLmxhYmVse2ZvbnQtZmFtaWx5OkludGVyLHVpLXNhbnMtc2VyaWYsc3lzdGVtLXVpLHNhbnMtc2VyaWY7Y29sb3I6IzE3MjYzMDt9I215LXN2ZyAuY2x1c3Rlci1sYWJlbCB0ZXh0e2ZpbGw6IzA4MDYwNDt9I215LXN2ZyAuY2x1c3Rlci1sYWJlbCBzcGFue2NvbG9yOiMwODA2MDQ7fSNteS1zdmcgLmNsdXN0ZXItbGFiZWwgc3BhbiBwe2JhY2tncm91bmQtY29sb3I6dHJhbnNwYXJlbnQ7fSNteS1zdmcgLmxhYmVsIHRleHQsI215LXN2ZyBzcGFue2ZpbGw6IzE3MjYzMDtjb2xvcjojMTcyNjMwO30jbXktc3ZnIC5ub2RlIHJlY3QsI215LXN2ZyAubm9kZSBjaXJjbGUsI215LXN2ZyAubm9kZSBlbGxpcHNlLCNteS1zdmcgLm5vZGUgcG9seWdvbiwjbXktc3ZnIC5ub2RlIHBhdGh7ZmlsbDojZGJlNWVjO3N0cm9rZTojNjA3OThhO3N0cm9rZS13aWR0aDoxcHg7fSNteS1zdmcgLnJvdWdoLW5vZGUgLmxhYmVsIHRleHQsI215LXN2ZyAubm9kZSAubGFiZWwgdGV4dCwjbXktc3ZnIC5pbWFnZS1zaGFwZSAubGFiZWwsI215LXN2ZyAuaWNvbi1zaGFwZSAubGFiZWx7dGV4dC1hbmNob3I6bWlkZGxlO30jbXktc3ZnIC5ub2RlIC5rYXRleCBwYXRoe2ZpbGw6IzAwMDtzdHJva2U6IzAwMDtzdHJva2Utd2lkdGg6MXB4O30jbXktc3ZnIC5yb3VnaC1ub2RlIC5sYWJlbCwjbXktc3ZnIC5ub2RlIC5sYWJlbCwjbXktc3ZnIC5pbWFnZS1zaGFwZSAubGFiZWwsI215LXN2ZyAuaWNvbi1zaGFwZSAubGFiZWx7dGV4dC1hbGlnbjpjZW50ZXI7fSNteS1zdmcgLm5vZGUuY2xpY2thYmxle2N1cnNvcjpwb2ludGVyO30jbXktc3ZnIC5yb290IC5hbmNob3IgcGF0aHtmaWxsOiM1MjZhNzkhaW1wb3J0YW50O3N0cm9rZS13aWR0aDowO3N0cm9rZTojNTI2YTc5O30jbXktc3ZnIC5hcnJvd2hlYWRQYXRoe2ZpbGw6IzA4MDYwNDt9I215LXN2ZyAuZWRnZVBhdGggLnBhdGh7c3Ryb2tlOiM1MjZhNzk7c3Ryb2tlLXdpZHRoOjFweDt9I215LXN2ZyAuZmxvd2NoYXJ0LWxpbmt7c3Ryb2tlOiM1MjZhNzk7ZmlsbDpub25lO30jbXktc3ZnIC5lZGdlTGFiZWx7YmFja2dyb3VuZC1jb2xvcjojZWRmMmY1O3RleHQtYWxpZ246Y2VudGVyO30jbXktc3ZnIC5lZGdlTGFiZWwgcHtiYWNrZ3JvdW5kLWNvbG9yOiNlZGYyZjU7fSNteS1zdmcgLmVkZ2VMYWJlbCByZWN0e29wYWNpdHk6MC41O2JhY2tncm91bmQtY29sb3I6I2VkZjJmNTtmaWxsOiNlZGYyZjU7fSNteS1zdmcgLmxhYmVsQmtne2JhY2tncm91bmQtY29sb3I6cmdiYSgyMzcsIDI0MiwgMjQ1LCAwLjUpO30jbXktc3ZnIC5jbHVzdGVyIHJlY3R7ZmlsbDojZjdmOWZiO3N0cm9rZTpoc2woMjEwLCAwJSwgODcuNjQ3MDU4ODIzNSUpO3N0cm9rZS13aWR0aDoxcHg7fSNteS1zdmcgLmNsdXN0ZXIgdGV4dHtmaWxsOiMwODA2MDQ7fSNteS1zdmcgLmNsdXN0ZXIgc3Bhbntjb2xvcjojMDgwNjA0O30jbXktc3ZnIGRpdi5tZXJtYWlkVG9vbHRpcHtwb3NpdGlvbjphYnNvbHV0ZTt0ZXh0LWFsaWduOmNlbnRlcjttYXgtd2lkdGg6MjAwcHg7cGFkZGluZzoycHg7Zm9udC1mYW1pbHk6SW50ZXIsdWktc2Fucy1zZXJpZixzeXN0ZW0tdWksc2Fucy1zZXJpZjtmb250LXNpemU6MTJweDtiYWNrZ3JvdW5kOiNmN2Y5ZmI7Ym9yZGVyOjFweCBzb2xpZCBoc2woMjEwLCAwJSwgODcuNjQ3MDU4ODIzNSUpO2JvcmRlci1yYWRpdXM6MnB4O3BvaW50ZXItZXZlbnRzOm5vbmU7ei1pbmRleDoxMDA7fSNteS1zdmcgLmZsb3djaGFydFRpdGxlVGV4dHt0ZXh0LWFuY2hvcjptaWRkbGU7Zm9udC1zaXplOjE4cHg7ZmlsbDojMTcyNjMwO30jbXktc3ZnIHJlY3QudGV4dHtmaWxsOm5vbmU7c3Ryb2tlLXdpZHRoOjA7fSNteS1zdmcgLmljb24tc2hhcGUsI215LXN2ZyAuaW1hZ2Utc2hhcGV7YmFja2dyb3VuZC1jb2xvcjojZWRmMmY1O3RleHQtYWxpZ246Y2VudGVyO30jbXktc3ZnIC5pY29uLXNoYXBlIHAsI215LXN2ZyAuaW1hZ2Utc2hhcGUgcHtiYWNrZ3JvdW5kLWNvbG9yOiNlZGYyZjU7cGFkZGluZzoycHg7fSNteS1zdmcgLmljb24tc2hhcGUgLmxhYmVsIHJlY3QsI215LXN2ZyAuaW1hZ2Utc2hhcGUgLmxhYmVsIHJlY3R7b3BhY2l0eTowLjU7YmFja2dyb3VuZC1jb2xvcjojZWRmMmY1O2ZpbGw6I2VkZjJmNTt9I215LXN2ZyAubGFiZWwtaWNvbntkaXNwbGF5OmlubGluZS1ibG9jaztoZWlnaHQ6MWVtO292ZXJmbG93OnZpc2libGU7dmVydGljYWwtYWxpZ246LTAuMTI1ZW07fSNteS1zdmcgLm5vZGUgLmxhYmVsLWljb24gcGF0aHtmaWxsOmN1cnJlbnRDb2xvcjtzdHJva2U6cmV2ZXJ0O3N0cm9rZS13aWR0aDpyZXZlcnQ7fSNteS1zdmcgLm5vZGUgLm5lby1ub2Rle3N0cm9rZTojNjA3OThhO30jbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLm5vZGUgcmVjdCwjbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLmNsdXN0ZXIgcmVjdCwjbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLm5vZGUgcG9seWdvbntzdHJva2U6dXJsKCNteS1zdmctZ3JhZGllbnQpO2ZpbHRlcjpkcm9wLXNoYWRvdyggMXB4IDJweCAycHggcmdiYSgxODUsMTg1LDE4NSwxKSk7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0uc3dpbWxhbmUuY2x1c3RlciByZWN0e2ZpbHRlcjpub25lO30jbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLm5vZGUgcGF0aHtzdHJva2U6dXJsKCNteS1zdmctZ3JhZGllbnQpO3N0cm9rZS13aWR0aDoxcHg7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0ubm9kZSAub3V0ZXItcGF0aHtmaWx0ZXI6ZHJvcC1zaGFkb3coIDFweCAycHggMnB4IHJnYmEoMTg1LDE4NSwxODUsMSkpO30jbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLm5vZGUgLm5lby1saW5lIHBhdGh7c3Ryb2tlOiM2MDc5OGE7ZmlsdGVyOm5vbmU7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0ubm9kZSBjaXJjbGV7c3Ryb2tlOnVybCgjbXktc3ZnLWdyYWRpZW50KTtmaWx0ZXI6ZHJvcC1zaGFkb3coIDFweCAycHggMnB4IHJnYmEoMTg1LDE4NSwxODUsMSkpO30jbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLm5vZGUgY2lyY2xlIC5zdGF0ZS1zdGFydHtmaWxsOiMwMDAwMDA7fSNteS1zdmcgW2RhdGEtbG9vaz0ibmVvIl0uaWNvbi1zaGFwZSAuaWNvbntmaWxsOnVybCgjbXktc3ZnLWdyYWRpZW50KTtmaWx0ZXI6ZHJvcC1zaGFkb3coIDFweCAycHggMnB4IHJnYmEoMTg1LDE4NSwxODUsMSkpO30jbXktc3ZnIFtkYXRhLWxvb2s9Im5lbyJdLmljb24tc2hhcGUgLmljb24tbmVvIHBhdGh7c3Ryb2tlOnVybCgjbXktc3ZnLWdyYWRpZW50KTtmaWx0ZXI6ZHJvcC1zaGFkb3coIDFweCAycHggMnB4IHJnYmEoMTg1LDE4NSwxODUsMSkpO30jbXktc3ZnIDpyb290ey0tbWVybWFpZC1mb250LWZhbWlseToidHJlYnVjaGV0IG1zIix2ZXJkYW5hLGFyaWFsLHNhbnMtc2VyaWY7fTwvc3R5bGU+PGc+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCIgY2xhc3M9Im1hcmtlciBmbG93Y2hhcnQtdjIiIHZpZXdCb3g9IjAgMCAxMCAxMCIgcmVmWD0iNSIgcmVmWT0iNSIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iOCIgbWFya2VySGVpZ2h0PSI4IiBvcmllbnQ9ImF1dG8iPjxwYXRoIGQ9Ik0gMCAwIEwgMTAgNSBMIDAgMTAgeiIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMTsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50U3RhcnQiIGNsYXNzPSJtYXJrZXIgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTAgMTAiIHJlZlg9IjQuNSIgcmVmWT0iNSIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iOCIgbWFya2VySGVpZ2h0PSI4IiBvcmllbnQ9ImF1dG8iPjxwYXRoIGQ9Ik0gMCA1IEwgMTAgMTAgTCAxMCAwIHoiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDE7IHN0cm9rZS1kYXNoYXJyYXk6IDEsIDA7Ii8+PC9tYXJrZXI+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZC1tYXJnaW4iIGNsYXNzPSJtYXJrZXIgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTEuNSAxNCIgcmVmWD0iMTEuNSIgcmVmWT0iNyIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iMTAuNSIgbWFya2VySGVpZ2h0PSIxNCIgb3JpZW50PSJhdXRvIj48cGF0aCBkPSJNIDAgMCBMIDExLjUgNyBMIDAgMTQgeiIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMDsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50U3RhcnQtbWFyZ2luIiBjbGFzcz0ibWFya2VyIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDExLjUgMTQiIHJlZlg9IjEiIHJlZlk9IjciIG1hcmtlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgbWFya2VyV2lkdGg9IjExLjUiIG1hcmtlckhlaWdodD0iMTQiIG9yaWVudD0iYXV0byI+PHBvbHlnb24gcG9pbnRzPSIwLDcgMTEuNSwxNCAxMS41LDAiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDA7IHN0cm9rZS1kYXNoYXJyYXk6IDEsIDA7Ii8+PC9tYXJrZXI+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1jaXJjbGVFbmQiIGNsYXNzPSJtYXJrZXIgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTAgMTAiIHJlZlg9IjExIiByZWZZPSI1IiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSIxMSIgbWFya2VySGVpZ2h0PSIxMSIgb3JpZW50PSJhdXRvIj48Y2lyY2xlIGN4PSI1IiBjeT0iNSIgcj0iNSIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMTsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLWNpcmNsZVN0YXJ0IiBjbGFzcz0ibWFya2VyIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDEwIDEwIiByZWZYPSItMSIgcmVmWT0iNSIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iMTEiIG1hcmtlckhlaWdodD0iMTEiIG9yaWVudD0iYXV0byI+PGNpcmNsZSBjeD0iNSIgY3k9IjUiIHI9IjUiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDE7IHN0cm9rZS1kYXNoYXJyYXk6IDEsIDA7Ii8+PC9tYXJrZXI+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1jaXJjbGVFbmQtbWFyZ2luIiBjbGFzcz0ibWFya2VyIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDEwIDEwIiByZWZZPSI1IiByZWZYPSIxMi4yNSIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iMTQiIG1hcmtlckhlaWdodD0iMTQiIG9yaWVudD0iYXV0byI+PGNpcmNsZSBjeD0iNSIgY3k9IjUiIHI9IjUiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDA7IHN0cm9rZS1kYXNoYXJyYXk6IDEsIDA7Ii8+PC9tYXJrZXI+PG1hcmtlciBpZD0ibXktc3ZnX2Zsb3djaGFydC12Mi1jaXJjbGVTdGFydC1tYXJnaW4iIGNsYXNzPSJtYXJrZXIgZmxvd2NoYXJ0LXYyIiB2aWV3Qm94PSIwIDAgMTAgMTAiIHJlZlg9Ii0yIiByZWZZPSI1IiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSIxNCIgbWFya2VySGVpZ2h0PSIxNCIgb3JpZW50PSJhdXRvIj48Y2lyY2xlIGN4PSI1IiBjeT0iNSIgcj0iNSIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMDsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLWNyb3NzRW5kIiBjbGFzcz0ibWFya2VyIGNyb3NzIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDExIDExIiByZWZYPSIxMiIgcmVmWT0iNS4yIiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSIxMSIgbWFya2VySGVpZ2h0PSIxMSIgb3JpZW50PSJhdXRvIj48cGF0aCBkPSJNIDEsMSBsIDksOSBNIDEwLDEgbCAtOSw5IiBjbGFzcz0iYXJyb3dNYXJrZXJQYXRoIiBzdHlsZT0ic3Ryb2tlLXdpZHRoOiAyOyBzdHJva2UtZGFzaGFycmF5OiAxLCAwOyIvPjwvbWFya2VyPjxtYXJrZXIgaWQ9Im15LXN2Z19mbG93Y2hhcnQtdjItY3Jvc3NTdGFydCIgY2xhc3M9Im1hcmtlciBjcm9zcyBmbG93Y2hhcnQtdjIiIHZpZXdCb3g9IjAgMCAxMSAxMSIgcmVmWD0iLTEiIHJlZlk9IjUuMiIgbWFya2VyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBtYXJrZXJXaWR0aD0iMTEiIG1hcmtlckhlaWdodD0iMTEiIG9yaWVudD0iYXV0byI+PHBhdGggZD0iTSAxLDEgbCA5LDkgTSAxMCwxIGwgLTksOSIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMjsgc3Ryb2tlLWRhc2hhcnJheTogMSwgMDsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLWNyb3NzRW5kLW1hcmdpbiIgY2xhc3M9Im1hcmtlciBjcm9zcyBmbG93Y2hhcnQtdjIiIHZpZXdCb3g9IjAgMCAxNSAxNSIgcmVmWD0iMTcuNyIgcmVmWT0iNy41IiBtYXJrZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIG1hcmtlcldpZHRoPSIxMiIgbWFya2VySGVpZ2h0PSIxMiIgb3JpZW50PSJhdXRvIj48cGF0aCBkPSJNIDEsMSBMIDE0LDE0IE0gMSwxNCBMIDE0LDEiIGNsYXNzPSJhcnJvd01hcmtlclBhdGgiIHN0eWxlPSJzdHJva2Utd2lkdGg6IDIuNTsiLz48L21hcmtlcj48bWFya2VyIGlkPSJteS1zdmdfZmxvd2NoYXJ0LXYyLWNyb3NzU3RhcnQtbWFyZ2luIiBjbGFzcz0ibWFya2VyIGNyb3NzIGZsb3djaGFydC12MiIgdmlld0JveD0iMCAwIDE1IDE1IiByZWZYPSItMy41IiByZWZZPSI3LjUiIG1hcmtlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgbWFya2VyV2lkdGg9IjEyIiBtYXJrZXJIZWlnaHQ9IjEyIiBvcmllbnQ9ImF1dG8iPjxwYXRoIGQ9Ik0gMSwxIEwgMTQsMTQgTSAxLDE0IEwgMTQsMSIgY2xhc3M9ImFycm93TWFya2VyUGF0aCIgc3R5bGU9InN0cm9rZS13aWR0aDogMi41OyBzdHJva2UtZGFzaGFycmF5OiAxLCAwOyIvPjwvbWFya2VyPjxnIGNsYXNzPSJyb290Ij48ZyBjbGFzcz0iY2x1c3RlcnMiPjxnIGNsYXNzPSJjbHVzdGVyIiBpZD0ibXktc3ZnLVNDUklQVCIgZGF0YS1sb29rPSJjbGFzc2ljIj48cmVjdCBzdHlsZT0iIiB4PSIxNC4zMzU5Mzc1IiB5PSIyMjguODAwMDAzMDUxNzU3OCIgd2lkdGg9IjU1NS40MjE4NzUiIGhlaWdodD0iNjk2Ljc5OTk4Nzc5Mjk2ODgiLz48ZyBjbGFzcz0iY2x1c3Rlci1sYWJlbCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTQzLjMxMjUsIDIyOC44MDAwMDMwNTE3NTc4KSI+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5QZXItdGVuYW50PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IG9uYm9hcmRpbmc8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gc2NyaXB0LDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBzZWN0aW9uPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IDQuMjwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PC9nPjxnIGNsYXNzPSJlZGdlUGF0aHMiPjxwYXRoIGQ9Ik0yNzguNzYyLDMxOS40TDI3My4wMzYsMzIzLjU2N0MyNjcuMzEsMzI3LjczMywyNTUuODU4LDMzNi4wNjcsMjUwLjEzMiwzNDMuNzMzQzI0NC40MDYsMzUxLjQsMjQ0LjQwNiwzNTguNCwyNDQuNDA2LDM2MS45TDI0NC40MDYsMzY1LjQiIGlkPSJteS1zdmctTF9TMV9TMl8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX1MxX1MyXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk1qYzRMamMyTVRZMU1UWXlNVEk1T1RFM0xDSjVJam96TVRrdU5EQXdNREF4TlRJMU9EYzRPWDBzZXlKNElqb3lORFF1TkRBMk1qVXNJbmtpT2pNME5DNDBNREF3TURFMU1qVTROemc1ZlN4N0luZ2lPakkwTkM0ME1EWXlOU3dpZVNJNk16WTVMalF3TURBd01UVXlOVGczT0RsOVhRPT0iIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik0yMTQuNDQyLDQxNy40TDIwNi45NTEsNDIzLjRDMTk5LjQ2LDQyOS40LDE4NC40NzgsNDQxLjQsMTc2Ljk4Nyw0NTQuMkMxNjkuNDk2LDQ2NywxNjkuNDk2LDQ4MC42LDE2OS40OTYsNDg3LjRMMTY5LjQ5Niw0OTQuMiIgaWQ9Im15LXN2Zy1MX1MyX1MzXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfUzJfUzNfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TWpFMExqUTBNakU0TnpVc0lua2lPalF4Tnk0ME1EQXdNREUxTWpVNE56ZzVmU3g3SW5naU9qRTJPUzQwT1RZd09UTTNOU3dpZVNJNk5EVXpMalF3TURBd01UVXlOVGczT0RsOUxIc2llQ0k2TVRZNUxqUTVOakE1TXpjMUxDSjVJam8wT1RndU1qQXdNREF3TnpZeU9UTTVORFY5WFE9PSIgZGF0YS1sb29rPSJjbGFzc2ljIiBtYXJrZXItZW5kPSJ1cmwoI215LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRFbmQpIi8+PHBhdGggZD0iTTE2OS40OTYsNTYzLjhMMTY5LjQ5Niw1NzIuNzMzQzE2OS40OTYsNTgxLjY2NywxNjkuNDk2LDU5OS41MzMsMTc4LjA3Niw2MTguMzYzQzE4Ni42NTcsNjM3LjE5MywyMDMuODE3LDY1Ni45ODUsMjEyLjM5Nyw2NjYuODgxTDIyMC45NzgsNjc2Ljc3OCIgaWQ9Im15LXN2Zy1MX1MzX1M0XzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfUzNfUzRfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TVRZNUxqUTVOakE1TXpjMUxDSjVJam8xTmpNdU56azVPVGs1TWpNM01EWXdOWDBzZXlKNElqb3hOamt1TkRrMk1Ea3pOelVzSW5raU9qWXhOeTR6T1RrNU9UYzNNVEV4T0RFMmZTeDdJbmdpT2pJeU15NDFPVGM0TnpJM01USTJOVFV4TlN3aWVTSTZOamM1TGpjNU9UazVOVFF5TWpNMk16TjlYUT09IiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNMjIyLjg5LDcyNy44TDIxNC44ODEsNzM2LjczM0MyMDYuODcyLDc0NS42NjcsMTkwLjg1NCw3NjMuNTMzLDE4Mi44NDUsNzgwLjczM0MxNzQuODM2LDc5Ny45MzMsMTc0LjgzNiw4MTQuNDY3LDE3NC44MzYsODIyLjczM0wxNzQuODM2LDgzMSIgaWQ9Im15LXN2Zy1MX1M0X1M1XzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfUzRfUzVfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TWpJeUxqZzRPVFkxT0RBNE1qQTJOVFUxTENKNUlqbzNNamN1TnprNU9UazFOREl5TXpZek0zMHNleUo0SWpveE56UXVPRE0xT1RNM05Td2llU0k2TnpneExqTTVPVGs1TXpnNU5qUTRORFI5TEhzaWVDSTZNVGMwTGpnek5Ua3pOelVzSW5raU9qZ3pOQzQ1T1RrNU9USXpOekEyTURVMWZWMD0iIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik00MTUuMzc5LDMxOS40TDQyNy4wMDgsMzIzLjU2N0M0MzguNjM3LDMyNy43MzMsNDYxLjg5NCwzMzYuMDY3LDQ3My41MjMsMzQ4LjRDNDg1LjE1MiwzNjAuNzMzLDQ4NS4xNTIsMzc3LjA2Nyw0ODUuMTUyLDM5NS4yMzNDNDg1LjE1Miw0MTMuNCw0ODUuMTUyLDQzMy40LDUzNi45MzksNDUyLjQ5OUM1ODguNzI2LDQ3MS41OTksNjkyLjI5OSw0ODkuNzk3LDc0NC4wODYsNDk4Ljg5Nkw3OTUuODczLDUwNy45OTYiIGlkPSJteS1zdmctTF9TMV9LQ18wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX1MxX0tDXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk5ERTFMak0zT0RneE1EY3hNemsyTWpJMUxDSjVJam96TVRrdU5EQXdNREF4TlRJMU9EYzRPWDBzZXlKNElqbzBPRFV1TVRVeU16UXpOelVzSW5raU9qTTBOQzQwTURBd01ERTFNalU0TnpnNWZTeDdJbmdpT2pRNE5TNHhOVEl6TkRNM05Td2llU0k2TXprekxqUXdNREF3TVRVeU5UZzNPRGw5TEhzaWVDSTZORGcxTGpFMU1qTTBNemMxTENKNUlqbzBOVE11TkRBd01EQXhOVEkxT0RjNE9YMHNleUo0SWpvM09Ua3VPREV5TlN3aWVTSTZOVEE0TGpZNE56azJOekV4TVRVNE9ESjlYUT09IiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNMzA0LjkzMyw0MTcuNEwzMjAuMDY0LDQyMy40QzMzNS4xOTYsNDI5LjQsMzY1LjQ1OSw0NDEuNCwzODAuNTkxLDQ2MC4zMzNDMzk1LjcyMyw0NzkuMjY3LDM5NS43MjMsNTA1LjEzMywzOTUuNzIzLDUzMi40NjdDMzk1LjcyMyw1NTkuOCwzOTUuNzIzLDU4OC42LDM3OC4wODgsNjEzLjA2OUMzNjAuNDUzLDYzNy41MzksMzI1LjE4Miw2NTcuNjc4LDMwNy41NDcsNjY3Ljc0N0wyODkuOTEyLDY3Ny44MTciIGlkPSJteS1zdmctTF9TMl9TNF8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX1MyX1M0XzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk16QTBMamt6TWpneE1qVXNJbmtpT2pReE55NDBNREF3TURFMU1qVTROemc1ZlN4N0luZ2lPak01TlM0M01qSTJOVFl5TlN3aWVTSTZORFV6TGpRd01EQXdNVFV5TlRnM09EbDlMSHNpZUNJNk16azFMamN5TWpZMU5qSTFMQ0o1SWpvMU16RjlMSHNpZUNJNk16azFMamN5TWpZMU5qSTFMQ0o1SWpvMk1UY3VNems1T1RrM056RXhNVGd4Tm4wc2V5SjRJam95T0RZdU5ETTROVGcyTVRneU9USXhNU3dpZVNJNk5qYzVMamM1T1RrNU5UUXlNak0yTXpOOVhRPT0iIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik0yOTEuMjA1LDcyNy44TDMwOC42MjUsNzM2LjczM0MzMjYuMDQ0LDc0NS42NjcsMzYwLjg4Myw3NjMuNTMzLDQxMi40OTIsNzgwLjMxNUM0NjQuMTAyLDc5Ny4wOTYsNTMyLjQ4LDgxMi43OTIsNTY2LjY3LDgyMC42NEw2MDAuODU5LDgyOC40ODgiIGlkPSJteS1zdmctTF9TNF9OQVRTXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfUzRfTkFUU18wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZNamt4TGpJd05URXpPVFExTVRFMU1qVTFMQ0o1SWpvM01qY3VOems1T1RrMU5ESXlNell6TTMwc2V5SjRJam96T1RVdU56SXlOalUyTWpVc0lua2lPamM0TVM0ek9UazVPVE00T1RZME9EUTBmU3g3SW5naU9qWXdOQzQzTlRjNE1USTFMQ0o1SWpvNE1qa3VNemd6TVRjNE1Ua3dNelk0T1gxZCIgZGF0YS1sb29rPSJjbGFzc2ljIiBtYXJrZXItZW5kPSJ1cmwoI215LXN2Z19mbG93Y2hhcnQtdjItcG9pbnRFbmQpIi8+PHBhdGggZD0iTTI4NC4zMTYsNTYzLjAxN0wzMTYuODIyLDU3Mi4wODFDMzQ5LjMyNyw1ODEuMTQ1LDQxNC4zMzcsNTk5LjI3Miw0NDYuODQyLDYyMi43MzZDNDc5LjM0OCw2NDYuMiw0NzkuMzQ4LDY3NSw0NzkuMzQ4LDcwMi4zMzNDNDc5LjM0OCw3MjkuNjY3LDQ3OS4zNDgsNzU1LjUzMyw0OTkuNjEyLDc3NC42NDdDNTE5Ljg3Niw3OTMuNzYxLDU2MC40MDQsODA2LjEyMSw1ODAuNjY4LDgxMi4zMDJMNjAwLjkzMiw4MTguNDgyIiBpZD0ibXktc3ZnLUxfUzNfTkFUU18wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX1MzX05BVFNfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2TWpnMExqTXhOalF3TmpJMUxDSjVJam8xTmpNdU1ERTJPRFl5TURZMU1ETXlmU3g3SW5naU9qUTNPUzR6TkRjMk5UWXlOU3dpZVNJNk5qRTNMak01T1RrNU56Y3hNVEU0TVRaOUxIc2llQ0k2TkRjNUxqTTBOelkxTmpJMUxDSjVJam8zTURNdU56azVPVGsxTkRJeU16WXpNMzBzZXlKNElqbzBOemt1TXpRM05qVTJNalVzSW5raU9qYzRNUzR6T1RrNU9UTTRPVFkwT0RRMGZTeDdJbmdpT2pZd05DNDNOVGM0TVRJMUxDSjVJam80TVRrdU5qUTRPVGd6TnpBeU5EVXhNMzFkIiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNMTc0LjgzNiw4ODNMMTc0LjgzNiw4OTAuMUMxNzQuODM2LDg5Ny4yLDE3NC44MzYsOTExLjQsMTc0LjgzNiw5MjIuNjY3QzE3NC44MzYsOTMzLjkzMywxNzQuODM2LDk0Mi4yNjcsMjI2Ljc3NCw5NTYuNjU3QzI3OC43MTMsOTcxLjA0NywzODIuNTg5LDk5MS40OTQsNDM0LjUyOCwxMDAxLjcxN0w0ODYuNDY2LDEwMTEuOTQxIiBpZD0ibXktc3ZnLUxfUzVfS1ZfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9TNV9LVl8wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZNVGMwTGpnek5Ua3pOelVzSW5raU9qZzRNaTQ1T1RrNU9USXpOekEyTURVMWZTeDdJbmdpT2pFM05DNDRNelU1TXpjMUxDSjVJam81TWpVdU5UazVPVGt3T0RRME56STJObjBzZXlKNElqb3hOelF1T0RNMU9UTTNOU3dpZVNJNk9UVXdMalU1T1RrNU1EZzBORGN5TmpaOUxIc2llQ0k2TkRrd0xqTTVNRFl5TlN3aWVTSTZNVEF4TWk0M01UTTBNekF5TlRRMU5URTRmVjA9IiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNOTI2Ljc5Nyw0MTcuNEw5MjYuNzk3LDQyMy40QzkyNi43OTcsNDI5LjQsOTI2Ljc5Nyw0NDEuNCw5MjYuNzk3LDQ1Mi43MzNDOTI2Ljc5Nyw0NjQuMDY3LDkyNi43OTcsNDc0LjczMyw5MjYuNzk3LDQ4MC4wNjdMOTI2Ljc5Nyw0ODUuNCIgaWQ9Im15LXN2Zy1MX1VfS0NfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9VX0tDXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk9USTJMamM1TmpnM05Td2llU0k2TkRFM0xqUXdNREF3TVRVeU5UZzNPRGw5TEhzaWVDSTZPVEkyTGpjNU5qZzNOU3dpZVNJNk5EVXpMalF3TURBd01UVXlOVGczT0RsOUxIc2llQ0k2T1RJMkxqYzVOamczTlN3aWVTSTZORGc1TGpRd01EQXdNVFV5TlRnM09EbDlYUT09IiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNOTI2Ljc5Nyw1NzIuNkw5MjYuNzk3LDU4MC4wNjdDOTI2Ljc5Nyw1ODcuNTMzLDkyNi43OTcsNjAyLjQ2Nyw5MjYuNzk3LDYxNi43MzNDOTI2Ljc5Nyw2MzEsOTI2Ljc5Nyw2NDQuNiw5MjYuNzk3LDY1MS40TDkyNi43OTcsNjU4LjIiIGlkPSJteS1zdmctTF9LQ19BUElfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9LQ19BUElfMCIgZGF0YS1wb2ludHM9Ilczc2llQ0k2T1RJMkxqYzVOamczTlN3aWVTSTZOVGN5TGpVNU9UazVPRFEzTkRFeU1URjlMSHNpZUNJNk9USTJMamM1TmpnM05Td2llU0k2TmpFM0xqTTVPVGs1TnpjeE1URTRNVFo5TEhzaWVDSTZPVEkyTGpjNU5qZzNOU3dpZVNJNk5qWXlMakU1T1RrNU5qazBPREkwTWpKOVhRPT0iIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik05NDQuODk4LDc0NS40TDk0Ny41MDksNzUxLjRDOTUwLjEyLDc1Ny40LDk1NS4zNDEsNzY5LjQsOTU3Ljk1Miw3ODguMzMzQzk2MC41NjMsODA3LjI2Nyw5NjAuNTYzLDgzMy4xMzMsOTYwLjU2Myw4NTcuMTY3Qzk2MC41NjMsODgxLjIsOTYwLjU2Myw5MDMuNCw5NjAuNTYzLDkxOC42NjdDOTYwLjU2Myw5MzMuOTMzLDk2MC41NjMsOTQyLjI2Nyw5MTcuMzM1LDk1Ni4xNTVDODc0LjEwOCw5NzAuMDQ0LDc4Ny42NTQsOTg5LjQ4OCw3NDQuNDI3LDk5OS4yMUw3MDEuMTk5LDEwMDguOTMyIiBpZD0ibXktc3ZnLUxfQVBJX0tWXzAiIGNsYXNzPSJlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZmxvd2NoYXJ0LWxpbmsiIHN0eWxlPSI7IiBkYXRhLWVkZ2U9InRydWUiIGRhdGEtZXQ9ImVkZ2UiIGRhdGEtaWQ9IkxfQVBJX0tWXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk9UUTBMamc1T0RBek5EUTROVGM1T0N3aWVTSTZOelExTGpNNU9UazVNemc1TmpRNE5EUjlMSHNpZUNJNk9UWXdMalUyTWpVc0lua2lPamM0TVM0ek9UazVPVE00T1RZME9EUTBmU3g3SW5naU9qazJNQzQxTmpJMUxDSjVJam80TlRndU9UazVPVGt5TXpjd05qQTFOWDBzZXlKNElqbzVOakF1TlRZeU5Td2llU0k2T1RJMUxqVTVPVGs1TURnME5EY3lOalo5TEhzaWVDSTZPVFl3TGpVMk1qVXNJbmtpT2prMU1DNDFPVGs1T1RBNE5EUTNNalkyZlN4N0luZ2lPalk1Tnk0eU9UWTROelVzSW5raU9qRXdNRGt1T0RBNU9EWXdNamcyTWpFMk9YMWQiIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik04MjMuMzI1LDc0NS40TDgwOC40MDEsNzUxLjRDNzkzLjQ3Nyw3NTcuNCw3NjMuNjI5LDc2OS40LDc0OC43MDUsNzgwLjczM0M3MzMuNzgxLDc5Mi4wNjcsNzMzLjc4MSw4MDIuNzMzLDczMy43ODEsODA4LjA2N0w3MzMuNzgxLDgxMy40IiBpZD0ibXktc3ZnLUxfQVBJX05BVFNfMCIgY2xhc3M9ImVkZ2UtdGhpY2tuZXNzLW5vcm1hbCBlZGdlLXBhdHRlcm4tc29saWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9BUElfTkFUU18wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZPREl6TGpNeU5EVTRNamswTmpJNU1qUXNJbmtpT2pjME5TNHpPVGs1T1RNNE9UWTBPRFEwZlN4N0luZ2lPamN6TXk0M09ERXlOU3dpZVNJNk56Z3hMak01T1RrNU16ZzVOalE0TkRSOUxIc2llQ0k2TnpNekxqYzRNVEkxTENKNUlqbzRNVGN1TXprNU9Ua3pPRGsyTkRnME5IMWQiIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjxwYXRoIGQ9Ik0xMTQuNTg2LDEzNUwxMTQuNTg2LDE0Ni40NjdDMTE0LjU4NiwxNTcuOTMzLDExNC41ODYsMTgwLjg2NywxMTQuNTg2LDE5NS44MzNDMTE0LjU4NiwyMTAuOCwxMTQuNTg2LDIxNy44LDExNC41ODYsMjIxLjNMMTE0LjU4NiwyMjQuOCIgaWQ9Im15LXN2Zy1MX09QX1NDUklQVF8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBlZGdlLXRoaWNrbmVzcy1ub3JtYWwgZWRnZS1wYXR0ZXJuLXNvbGlkIGZsb3djaGFydC1saW5rIiBzdHlsZT0iOyIgZGF0YS1lZGdlPSJ0cnVlIiBkYXRhLWV0PSJlZGdlIiBkYXRhLWlkPSJMX09QX1NDUklQVF8wIiBkYXRhLXBvaW50cz0iVzNzaWVDSTZNVEUwTGpVNE5Ua3pOelVzSW5raU9qRXpOWDBzZXlKNElqb3hNVFF1TlRnMU9UTTNOU3dpZVNJNk1qQXpMamd3TURBd016QTFNVGMxTnpoOUxIc2llQ0k2TVRFMExqVTROVGt6TnpVc0lua2lPakl5T0M0NE1EQXdNRE13TlRFM05UYzRmU3g3SW5naU9qSXdPUzQyTWpVc0lua2lPakkxTlM0d05USXhNekE0TkRFME16azNPSDFkIiBkYXRhLWxvb2s9ImNsYXNzaWMiIG1hcmtlci1lbmQ9InVybCgjbXktc3ZnX2Zsb3djaGFydC12Mi1wb2ludEVuZCkiLz48cGF0aCBkPSJNNDg1LjE1MiwxNzguOEw0ODUuMTUyLDE4Mi45NjdDNDg1LjE1MiwxODcuMTMzLDQ4NS4xNTIsMTk1LjQ2Nyw0ODUuMTUyLDIwMy44QzQ4NS4xNTIsMjEyLjEzMyw0ODUuMTUyLDIyMC40NjcsNDc0LjE1MSwyMjguNTc1QzQ2My4xNSwyMzYuNjg0LDQ0MS4xNDcsMjQ0LjU2Nyw0MzAuMTQ2LDI0OC41MDlMNDE5LjE0NCwyNTIuNDUxIiBpZD0ibXktc3ZnLUxfT05DRV9TMV8wIiBjbGFzcz0iZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1kb3R0ZWQgZWRnZS10aGlja25lc3Mtbm9ybWFsIGVkZ2UtcGF0dGVybi1zb2xpZCBmbG93Y2hhcnQtbGluayIgc3R5bGU9IjsiIGRhdGEtZWRnZT0idHJ1ZSIgZGF0YS1ldD0iZWRnZSIgZGF0YS1pZD0iTF9PTkNFX1MxXzAiIGRhdGEtcG9pbnRzPSJXM3NpZUNJNk5EZzFMakUxTWpNME16YzFMQ0o1SWpveE56Z3VPREF3TURBek1EVXhOelUzT0gwc2V5SjRJam8wT0RVdU1UVXlNelF6TnpVc0lua2lPakl3TXk0NE1EQXdNRE13TlRFM05UYzRmU3g3SW5naU9qUTROUzR4TlRJek5ETTNOU3dpZVNJNk1qSTRMamd3TURBd016QTFNVGMxTnpoOUxIc2llQ0k2TkRFMUxqTTNPRGd4TURjeE16azJNakkxTENKNUlqb3lOVE11T0RBd01EQXpNRFV4TnpVM09IMWQiIGRhdGEtbG9vaz0iY2xhc3NpYyIgbWFya2VyLWVuZD0idXJsKCNteS1zdmdfZmxvd2NoYXJ0LXYyLXBvaW50RW5kKSIvPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVscyI+PGcgY2xhc3M9ImVkZ2VMYWJlbCI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX1MxX1MyXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIDApIj48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiLz48L3RleHQ+PC9nPjwvZz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVsIj48ZyBjbGFzcz0ibGFiZWwiIGRhdGEtaWQ9IkxfUzJfUzNfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgMCkiPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSIvPjwvdGV4dD48L2c+PC9nPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9TM19TNF8wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAwKSI+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIi8+PC90ZXh0PjwvZz48L2c+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX1M0X1M1XzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIDApIj48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiLz48L3RleHQ+PC9nPjwvZz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVsIj48ZyBjbGFzcz0ibGFiZWwiIGRhdGEtaWQ9IkxfUzFfS0NfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgMCkiPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSIvPjwvdGV4dD48L2c+PC9nPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9TMl9TNF8wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAwKSI+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIi8+PC90ZXh0PjwvZz48L2c+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX1M0X05BVFNfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgMCkiPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSIvPjwvdGV4dD48L2c+PC9nPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9TM19OQVRTXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIDApIj48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiLz48L3RleHQ+PC9nPjwvZz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVsIj48ZyBjbGFzcz0ibGFiZWwiIGRhdGEtaWQ9IkxfUzVfS1ZfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgMCkiPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSIvPjwvdGV4dD48L2c+PC9nPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDkyNi43OTY4NzUsIDQ1My40MDAwMDE1MjU4Nzg5KSI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX1VfS0NfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTEwKSI+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSIiIHg9Ii0yNS42MTcxODc1IiB5PSItMSIgd2lkdGg9IjUxLjIzNDM3NSIgaGVpZ2h0PSIyMiIvPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPmxvZ3M8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gaW48L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDkyNi43OTY4NzUsIDYxNy4zOTk5OTc3MTExODE2KSI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX0tDX0FQSV8wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMTguNzk5OTk5MjM3MDYwNTQ3KSI+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSIiIHg9Ii04OC4xMDkzNzUiIHk9Ii0xIiB3aWR0aD0iMTc2LjIxODc1IiBoZWlnaHQ9IjM5LjU5OTk5ODQ3NDEyMTA5NCIvPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPmFjY2VzczwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiB0b2tlbiw8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gdGVuYW50X2lkPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+Y2xhaW08L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJlZGdlTGFiZWwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDk2MC41NjI1LCA4NTguOTk5OTkyMzcwNjA1NSkiPjxnIGNsYXNzPSJsYWJlbCIgZGF0YS1pZD0iTF9BUElfS1ZfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTEwKSI+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSIiIHg9Ii02Mi43NTc4MTI1IiB5PSItMSIgd2lkdGg9IjEyNS41MTU2MjUiIGhlaWdodD0iMjIiLz48dGV4dCB5PSItMTAuMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj50ZW5hbnRfaWQ8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gbG9va3VwPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0iZWRnZUxhYmVsIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg3MzMuNzgxMjUsIDc4MS4zOTk5OTM4OTY0ODQ0KSI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX0FQSV9OQVRTXzAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0xMCkiPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0iIiB4PSItNDcuNTMxMjUiIHk9Ii0xIiB3aWR0aD0iOTUuMDYyNSIgaGVpZ2h0PSIyMiIvPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPnRlbmFudDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBjcmVkczwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX09QX1NDUklQVF8wIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAwKSI+PHRleHQgeT0iLTEwLjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIi8+PC90ZXh0PjwvZz48L2c+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48L2c+PGcgY2xhc3M9ImVkZ2VMYWJlbCI+PGcgY2xhc3M9ImxhYmVsIiBkYXRhLWlkPSJMX09OQ0VfUzFfMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgMCkiPjx0ZXh0IHk9Ii0xMC4xIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSIvPjwvdGV4dD48L2c+PC9nPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZXMiPjxnIGNsYXNzPSJyb290IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzMTEuMTA1NDY4NzUsIDApIj48ZyBjbGFzcz0iY2x1c3RlcnMiPjxnIGNsYXNzPSJjbHVzdGVyIiBpZD0ibXktc3ZnLU9OQ0UiIGRhdGEtbG9vaz0iY2xhc3NpYyI+PHJlY3Qgc3R5bGU9IiIgeD0iOCIgeT0iOCIgd2lkdGg9IjMzMi4wOTM3NSIgaGVpZ2h0PSIxNzAuODAwMDAzMDUxNzU3OCIvPjxnIGNsYXNzPSJjbHVzdGVyLWxhYmVsIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg3NC4yMzQzNzUsIDgpIj48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPk9uZS10aW1lPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IHNldHVwLDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBzZWN0aW9uPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IDQuMTwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PC9nPjxnIGNsYXNzPSJlZGdlUGF0aHMiLz48ZyBjbGFzcz0iZWRnZUxhYmVscyIvPjxnIGNsYXNzPSJub2RlcyI+PGcgY2xhc3M9Im5vZGUgZGVmYXVsdCIgaWQ9Im15LXN2Zy1mbG93Y2hhcnQtS0NSLTEiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTc0LjA0Njg3NSwgOTMuNDAwMDAxNTI1ODc4OSkiPjxyZWN0IGNsYXNzPSJiYXNpYyBsYWJlbC1jb250YWluZXIiIHN0eWxlPSIiIHg9Ii0xMjguNTQ2ODc1IiB5PSItNTAuNDAwMDAxNTI1ODc4OTA2IiB3aWR0aD0iMjU3LjA5Mzc1IiBoZWlnaHQ9IjEwMC44MDAwMDMwNTE3NTc4MSIvPjxnIGNsYXNzPSJsYWJlbCIgc3R5bGU9IiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTM1LjQwMDAwMTUyNTg3ODkwNikiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPktleWNsb2FrPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IHJlYWxtOjwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBuYXRzc2FhczwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIxZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPmNsaWVudDo8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gcmVzdC1hcGk8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMi4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPmNsaWVudDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBzY29wZTo8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gdGVuYW50PC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjMuMmVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5wcm90b2NvbDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBtYXBwZXI6PC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IHRlbmFudF9pZDwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1PUC0wIiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDExNC41ODU5Mzc1LCA5My40MDAwMDE1MjU4Nzg5KSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTEwNi41ODU5Mzc1IiB5PSItNDEuNTk5OTk4NDc0MTIxMDk0IiB3aWR0aD0iMjEzLjE3MTg3NSIgaGVpZ2h0PSI4My4xOTk5OTY5NDgyNDIxOSIvPjxnIGNsYXNzPSJsYWJlbCIgc3R5bGU9IiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTI2LjU5OTk5ODQ3NDEyMTA5NCkiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPk9wZXJhdG9yPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IHdvcmtzdGF0aW9uPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+bnNjLDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBuYXRzPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IENMSSw8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gYXo8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gQ0xJLDwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIyLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+a2NhZG0uc2g8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LVMxLTIiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzIzLjgzNTkzNzUsIDI4Ni42MDAwMDIyODg4MTgzNikiPjxyZWN0IGNsYXNzPSJiYXNpYyBsYWJlbC1jb250YWluZXIiIHN0eWxlPSIiIHg9Ii0xMTQuMjEwOTM3NSIgeT0iLTMyLjc5OTk5OTIzNzA2MDU1IiB3aWR0aD0iMjI4LjQyMTg3NSIgaGVpZ2h0PSI2NS41OTk5OTg0NzQxMjExIi8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtMTcuNzk5OTk5MjM3MDYwNTQ3KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+MS48L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gQ3JlYXRlPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEtleWNsb2FrPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IHVzZXI8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj50ZW5hbnRfaWQ8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gYXR0cmlidXRlPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1TMi0zIiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDI0NC40MDYyNSwgMzkzLjQwMDAwMTUyNTg3ODkpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItMTIzLjg1OTM3NSIgeT0iLTI0IiB3aWR0aD0iMjQ3LjcxODc1IiBoZWlnaHQ9IjQ4Ii8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtOSkiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPjIuPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IG5zYzwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBhZGQ8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gYWNjb3VudDwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiArPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IHVzZXI8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LVMzLTQiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTY5LjQ5NjA5Mzc1LCA1MzEpIj48cmVjdCBjbGFzcz0iYmFzaWMgbGFiZWwtY29udGFpbmVyIiBzdHlsZT0iIiB4PSItMTE0LjgyMDMxMjUiIHk9Ii0zMi43OTk5OTkyMzcwNjA1NSIgd2lkdGg9IjIyOS42NDA2MjUiIGhlaWdodD0iNjUuNTk5OTk4NDc0MTIxMSIvPjxnIGNsYXNzPSJsYWJlbCIgc3R5bGU9IiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTE3Ljc5OTk5OTIzNzA2MDU0NykiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPjMuPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IENyZWF0ZTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBKZXRTdHJlYW08L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gS1Y8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5idWNrZXQ8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LVM0LTUiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjQ0LjQwNjI1LCA3MDMuNzk5OTk1NDIyMzYzMykiPjxyZWN0IGNsYXNzPSJiYXNpYyBsYWJlbC1jb250YWluZXIiIHN0eWxlPSIiIHg9Ii0xMTIuMjUiIHk9Ii0yNCIgd2lkdGg9IjIyNC41IiBoZWlnaHQ9IjQ4Ii8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtOSkiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPjQuPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IG5zYzwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBwdXNoPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IHRvPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IHJlc29sdmVyPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1TNS02IiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE3NC44MzU5Mzc1LCA4NTguOTk5OTkyMzcwNjA1NSkiPjxyZWN0IGNsYXNzPSJiYXNpYyBsYWJlbC1jb250YWluZXIiIHN0eWxlPSIiIHg9Ii0xMjUuNSIgeT0iLTI0IiB3aWR0aD0iMjUxIiBoZWlnaHQ9IjQ4Ii8+PGcgY2xhc3M9ImxhYmVsIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLCAtOSkiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPjUuPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IFdyaXRlPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IGNyZWRzPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IHRvPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEtleTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBWYXVsdDwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9Im5vZGUgZGVmYXVsdCIgaWQ9Im15LXN2Zy1mbG93Y2hhcnQtS0MtMTciIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoOTI2Ljc5Njg3NSwgNTMxKSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTEyNi45ODQzNzUiIHk9Ii00MS41OTk5OTg0NzQxMjEwOTQiIHdpZHRoPSIyNTMuOTY4NzUiIGhlaWdodD0iODMuMTk5OTk2OTQ4MjQyMTkiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0yNi41OTk5OTg0NzQxMjEwOTQpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5LZXljbG9hazwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIxZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPmRvY3Mva2V5Y2xvYWstb3BlcmF0b3IvZGU8L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMi4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPnNpZ24ubWQ8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LU5BVFMtMjEiIGRhdGEtbG9vaz0iY2xhc3NpYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNzMzLjc4MTI1LCA4NTguOTk5OTkyMzcwNjA1NSkiPjxyZWN0IGNsYXNzPSJiYXNpYyBsYWJlbC1jb250YWluZXIiIHN0eWxlPSIiIHg9Ii0xMjkuMDIzNDM3NSIgeT0iLTQxLjU5OTk5ODQ3NDEyMTA5NCIgd2lkdGg9IjI1OC4wNDY4NzUiIGhlaWdodD0iODMuMTk5OTk2OTQ4MjQyMTkiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC0yNi41OTk5OTg0NzQxMjEwOTQpIj48cmVjdC8+PGc+PHJlY3QgY2xhc3M9ImJhY2tncm91bmQiIHN0eWxlPSJzdHJva2U6IG5vbmUiLz48dGV4dCB5PSItMTAuMSIgc3R5bGU9IiI+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iLTAuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5OQVRTPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IHJlc29sdmVyPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+ZG9jcy9uYXRzLWNsdXN0ZXIvZGVzaWduLm08L3RzcGFuPjwvdHNwYW4+PHRzcGFuIGNsYXNzPSJ0ZXh0LW91dGVyLXRzcGFuIHJvdyIgeD0iMCIgeT0iMi4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPmQ8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjxnIGNsYXNzPSJub2RlIGRlZmF1bHQiIGlkPSJteS1zdmctZmxvd2NoYXJ0LUtWLTI1IiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDU5My44NDM3NSwgMTAzMy4wNzcwMzAxODE4ODQ4KSI+PHBhdGggZD0iTTAsMTUuNTg0NjkwNzA3MDg5NzMgYTEwMy40NTMxMjUsMTUuNTg0NjkwNzA3MDg5NzMgMCwwLDAgMjA2LjkwNjI1LDAgYTEwMy40NTMxMjUsMTUuNTg0NjkwNzA3MDg5NzMgMCwwLDAgLTIwNi45MDYyNSwwIGwwLDgzLjc4NDY4NzY1NTMzMTkyIGExMDMuNDUzMTI1LDE1LjU4NDY5MDcwNzA4OTczIDAsMCwwIDIwNi45MDYyNSwwIGwwLC04My43ODQ2ODc2NTUzMzE5MiIgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciBvdXRlci1wYXRoIiBzdHlsZT0iIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMTAzLjQ1MzEyNSwgLTU3LjQ3NzAzNDUzNDc1NTY5KSIvPjxnIGNsYXNzPSJsYWJlbCIgc3R5bGU9IiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTE3LjU5OTk5ODQ3NDEyMTA5NCkiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPkF6dXJlPC90c3Bhbj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+IEtleTwvdHNwYW4+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPiBWYXVsdDwvdHNwYW4+PC90c3Bhbj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSIxZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPmRvY3MvdGVycmFmb3JtLWluZnJhL2Rlc2lnPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjIuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5uLm1kPC90c3Bhbj48L3RzcGFuPjwvdGV4dD48L2c+PC9nPjwvZz48ZyBjbGFzcz0ibm9kZSBkZWZhdWx0IiBpZD0ibXktc3ZnLWZsb3djaGFydC1VLTI2IiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDkyNi43OTY4NzUsIDM5My40MDAwMDE1MjU4Nzg5KSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTc4Ljc3MzQzNzUiIHk9Ii0yNCIgd2lkdGg9IjE1Ny41NDY4NzUiIGhlaWdodD0iNDgiLz48ZyBjbGFzcz0ibGFiZWwiIHN0eWxlPSIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIC05KSI+PHJlY3QvPjxnPjxyZWN0IGNsYXNzPSJiYWNrZ3JvdW5kIiBzdHlsZT0ic3Ryb2tlOiBub25lIi8+PHRleHQgeT0iLTEwLjEiIHN0eWxlPSIiPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9Ii0wLjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+VGVuYW50J3M8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gdXNlcjwvdHNwYW4+PC90c3Bhbj48L3RleHQ+PC9nPjwvZz48L2c+PGcgY2xhc3M9Im5vZGUgZGVmYXVsdCIgaWQ9Im15LXN2Zy1mbG93Y2hhcnQtQVBJLTI5IiBkYXRhLWxvb2s9ImNsYXNzaWMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDkyNi43OTY4NzUsIDcwMy43OTk5OTU0MjIzNjMzKSI+PHJlY3QgY2xhc3M9ImJhc2ljIGxhYmVsLWNvbnRhaW5lciIgc3R5bGU9IiIgeD0iLTEyNS45Mzc1IiB5PSItNDEuNTk5OTk4NDc0MTIxMDk0IiB3aWR0aD0iMjUxLjg3NSIgaGVpZ2h0PSI4My4xOTk5OTY5NDgyNDIxOSIvPjxnIGNsYXNzPSJsYWJlbCIgc3R5bGU9IiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwgLTI2LjU5OTk5ODQ3NDEyMTA5NCkiPjxyZWN0Lz48Zz48cmVjdCBjbGFzcz0iYmFja2dyb3VuZCIgc3R5bGU9InN0cm9rZTogbm9uZSIvPjx0ZXh0IHk9Ii0xMC4xIiBzdHlsZT0iIj48dHNwYW4gY2xhc3M9InRleHQtb3V0ZXItdHNwYW4gcm93IiB4PSIwIiB5PSItMC4xZW0iIGR5PSIxLjFlbSI+PHRzcGFuIGZvbnQtc3R5bGU9Im5vcm1hbCIgY2xhc3M9InRleHQtaW5uZXItdHNwYW4iIGZvbnQtd2VpZ2h0PSJub3JtYWwiPlJFU1Q8L3RzcGFuPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj4gQVBJPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjFlbSIgZHk9IjEuMWVtIj48dHNwYW4gZm9udC1zdHlsZT0ibm9ybWFsIiBjbGFzcz0idGV4dC1pbm5lci10c3BhbiIgZm9udC13ZWlnaHQ9Im5vcm1hbCI+ZG9jcy9uYXRzLXRlbmFudC1xdWV1ZS1hPC90c3Bhbj48L3RzcGFuPjx0c3BhbiBjbGFzcz0idGV4dC1vdXRlci10c3BhbiByb3ciIHg9IjAiIHk9IjIuMWVtIiBkeT0iMS4xZW0iPjx0c3BhbiBmb250LXN0eWxlPSJub3JtYWwiIGNsYXNzPSJ0ZXh0LWlubmVyLXRzcGFuIiBmb250LXdlaWdodD0ibm9ybWFsIj5waS9kZXNpZ24ubWQ8L3RzcGFuPjwvdHNwYW4+PC90ZXh0PjwvZz48L2c+PC9nPjwvZz48L2c+PC9nPjxkZWZzPjxmaWx0ZXIgaWQ9Im15LXN2Zy1kcm9wLXNoYWRvdyIgaGVpZ2h0PSIxMzAlIiB3aWR0aD0iMTMwJSI+PGZlRHJvcFNoYWRvdyBkeD0iNCIgZHk9IjQiIHN0ZERldmlhdGlvbj0iMCIgZmxvb2Qtb3BhY2l0eT0iMC4wNiIgZmxvb2QtY29sb3I9IiMwMDAwMDAiLz48L2ZpbHRlcj48L2RlZnM+PGRlZnM+PGZpbHRlciBpZD0ibXktc3ZnLWRyb3Atc2hhZG93LXNtYWxsIiBoZWlnaHQ9IjE1MCUiIHdpZHRoPSIxNTAlIj48ZmVEcm9wU2hhZG93IGR4PSIyIiBkeT0iMiIgc3RkRGV2aWF0aW9uPSIwIiBmbG9vZC1vcGFjaXR5PSIwLjA2IiBmbG9vZC1jb2xvcj0iIzAwMDAwMCIvPjwvZmlsdGVyPjwvZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9Im15LXN2Zy1ncmFkaWVudCIgZ3JhZGllbnRVbml0cz0ib2JqZWN0Qm91bmRpbmdCb3giIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjNjA3OThhIiBzdG9wLW9wYWNpdHk9IjEiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9ImhzbCgyMDIuNSwgMCUsIDg0LjUwOTgwMzkyMTYlKSIgc3RvcC1vcGFjaXR5PSIxIi8+PC9saW5lYXJHcmFkaWVudD48L3N2Zz4="><figcaption>Diagram 1</figcaption><details><summary>View Mermaid source</summary><pre><code class="language-mermaid">flowchart TB
+    OP[Operator workstation\nnsc, nats CLI, az CLI, kcadm.sh]
+
+    subgraph ONCE[One-time setup, section 4.1]
+        KCR[Keycloak realm: natssaas\nclient: rest-api\nclient scope: tenant\nprotocol mapper: tenant_id]
+    end
+
+    subgraph SCRIPT[Per-tenant onboarding script, section 4.2]
+        S1[1. Create Keycloak user\ntenant_id attribute]
+        S2[2. nsc add account + user]
+        S3[3. Create JetStream KV bucket]
+        S4[4. nsc push to resolver]
+        S5[5. Write creds to Key Vault]
+        S1 --&gt; S2 --&gt; S3 --&gt; S4 --&gt; S5
+    end
+
+    OP --&gt; SCRIPT
+    ONCE -.-&gt; S1
+
+    S1 --&gt; KC[Keycloak\ndocs/keycloak-operator/design.md]
+    S2 --&gt; S4
+    S4 --&gt; NATS[NATS resolver\ndocs/nats-cluster/design.md]
+    S3 --&gt; NATS
+    S5 --&gt; KV[(Azure Key Vault\ndocs/terraform-infra/design.md)]
+
+    U[Tenant&#x27;s user] -- logs in --&gt; KC
+    KC -- access token, tenant_id claim --&gt; API[REST API\ndocs/nats-tenant-queue-api/design.md]
+    API -- tenant_id lookup --&gt; KV
+    API -- tenant creds --&gt; NATS</code></pre></details></figure>
+<div class="source-block" data-source-block="9"
+data-source-sha256="8311fe7eb74e3492374e30e46c9e919c368e1d6c79ddb7270d264536ea2d592d">
+<p>The operator's workstation is the same trust boundary
+<code>docs/nats-cluster/design.md</code> section 4 already establishes
+for the NATS Operator's signing keys: this script runs from that same
+workstation (or one with equivalent access), never from inside the
+cluster, since it needs the <code>nsc</code> identity that can mint a
+new Account. It also needs Keycloak realm-admin credentials and an Azure
+AD identity with write access to Key Vault (section 8). The boundary
+this document must preserve, unchanged from the three documents it
+completes: the REST API never creates a NATS Account, a KV bucket, or a
+Keycloak user itself, and a user never receives a NATS credential
+directly. Everything this document adds runs before a tenant's first
+request, not in response to one.</p>
+</div>
+<section id="4-proposed-design" class="source-block"
+data-source-block="10"
+data-source-sha256="cb43280d884b7bd10ddfe1c903a3a3ffc221ebb65bc3295cbb6d512812e2ddb1">
+<h2>4. Proposed design</h2>
+</section>
+<section id="how-it-works" class="source-block" data-source-block="11"
+data-source-sha256="e248d7da23aef6704ac43f3f639e0b91f6c326e9ecb982e008905e4785a6b4ed">
+<h3>How it works</h3>
+</section>
+<div class="source-block" data-source-block="12"
+data-source-sha256="5901f6f31984723288701be6a1d497e13ef186dda9b65d794ec0361aa6d71e3a">
+<p><strong>One-time setup (section 4.1)</strong> happens once, before
+the first tenant is ever onboarded, and never again per tenant: an
+operator creates a <code>natssaas</code> realm in Keycloak, a
+<code>rest-api</code> client for the REST API's login flow, a
+<code>tenant</code> client scope holding one protocol mapper that copies
+each user's <code>tenant_id</code> attribute into a
+<code>tenant_id</code> claim on every issued access token, and adds that
+client scope as a default scope on the <code>rest-api</code> client.
+This is exactly the "Keycloak protocol mapper"
+<code>docs/nats-tenant-queue-api/design.md</code> section 6 (Naming and
+identity) already assumes exists; this document is where it actually
+gets specified and created.</p>
+</div>
+<div class="source-block" data-source-block="13"
+data-source-sha256="8cf44c95234aeb3a042b6761504929d5e0b661ac45be59196775e4432e63a587">
+<p><strong>Per-tenant onboarding (section 4.2)</strong> happens once per
+company, run by an operator as
+<code>./onboard-tenant.sh acme-corp admin@acme-corp.example</code>. The
+script validates <code>acme-corp</code> against the shared naming rule
+(section 6), then, in order: creates a Keycloak user in the
+<code>natssaas</code> realm with a <code>tenant_id</code> attribute set
+to <code>acme-corp</code> and a temporary password the invited admin
+must reset on first login; creates a NATS Account named
+<code>acme-corp</code> and a User under it
+(<code>nsc add account acme-corp</code>,
+<code>nsc add user -a acme-corp api</code>); creates that tenant's
+JetStream KV bucket (<code>history=1</code>, per the
+tombstone-accumulation risk
+<code>docs/nats-tenant-queue-api/design.md</code> section 11 already
+calls out, and the recommended 1 GiB default quota from that document's
+section 12); pushes the Account and User JWTs to the NATS resolver
+(<code>nsc push -a acme-corp</code>), the same resolver
+<code>docs/nats-cluster/design.md</code> section 4 bootstrapped and
+section 9 left ready to receive exactly this push; and writes the
+tenant's NATS user JWT and seed into Azure Key Vault as two secrets
+keyed by <code>acme-corp</code> (section 6). Once the script finishes,
+the invited admin resets their password, logs in through Keycloak,
+receives a token with <code>tenant_id: acme-corp</code>, and their first
+API call succeeds: <code>Pool.Get</code>
+(<code>docs/nats-auth-middleware/design.md</code> section 4) resolves
+<code>acme-corp</code>'s NATS credentials from the now-populated Key
+Vault entry on its first, cache-miss lookup.</p>
+</div>
+<section id="components-and-responsibilities" class="source-block"
+data-source-block="14"
+data-source-sha256="ec9a76783795a31c5a8fa78eb007e1288ed67056f6e893afc753006cc7f2e898">
+<h3>Components and responsibilities</h3>
+</section>
+<div class="source-block" data-source-block="15"
+data-source-sha256="229805ee77d0c034f396814f91c0d89d67e29d2cf4971e20eadfbc5b88f01d8c">
+<ul>
+<li><strong>Keycloak realm/client/protocol-mapper setup (one-time,
+section 4.1).</strong> Owns making <code>tenant_id</code> a real,
+mappable user attribute and ensuring every access token the
+<code>rest-api</code> client issues carries it as a claim, once a user
+has that attribute set. Does not own creating any individual tenant's
+user, and does not own choosing the <code>tenant_id</code> value for any
+tenant.</li>
+<li><strong>Onboarding script (per-tenant, section 4.2).</strong> Owns
+creating one tenant's Keycloak user, NATS Account, JetStream KV bucket,
+resolver push, and Key Vault credential entry, in the fixed order above,
+and owns validating the <code>tenant_id</code> value before touching any
+system. Does not own the one-time Keycloak setup (a prerequisite it
+assumes already ran) and does not own the NATS Operator/<code>SYS</code>
+account bootstrap (a prerequisite
+<code>docs/nats-cluster/design.md</code> section 4 already owns). Does
+not own tenant offboarding (section 13).</li>
+<li><strong><code>tenant_id</code> naming rule (section 6).</strong>
+Owns the one constraint every other component in this system already
+implicitly depends on: that a single string is simultaneously a valid
+Keycloak user attribute value, a valid NATS Account name, and a valid
+Azure Key Vault secret name component. Does not own choosing which
+specific value a given tenant gets; that is a business decision the
+operator makes when running the script.</li>
+<li><strong>Azure Key Vault (existing,
+<code>docs/terraform-infra/design.md</code>).</strong> Owns storing the
+two secrets this script writes per tenant. Does not own generating them;
+the script writes values <code>nsc</code> already generated.</li>
+</ul>
+</div>
+<section id="decisions" class="source-block role-decisions"
+data-source-block="16"
+data-source-sha256="5a6a5f0f1903f8ea343148136e7bb0710d2555ca216504d9bf9d9b532157aa00">
+<h3>Decisions</h3>
+</section>
+<div class="source-block" data-source-block="17"
+data-source-sha256="7c9913f70002658928647607c486b118a4b99dc8d4e063e4e40eeba03b1bc70f">
+<p>We use a single shared Keycloak realm (<code>natssaas</code>) for
+every tenant, with <code>tenant_id</code> as a per-user attribute,
+rather than a separate realm per tenant.
+<code>docs/nats-tenant-queue-api/design.md</code> section 6 already
+commits to this shape ("each user is created with a
+<code>tenant_id</code> custom attribute at provisioning time"); a
+per-tenant realm would mean a per-tenant Keycloak client, a per-tenant
+JWKS endpoint, and the REST API verifying against whichever realm a
+request claims to be from, none of which the parent design assumes and
+all of which would need the request itself to assert a tenant before
+authentication, which <code>INV-1</code> in that document already rules
+out. The cost of the shared-realm approach is that every tenant's users
+share one realm's session and rate-limit configuration; Keycloak's own
+per-realm-vs-per-client isolation options are a real lever if that ever
+becomes a problem, and are not foreclosed by this decision.</p>
+</div>
+<div class="source-block" data-source-block="18"
+data-source-sha256="22b1ddc0707d8dd060368c996405189c06834495e62d27e82da337001accba39">
+<p>We do the one-time Keycloak setup (realm, client, protocol mapper) as
+a separate, once-ever procedure (section 4.1) rather than folding it
+into the per-tenant script with an "if not already configured" check.
+The one-time setup and the per-tenant script have different blast radii:
+getting the protocol mapper wrong affects every tenant's tokens at once,
+while getting one tenant's onboarding wrong affects only that tenant.
+Keeping them as two separate, separately-reviewable procedures means the
+high-blast-radius one gets run and checked once, carefully, rather than
+re-evaluated (and risking a silent drift) on every tenant
+onboarding.</p>
+</div>
+<div class="source-block" data-source-block="19"
+data-source-sha256="1cdc055d208102550cc8ca04c401ef8c2a9d726d3198039033c37bc5da7ea1ce">
+<p>We create the Keycloak user with a temporary, must-reset password
+rather than provisioning an initial password the operator communicates
+directly, or wiring up a self-registration flow. A temporary
+Keycloak-issued password that must be reset on first login means the
+operator never learns, and cannot leak, a password the tenant's user
+will actually use going forward; a self-registration flow would let a
+company create the <em>initial</em> admin user itself, but "how does a
+self-registration flow assign the correct <code>tenant_id</code>
+attribute without letting the registrant choose it" is exactly the trust
+problem <code>INV-1</code> (below) exists to close off, and is deferred
+to Open questions rather than solved here.</p>
+</div>
+<div class="source-block" data-source-block="20"
+data-source-sha256="4aa73d488f859d785f17a07aba273cfd36411350324ba6bb01e4cab655adf7fa">
+<p>We order the script's five steps (section 4.2) Keycloak user first,
+then NATS Account and bucket, then resolver push, then Key Vault write,
+specifically so that any step failing midway leaves the system in a
+state that already fails closed rather than one that grants partial
+access. A Keycloak user existing without a NATS Account is inert:
+<code>AuthMiddleware</code> still verifies the token fine, but
+<code>Pool.Get</code> finds no Key Vault entry and returns
+<code>503</code>, exactly the "tenant not yet provisioned" failure
+<code>docs/nats-tenant-queue-api/design.md</code> section 7 already
+documents. A NATS Account existing without a Key Vault entry is equally
+inert, for the same reason. The only step whose failure is not
+automatically inert is the Key Vault write itself (the last step); if it
+fails, the script reports exactly that and is safe to re-run
+(Requirements), since every step before it is idempotent against being
+re-run with the same <code>tenant_id</code>.</p>
+</div>
+<div class="source-block" data-source-block="21"
+data-source-sha256="586bcf7977b5005532add4fbb4e8ebc830b8fd21ad6acc17a0c7b9e4cefe774f">
+<p>We write the tenant's NATS user JWT and seed as two separate Key
+Vault secrets, not one combined <code>.creds</code> file secret,
+matching <code>docs/nats-auth-middleware/design.md</code> section 4's
+<code>Pool.Get</code> description ("fetch that tenant's NATS user JWT
+and seed") and its use of <code>nats.UserJWTAndSeed</code> rather than a
+filesystem-based credentials file. This also matches the two-secret
+shape <code>docs/keycloak-operator/design.md</code> section 4.1 already
+uses for Keycloak's own database credential
+(<code>keycloak-db-username</code>/<code>keycloak-db-password</code>),
+so this is not a new pattern in this project's Key Vault.</p>
+</div>
+<section id="5-invariants-and-requirements" class="source-block"
+data-source-block="22"
+data-source-sha256="a564a89ef16d655f45f32b2298c33c4d79e1b4129c3a882f233e5c6d85b55fc2">
+<h2>5. Invariants and requirements</h2>
+</section>
+<section id="invariants" class="source-block role-invariants"
+data-source-block="23"
+data-source-sha256="41701f368993e3f63ab599cb3ebcf32756d56c298bf06612195e918bf86cd6b4">
+<h3>Invariants</h3>
+</section>
+<div class="source-block" data-source-block="24"
+data-source-sha256="e05fb7d00ece1259089d40d322120df8f4117b967ff70d67ac83560b918c9883">
+<ul>
+<li><code>INV-1</code>: A <code>tenant_id</code> value is never chosen
+by, or accepted from, the company being onboarded. It is chosen by the
+operator running the onboarding script, validated against the naming
+rule (section 6) before any system is touched, and then used identically
+(byte-for-byte) as the Keycloak user attribute value, the NATS Account
+name, and the Key Vault secret name component for that tenant.</li>
+<li><code>INV-2</code>: The onboarding script never creates a Keycloak
+user, NATS Account, or Key Vault secret for a <code>tenant_id</code>
+that already exists in that respective system; re-running the script for
+an existing <code>tenant_id</code> is a no-op for whichever steps
+already succeeded (Requirements), never a duplicate or an
+overwrite.</li>
+<li><code>INV-3</code>: A NATS Account or JetStream KV bucket existing
+for a <code>tenant_id</code> with no corresponding Key Vault secret
+entry can never be used to serve a request; <code>Pool.Get</code>
+(<code>docs/nats-auth-middleware/design.md</code>) only ever resolves
+credentials through Key Vault, never by querying the NATS resolver
+directly.</li>
+<li><code>INV-4</code>: The one-time Keycloak setup (section 4.1)
+provisions exactly one <code>tenant_id</code> protocol mapper, attached
+to one client scope, applied as a default scope on the
+<code>rest-api</code> client. No per-tenant Keycloak configuration
+duplicates or overrides this mapper.</li>
+</ul>
+</div>
+<section id="requirements" class="source-block role-requirements"
+data-source-block="25"
+data-source-sha256="d58a3741c408d72bf8e99cb9c99f055d7cabeda3c3b4d006597446e8412a7e76">
+<h3>Requirements</h3>
+</section>
+<div class="source-block" data-source-block="26"
+data-source-sha256="31503517bd91c412aac732071c3be0a57f4b75e5a677705598c5d0d3bfde08da">
+<ul>
+<li>The onboarding script accepts a <code>tenant_id</code> and rejects
+it before any side effect if it fails the naming rule (section 6).</li>
+<li>Running the script twice in a row with the same
+<code>tenant_id</code> and the same arguments succeeds both times and
+leaves the same end state as running it once (<code>INV-2</code>).</li>
+<li>The script's Key Vault write step is the only step that is not
+naturally idempotent by construction (the earlier steps use each tool's
+own "already exists" checks); the script explicitly checks for an
+existing secret with the same name before writing, rather than relying
+on <code>az keyvault secret set</code> to silently version over it, so a
+partial re-run never masks a prior write with different content.</li>
+<li>The script prints a clear success or failure result for each of its
+five steps, so a failure midway is attributable to a specific step, not
+the run as a whole.</li>
+</ul>
+</div>
+<section id="6-interfaces-and-data" class="source-block"
+data-source-block="27"
+data-source-sha256="c031b53bb441f0ffee3273a73ce9f61efab706f92df0957046bc404cf8ffd544">
+<h2>6. Interfaces and data</h2>
+</section>
+<div class="source-block" data-source-block="28"
+data-source-sha256="0e47f753a417ecceb410af4c499b663cbbed4438de434f1efb4e8f7c62339a31">
+<p>This document's interface is the onboarding script's CLI and the
+naming rule every system-specific identifier derives from.</p>
+</div>
+<div class="source-block" data-source-block="29"
+data-source-sha256="50d14b5587c78c02e59c9b33c6af0c0ffb0d3d819cdfc43ae31b76dad56b1337">
+<pre class="console"><code>./onboard-tenant.sh &lt;tenant_id&gt; &lt;admin_email&gt;</code></pre>
+</div>
+<section id="naming-and-identity" class="source-block"
+data-source-block="30"
+data-source-sha256="8d3d7b7a1af98b0dfa8eb94237680e19b796bb68dc456be15450d239907cc0ab">
+<h3>Naming and identity</h3>
+</section>
+<div class="source-block" data-source-block="31"
+data-source-sha256="55b6453d81a868d8b66086bedc8dd21a8aee3545db993ab6f859453c7835c200">
+<ul>
+<li><strong><code>tenant_id</code></strong>: chosen by the operator
+(<code>INV-1</code>), and validated against
+<code>^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$</code> before the script does
+anything else. This regex is the intersection of three independent
+constraints: Azure Key Vault secret names allow only alphanumeric
+characters and dashes (up to 127 characters); NATS Account names (via
+<code>nsc</code>) allow any printable identifier but this project
+additionally restricts them to the same safe character set so a tenant's
+Account name is never a surprise to <code>nsc</code> tooling or shell
+scripting around it; and keeping it short and DNS-label-shaped leaves
+room to reuse the same value as a Kubernetes label or namespace segment
+later, without a second identifier ever needing to be invented. If a
+<code>tenant_id</code> fails this rule, the script exits before creating
+anything, and the operator picks a different value;
+<code>tenant_id</code> is never auto-generated, since it should be a
+recognizable name (matching the company), not an opaque identifier.</li>
+<li><strong>Keycloak user attribute</strong>: <code>tenant_id</code>,
+set to the exact <code>tenant_id</code> value at user-creation time
+(<code>kcadm.sh create users</code> with
+<code>-s attributes.tenant_id=&lt;tenant_id&gt;</code>). Never edited by
+the onboarding script after creation; changing a tenant's ID after users
+and data already exist is a tenant-migration event, explicitly out of
+scope in <code>docs/nats-tenant-queue-api/design.md</code> section 6
+("that is a tenant migration event out of scope for this design") and
+inherited as out of scope here too.</li>
+<li><strong>NATS Account name</strong>:
+<code>nsc add account &lt;tenant_id&gt;</code>, identical to the
+<code>tenant_id</code> value. <code>nsc</code> accounts are looked up by
+name during onboarding and by public key once pushed to the resolver;
+the script records both, but only the name (<code>tenant_id</code>) is
+what any other document or component ever needs to reference this
+Account by.</li>
+<li><strong>Key Vault secret names</strong>:
+<code>tenant-&lt;tenant_id&gt;-nats-jwt</code> and
+<code>tenant-&lt;tenant_id&gt;-nats-seed</code>, the two secrets
+<code>docs/nats-auth-middleware/design.md</code> section 4's
+<code>Pool.Get</code> fetches on a cache miss. The <code>tenant-</code>
+prefix distinguishes these from the flat, resource-specific secret names
+Key Vault already holds (<code>keycloak-db-username</code>,
+<code>postgres-admin-password</code>), so listing secrets by prefix
+cleanly separates tenant credentials from platform credentials.</li>
+<li><strong>JetStream KV bucket name</strong>:
+<code>&lt;tenant_id&gt;</code>, created inside the tenant's own Account
+(<code>nats kv add &lt;tenant_id&gt; --history=1 --max-bytes=1073741824</code>,
+using the tenant's own User credentials so the bucket is created inside
+that Account's namespace, not a shared one), matching
+<code>docs/nats-tenant-queue-api/design.md</code> section 11's
+<code>history=1</code> recommendation and section 12's 1 GiB default
+quota.</li>
+</ul>
+</div>
+<section id="7-failure-behavior-and-lifecycle"
+class="source-block role-failures" data-source-block="32"
+data-source-sha256="caf163a2a6ae29594c9aceec85019732d86f557465622ee179014fdfedcee686">
+<h2>7. Failure behavior and lifecycle</h2>
+</section>
+<div class="source-block" data-source-block="33"
+data-source-sha256="eda735009db94b2f559c5efeadb04d5c2a4f735f3dadabe1f7480e89bd82d732">
+<ul>
+<li><strong>Keycloak user creation fails</strong> (realm unreachable,
+<code>tenant_id</code> attribute already exists on a different user, and
+so on): the script exits before touching NATS or Key Vault. Nothing
+partial exists anywhere; re-running after the underlying issue is fixed
+is safe (<code>INV-2</code>).</li>
+<li><strong>NATS Account or User creation fails</strong>
+(<code>nsc</code> cannot reach the resolver, or the Operator's local
+signing key is unavailable on this workstation): the script exits with
+the Keycloak user already created but inert, since no Key Vault entry
+exists yet for that <code>tenant_id</code> (<code>INV-3</code>).
+Re-running the script skips the already-created Keycloak user
+(<code>INV-2</code>) and retries from the NATS step.</li>
+<li><strong>JetStream KV bucket creation fails</strong> (storage quota
+misconfiguration, resolver push not yet propagated): same inert state as
+above; the Account exists but has no bucket and no Key Vault entry, so
+no request can be served for this tenant yet.</li>
+<li><strong>Resolver push (<code>nsc push</code>) fails or times
+out</strong>: the Account and User JWTs exist locally (in the operator's
+<code>nsc</code> working directory) but the running NATS cluster has not
+yet accepted them, so a User credential minted in this step cannot yet
+open a connection even if it somehow reached Key Vault. The script does
+not proceed to the Key Vault write until the push is confirmed, so this
+failure mode also leaves an inert, safely-retriable state.</li>
+<li><strong>Key Vault write fails</strong> (network, throttling, an
+insufficiently-privileged operator identity): every other step already
+succeeded; the tenant's NATS Account, bucket, and credentials are fully
+provisioned and pushed, but unreachable until this last write succeeds.
+The script reports exactly this state on failure ("NATS provisioning
+complete, Key Vault write failed, re-run to retry") so an operator does
+not need to inspect four different systems to know what is left to do;
+re-running the script performs only this last step, since every earlier
+step's idempotency check finds its work already done.</li>
+<li><strong>Script run twice for the same <code>tenant_id</code> with no
+failure in between</strong>: every step's own "already exists" check
+makes the second run a no-op (<code>INV-2</code>); the script exits
+<code>0</code> and reports "already provisioned" rather than
+erroring.</li>
+<li><strong>A tenant is provisioned but never logs in</strong>: no
+different from any other unused Keycloak account and unused NATS
+Account; nothing in this design expires or reclaims an
+onboarded-but-unused tenant (see Open questions).</li>
+</ul>
+</div>
+<section id="8-security-privacy-and-operations" class="source-block"
+data-source-block="34"
+data-source-sha256="d373a802adb9444e8d300217a0222856fa057b13255436c0f4709f894158a5f1">
+<h2>8. Security, privacy, and operations</h2>
+</section>
+<div class="source-block" data-source-block="35"
+data-source-sha256="e5a78be12f489a33b292ad782cd04a630258971a9238450647465b5f18682349">
+<ul>
+<li><strong>Trust boundary</strong>: this script is the only place in
+the system that mints the binding between a <code>tenant_id</code>, a
+Keycloak identity, and a NATS credential. It runs on an operator's
+workstation, the same trust boundary
+<code>docs/nats-cluster/design.md</code> section 4 already requires for
+any <code>nsc</code> command that can create a new Account, since the
+Operator's signing key never leaves that machine.</li>
+<li><strong>Authorization to run this script</strong>: requires three
+separate credentials, none of which the REST API, Keycloak, or NATS pods
+themselves ever hold: Keycloak realm-admin credentials (to create a user
+via <code>kcadm.sh</code> or the Admin REST API), the <code>nsc</code>
+Operator identity (to sign a new Account), and an Azure AD identity with
+write access to Key Vault. We recommend the operator's own identity be
+granted the <code>Key Vault Secrets Officer</code> role (write), scoped
+to this Key Vault only, rather than reusing the AKS or Keycloak workload
+identities from <code>docs/terraform-infra/design.md</code> and
+<code>docs/keycloak-operator/design.md</code>, both of which only hold
+<code>Key Vault Secrets User</code> (read) and by design should never
+gain write access.</li>
+<li><strong>Sensitive data</strong>: the NATS user seed (the private
+half of the User's key pair) exists briefly in the script's process
+memory and in Key Vault; it is never written to disk outside the
+operator's <code>nsc</code> working directory (already covered by
+<code>docs/nats-cluster/design.md</code> section 4's
+operator-identity-backup open question) and never logged.</li>
+<li><strong>Tenant admin invitation</strong>: the temporary password and
+invitation link (or email) are the one piece of this flow that reaches a
+person outside the operating team; whatever channel delivers them should
+not be this script's own stdout in a shared terminal (see Open questions
+for the specific delivery mechanism).</li>
+<li><strong>Operational dependency</strong>: this script depends on
+Keycloak, the NATS resolver, and Key Vault all being reachable and
+healthy; if any is down, onboarding a new tenant is blocked, but this
+has no effect on already-onboarded tenants' traffic, since none of
+<code>docs/nats-tenant-queue-api/design.md</code>'s runtime request path
+calls anything this script calls.</li>
+</ul>
+</div>
+<section id="9-acceptance-criteria"
+class="source-block role-acceptance-criteria" data-source-block="36"
+data-source-sha256="6d76b4820d002f28fcf60404f54b3b5893667240dd3e86def26e97bd7b6ad68d">
+<h2>9. Acceptance criteria</h2>
+</section>
+<div class="source-block" data-source-block="37"
+data-source-sha256="cfd5f22e898eb0466473bfb4c27532644c2507cc8bf3a9d49a39ba0b75d06312">
+<ul>
+<li><code>AC-1</code>: Running the onboarding script for a new
+<code>tenant_id</code> results in a Keycloak user with that
+<code>tenant_id</code> attribute, a NATS Account and JetStream KV bucket
+of the same name pushed to the resolver, and two Key Vault secrets
+(<code>tenant-&lt;tenant_id&gt;-nats-jwt</code>,
+<code>tenant-&lt;tenant_id&gt;-nats-seed</code>) holding that Account's
+User credentials.</li>
+<li><code>AC-2</code>: After that user resets their temporary password
+and logs in through Keycloak, the resulting access token's
+<code>tenant_id</code> claim equals the exact <code>tenant_id</code>
+value passed to the script (<code>INV-1</code>).</li>
+<li><code>AC-3</code>: A <code>POST /v1/items</code> request bearing
+that token succeeds, and the item is written into that tenant's own
+JetStream KV bucket, not any other tenant's.</li>
+<li><code>AC-4</code>: Running the script a second time with the same
+<code>tenant_id</code> exits successfully with no duplicate Keycloak
+user, no duplicate NATS Account, and no changed Key Vault secret values
+(<code>INV-2</code>).</li>
+<li><code>AC-5</code>: A <code>tenant_id</code> that fails the naming
+rule (section 6) is rejected before the script performs any Keycloak,
+NATS, or Key Vault operation.</li>
+<li><code>AC-6</code>: If the script is interrupted after the NATS steps
+but before the Key Vault write, a request from that tenant's
+(already-logged-in) user fails with <code>503</code> (matching
+<code>docs/nats-tenant-queue-api/design.md</code> section 7's
+<code>tenant_not_provisioned</code> behavior), and re-running the script
+to completion makes the same request succeed without any other
+change.</li>
+</ul>
+</div>
+<section id="10-test-approach" class="source-block"
+data-source-block="38"
+data-source-sha256="c12e936da26b05f551bb9244d0b3c7384b2d3d340c374095d6baea0e971a43de">
+<h2>10. Test approach</h2>
+</section>
+<div class="source-block" data-source-block="39"
+data-source-sha256="7161ef7f056e5e05a1975d5fe439cf6a4df2b12e092c5d617f8b3d7c2a05f2bd">
+<ul>
+<li>A scripted end-to-end test runs the onboarding script against a
+local Keycloak realm, an embedded/local NATS server, and a test Key
+Vault (or a mocked Key Vault client), then drives a real login and API
+call to prove <code>AC-1</code> through <code>AC-3</code>.</li>
+<li>The same test harness runs the script twice in a row and asserts no
+duplicate resources and no changed secret values, proving
+<code>AC-4</code> and <code>INV-2</code>.</li>
+<li>A table-driven unit test feeds a list of valid and invalid
+<code>tenant_id</code> values through the naming-rule check alone (no
+side effects), proving <code>AC-5</code>.</li>
+<li>A fault-injection test runs the script with the Key Vault write step
+forced to fail, asserts the tenant's request fails with
+<code>503</code>, then removes the fault and re-runs the script,
+asserting the same request now succeeds, proving <code>AC-6</code> and
+the failure-behavior claims in section 7.</li>
+<li>A manual review of the one-time Keycloak setup (section 4.1)
+confirms the <code>tenant_id</code> protocol mapper is attached to
+exactly one client scope, applied as a default scope on the
+<code>rest-api</code> client, and that a decoded access token for a test
+user carries the claim (<code>INV-4</code>).</li>
+</ul>
+</div>
+<section id="11-risks-and-tradeoffs" class="source-block role-risks"
+data-source-block="40"
+data-source-sha256="1285aaa4ffd2e9469718aff3ada6282e941a59e9a8b79073a130a46b00ce69bd">
+<h2>11. Risks and tradeoffs</h2>
+</section>
+<div class="source-block" data-source-block="41"
+data-source-sha256="abfaf9bff960932087cc0739b172d8bf3472187f00a083633d22df0557edd6b6">
+<ul>
+<li>The script is a manual, operator-run procedure, not tenant
+self-service; every new tenant is a human running a command on a
+workstation with three separate sets of credentials. This matches the
+recommended default <code>docs/nats-tenant-queue-api/design.md</code>
+section 12 already calls out ("stubbed here with a manual provisioning
+script for the first tenants") but is a real scaling limit once
+onboarding volume grows past what one or two operators can handle by
+hand.</li>
+<li>The onboarding script's five steps are not a single atomic
+transaction across three independent systems; a failure between steps
+leaves a real, if inert and safely-retriable, partial state (section 7).
+A more robust design would use a durable job queue or a reconciling
+controller instead of a linear script, at real implementation cost this
+document does not take on now (see Open questions).</li>
+<li>Running this script requires an operator's workstation to hold three
+high-value credentials at once (Keycloak realm-admin, the NATS Operator
+signing key, and a Key Vault write-capable Azure AD identity);
+compromising that workstation compromises the ability to onboard a rogue
+tenant or read every existing tenant's NATS credentials from Key Vault.
+This is the same concentration-of-trust tradeoff
+<code>docs/nats-cluster/design.md</code> section 4 already accepts for
+the NATS Operator identity alone; this document extends it to two more
+credentials on the same machine.</li>
+</ul>
+</div>
+<section id="12-open-questions" class="source-block role-open-questions"
+data-source-block="42"
+data-source-sha256="9a814093a20806bc5a44c69acb6ee4c27c516199b03238efaf23de1e8b4e534d">
+<h2>12. Open questions</h2>
+</section>
+<div class="source-block" data-source-block="43"
+data-source-sha256="4e06f0bfaa5a5afcf3f1b26118cb4d9593d43a82645f60dbf36cd1d5e72564f1">
+<ul>
+<li>Should onboarding move from a manual script to a self-service flow
+(a signup form that creates the Keycloak user, or a reconciling
+controller that watches for new tenants) once volume justifies it?
+Recommended default: keep the manual script until real onboarding volume
+or operator bandwidth data says otherwise, consistent with
+<code>docs/nats-tenant-queue-api/design.md</code> section 12's own
+recommended default. Does not block starting work.</li>
+<li>How does the invited tenant admin actually receive their temporary
+Keycloak password: Keycloak's own "send invite email" flow (requires
+Keycloak SMTP configuration, not yet specified anywhere), or a manual,
+out-of-band message the operator sends? Recommended default: configure
+Keycloak's built-in email actions (<code>UPDATE_PASSWORD</code> required
+action plus SMTP settings) so the operator never handles the password
+directly, deferred as a follow-up to this document's realm setup
+(section 4.1). Blocks a production-safe rollout, not initial script
+development.</li>
+<li>Should this script become a durable, resumable job (tracking
+per-tenant onboarding state in a small database or a file) rather than a
+linear shell script relying on each step's own idempotency check?
+Recommended default: start with the linear script, since the per-step
+idempotency checks in section 4.2 already make re-runs safe, and revisit
+only if onboarding volume or failure frequency makes manual re-running
+impractical. Does not block starting work.</li>
+<li>Who is authorized to run this script, and is that access itself
+audited (who onboarded which tenant, when)? Recommended default:
+restrict the three required credentials (section 8) to a small, named
+set of operators, and log each script run's <code>tenant_id</code> and
+operator identity to a location outside the script's own stdout. Blocks
+a production-safe rollout, not initial script development.</li>
+<li>Should a <code>tenant_id</code> ever be reusable after a tenant is
+offboarded (see Out of scope), or permanently retired once used?
+Recommended default: permanently retired, so a Key Vault secret, NATS
+Account, or Keycloak attribute value can never be misread as belonging
+to a different, later company. Does not block starting work.</li>
+</ul>
+</div>
+<section id="13-out-of-scope" class="source-block"
+data-source-block="44"
+data-source-sha256="c22168596a4b1b1829bac627abf17561e31167099a31c6893f97bddab585a496">
+<h2>13. Out of scope</h2>
+</section>
+<div class="source-block" data-source-block="45"
+data-source-sha256="60df3a9133fe2ba0efb5f7be883f2c7c19cc4099d700c4e5a9741dfcef7f227c">
+<ul>
+<li>Tenant self-service signup (a UI or public API a company would use
+to onboard itself without an operator running this script).</li>
+<li>Tenant offboarding and deletion (removing a tenant's Keycloak users,
+NATS Account, JetStream bucket, and Key Vault secrets).
+<code>docs/nats-cluster/design.md</code> section 9 already notes the
+resolver's <code>allow_delete: false</code> default makes Account
+removal a deliberate, separate operation, not a reversal of this
+document's push step.</li>
+<li>Tenant ID migration (changing a <code>tenant_id</code> after data
+already exists), already out of scope in
+<code>docs/nats-tenant-queue-api/design.md</code> section 6.</li>
+<li>Billing, metering, or per-tenant usage reporting, already out of
+scope in <code>docs/nats-tenant-queue-api/design.md</code> section
+13.</li>
+<li>Keycloak email/SMTP configuration for the tenant-admin invitation
+flow (see Open questions).</li>
+<li>A durable job queue or reconciling controller replacing the linear
+onboarding script (see Open questions).</li>
+<li>The NATS Operator/<code>SYS</code> account bootstrap and the
+Keycloak realm/client/protocol-mapper's underlying deployment; this
+document assumes <code>docs/nats-cluster/design.md</code> section 4 and
+<code>docs/keycloak-operator/design.md</code> have already run.</li>
+</ul>
+</div>
+
+    </main>
+  </div>
+  <footer class="document-footer">Generated from docs/tenant-provisioning/design.md by blueprint/html-doc@1. Edit the Markdown source, then regenerate.</footer>
+</body>
+</html>
