@@ -46,3 +46,29 @@ terraform.rc
 # Optional: ignore plan files saved before destroying Terraform configuration
 # Uncomment the line below if you want to ignore planout files.
 # planout
+
+# Go build artifacts (nats-auth-middleware/)
+/nats-auth-middleware/nats-auth-middleware
+/nats-auth-middleware/cmd/nats-auth-middleware/nats-auth-middleware
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# go test -coverprofile output
+coverage.txt
+coverage.html
+
+# Helm chart dependencies (`helm dependency update` output) — none of our
+# local charts (helm/charts/*) declare dependencies today, but ignore the
+# convention regardless so a future one doesn't commit vendored tarballs
+helm/charts/*/charts/*.tgz
+helm/charts/*/Chart.lock
+
+# Helmfile
+.helmfile/
+helm/.helmfile/

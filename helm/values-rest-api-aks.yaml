@@ -1,0 +1,24 @@
+# values-rest-api-aks.yaml — docs/rest-api-workload/design.md §6
+serviceAccount:
+  name: rest-api
+  azureClientId: "REPLACE_ME_REST_API_IDENTITY_CLIENT_ID"   # rest_api_identity_client_id Terraform output
+
+image:
+  repository: "REPLACE_ME_ACR_LOGIN_SERVER"   # acr_login_server Terraform output
+  tag: "REPLACE_ME_GIT_SHA"                     # immutable short git commit SHA pushed by docs/nats-auth-middleware/design.md §4 — never "latest"
+
+replicaCount: 2
+
+config:
+  keycloakIssuerURL: "https://auth.natssaas.example.com/auth/realms/natssaas"
+  keycloakJWKSURL: "http://keycloak-service.keycloak.svc.cluster.local:8080/auth/realms/natssaas/protocol/openid-connect/certs"
+  natsURL: "nats://nats.nats.svc.cluster.local:4222"
+  poolTTL: "15m"
+  poolMaxConns: "500"
+  jwksCacheTTL: "1h"
+
+hug:
+  gatewayName: hug-gateway
+  gatewayNamespace: haproxy-unified-gateway
+  hostname: api.natssaas.example.com
+  pathPrefix: /v1

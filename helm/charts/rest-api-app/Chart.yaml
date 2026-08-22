@@ -1,0 +1,5 @@
+apiVersion: v2
+name: rest-api-app
+description: ServiceAccount, ConfigMap, Deployment/Service, and HUG HTTPRoute for the REST API workload
+type: application
+version: 0.1.0

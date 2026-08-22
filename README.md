@@ -378,3 +378,169 @@ inside a pod carrying the `id-rest-api` Workload Identity annotations
 Deploying this image into the cluster (a Kubernetes Deployment referencing
 the pushed tag) is `docs/rest-api-workload/design.md`, a separate,
 out-of-scope step from this one.
+
+## REST API workload (Kubernetes)
+
+`helm/charts/rest-api-app` + `helm/values-rest-api-aks.yaml` deploy the
+pushed `nats-auth-middleware` image as a running, HUG-reachable workload —
+`nats-saas-api` namespace, ServiceAccount, ConfigMap, two-replica
+Deployment, Service, `api-route` `HTTPRoute`, `rest-api-allow-hug`
+`NetworkPolicy`, `PodDisruptionBudget` — per
+`docs/rest-api-workload/design.md`. This is phase 7: it needs phase 2 (the
+`id-rest-api` identity, already part of the Terraform project above), phase
+3 (NATS reachable), phase 4 (Keycloak reachable, for JWKS), phase 5 (the
+`hug-gateway` `Gateway` to attach to), and phase 6 (a pushed image tag).
+
+### Prerequisites
+
+- `kubectl` context pointed at the AKS cluster
+- Helm `3.7+`, Helmfile `0.150+` with the `helm-diff` plugin
+- Phases 2–6 above already applied
+
+### Fill in the values file
+
+Replace the `REPLACE_ME_*` placeholders in `helm/values-rest-api-aks.yaml`:
+
+| Placeholder | Value |
+|---|---|
+| `REPLACE_ME_REST_API_IDENTITY_CLIENT_ID` | `rest_api_identity_client_id` Terraform output |
+| `REPLACE_ME_ACR_LOGIN_SERVER` | `acr_login_server` Terraform output |
+| `REPLACE_ME_GIT_SHA` | the short git commit SHA tag pushed in the REST API image step above |
+
+### Install the chart
+
+```bash
+cd helm
+helmfile diff
+helmfile apply
+
+kubectl get pods -n nats-saas-api -l app=rest-api
+kubectl get svc rest-api -n nats-saas-api
+kubectl get httproute api-route -n nats-saas-api -o yaml   # ResolvedRefs: True
+```
+
+A healthy deployment shows two `Ready` `rest-api` pods and `api-route`
+reporting `ResolvedRefs: True`. Until a tenant is onboarded (next section),
+every request still fails with `503 tenant_not_provisioned` — `Pool.Get`
+finds no Key Vault entry for any `tenant_id` yet, by design.
+
+### Tear down
+
+```bash
+cd helm
+helmfile destroy   # removes ServiceAccount, ConfigMap, Deployment, Service,
+                     # api-route, NetworkPolicy, PodDisruptionBudget
+```
+
+Does not remove the `id-rest-api` Terraform identity or any Azure resource.
+
+## Tenant provisioning
+
+Two parts, per `docs/tenant-provisioning/design.md`: a one-time Keycloak
+realm/client/protocol-mapper setup, run once ever before the first tenant,
+and `onboard-tenant.sh`, run once per tenant thereafter. This is phase 8:
+it needs phase 4 (Keycloak reachable) and phase 3 (NATS resolver reachable)
+already applied.
+
+### Prerequisites
+
+- `kcadm.sh` (Keycloak's admin CLI), authenticated against the deployed
+  Keycloak instance
+- `nsc` and the NATS CLI (`nats`), on the same operator workstation that
+  holds the Operator's signing keys from the NATS cluster bootstrap above
+- Azure CLI (`az`), with an identity granted `Key Vault Secrets Officer`
+  (write) on the Key Vault — see `docs/tenant-provisioning/design.md` §8;
+  do not reuse the `id-rest-api`/`id-keycloak` read-only identities for this
+
+### One-time: Keycloak realm, client, and protocol mapper
+
+Run once, ever, before onboarding the first tenant (`docs/tenant-provisioning/design.md`
+§4.1). Getting this step wrong affects every tenant's tokens at once, so
+review it carefully before moving on:
+
+```bash
+kcadm.sh config credentials --server <keycloak_url> --realm master \
+  --user <admin_user> --password <admin_password>
+
+kcadm.sh create realms -s realm=natssaas -s enabled=true
+
+REST_API_CLIENT_ID=$(kcadm.sh create clients -r natssaas \
+  -s clientId=rest-api -s publicClient=false -s enabled=true -i)
+
+TENANT_SCOPE_ID=$(kcadm.sh create client-scopes -r natssaas \
+  -s name=tenant -s protocol=openid-connect -i)
+
+kcadm.sh create "client-scopes/${TENANT_SCOPE_ID}/protocol-mappers/models" -r natssaas \
+  -s name=tenant_id \
+  -s protocol=openid-connect \
+  -s protocolMapper=oidc-usermodel-attribute-mapper \
+  -s 'config."user.attribute"=tenant_id' \
+  -s 'config."claim.name"=tenant_id' \
+  -s 'config."jsonType.label"=String' \
+  -s 'config."id.token.claim"=true' \
+  -s 'config."access.token.claim"=true'
+
+kcadm.sh update "clients/${REST_API_CLIENT_ID}/default-client-scopes/${TENANT_SCOPE_ID}" -r natssaas
+```
+
+Verify: a decoded access token for any user with a `tenant_id` attribute
+carries a `tenant_id` claim.
+
+### Per-tenant: run the onboarding script
+
+```bash
+export KEYCLOAK_URL=<keycloak_url>              # e.g. https://auth.natssaas.example.com/auth
+export KEYCLOAK_ADMIN_USER=<admin_user>
+export KEYCLOAK_ADMIN_PASSWORD=<admin_password>
+export NATS_URL=<nats_url>                        # reachable from this workstation
+export KEY_VAULT_NAME=<key_vault_name>            # Terraform output
+
+./onboard-tenant.sh acme-corp admin@acme-corp.example
+```
+
+Prints a `[n/5]` status line per step. Re-running with the same `tenant_id`
+is a safe no-op for whichever steps already succeeded — this is how a
+partial failure resumes; see the script's own header comment for the full
+per-step failure/idempotency behavior.
+
+## End-to-end verification
+
+With phases 1–8 above all applied, prove the system as a whole, not just
+each component in isolation (`docs/implementation-plan.md` phase 9).
+
+```bash
+# Onboard two tenants
+./onboard-tenant.sh tenant-a admin@tenant-a.example
+./onboard-tenant.sh tenant-b admin@tenant-b.example
+
+# Each tenant's user resets their temporary password, logs in, and gets a
+# token. Then, with TOKEN_A / TOKEN_B set to each tenant's access token:
+
+curl -s -X POST https://api.natssaas.example.com/v1/items \
+  -H "Authorization: Bearer ${TOKEN_A}" -H 'Content-Type: application/json' \
+  -d '{"foo":"bar"}'
+# -> 201, item lands in tenant-a's own bucket
+
+curl -s https://api.natssaas.example.com/v1/items/<item_id_from_tenant_a> \
+  -H "Authorization: Bearer ${TOKEN_B}"
+# -> 404, never 403 — tenant-b cannot see tenant-a's item
+
+# A valid token missing the tenant_id claim (e.g. a user with no attribute set)
+curl -s -o /dev/null -w '%{http_code}\n' https://api.natssaas.example.com/v1/items \
+  -H "Authorization: Bearer ${TOKEN_NO_TENANT}"
+# -> 403, before any NATS or Key Vault call
+
+# Resilience: kill one pod of each component in turn, confirm the system
+# keeps serving traffic through the remaining replica each time
+kubectl delete pod -n nats-saas-api -l app=rest-api --field-selector status.phase=Running -o name | head -n1 | xargs kubectl delete
+kubectl delete pod -n nats -l app.kubernetes.io/instance=nats -o name | head -n1 | xargs kubectl delete
+kubectl delete pod -n keycloak -l app=keycloak -o name | head -n1 | xargs kubectl delete
+
+# Drift check
+cd terraform && terraform plan -var-file=variables.tfvars   # no changes
+cd ../helm && helmfile diff                                    # no changes
+```
+
+Passing all of the above is `docs/implementation-plan.md` phase 9's
+acceptance bar — the system works as `docs/nats-tenant-queue-api/design.md`
+describes it end to end, not just component-by-component.

@@ -56,3 +56,20 @@ releases:
     needs:
       - haproxy-unified-gateway/hug   # wait for hug's gwapijob hook to install the
                                         # Gateway API CRDs before creating instances of them
+
+  # Phase 7 — REST API workload: docs/rest-api-workload/design.md §6.
+  # ServiceAccount, ConfigMap, Deployment/Service, api-route HTTPRoute
+  # (lives here, not in hug-app — same rule keycloak-route follows) and
+  # rest-api-allow-hug NetworkPolicy. Needs phase 2's Terraform (id-rest-api
+  # identity) and phase 6's pushed image tag set in values-rest-api-aks.yaml
+  # before this applies cleanly.
+  - name: rest-api-app
+    namespace: nats-saas-api
+    createNamespace: true
+    chart: ./charts/rest-api-app
+    values:
+      - values-rest-api-aks.yaml
+    needs:
+      - haproxy-unified-gateway/hug   # wait for hug's Gateway API CRDs, same reason
+                                        # docs/haproxy-unified-gateway/design.md §7
+                                        # gives for hug-app's own needs
