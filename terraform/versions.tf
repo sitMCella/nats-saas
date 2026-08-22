@@ -3,7 +3,7 @@
 # per explicit project decision, not the design doc's own (looser) defaults.
 
 terraform {
-  required_version = "= 1.5.7"
+  required_version = "= 1.15.8"
 
   required_providers {
     azurerm = {

@@ -29,3 +29,11 @@ output "acr_login_server" {
 output "postgres_fqdn" {
   value = module.postgresql.fqdn
 }
+
+output "keycloak_identity_client_id" {
+  value = azurerm_user_assigned_identity.keycloak.client_id
+}
+
+output "rest_api_identity_client_id" {
+  value = azurerm_user_assigned_identity.rest_api.client_id
+}
