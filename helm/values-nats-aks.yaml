@@ -1,0 +1,127 @@
+config:
+  cluster:
+    enabled: true
+    replicas: 3          # must be 2+ when jetstream is enabled; matches
+                          # docs/nats-tenant-queue-api/design.md's open-questions
+                          # recommended default of 3 JetStream stream replicas —
+                          # a stream cannot have more replicas than server nodes
+    routeURLs:
+      user: "route-user"           # POC: shared route auth, not TLS (status banner)
+      password: "REPLACE_ME_ROUTE_PASSWORD"   # generate once, store like any other
+                                                # credential (docs/nats-cluster/design.md §6)
+
+  jetstream:
+    enabled: true
+    fileStore:
+      enabled: true
+      pvc:
+        enabled: true
+        size: 50Gi                  # starting default across all tenants sharing
+                                     # this store; revisit per docs/nats-tenant-queue-api/
+                                     # design.md section 12's per-tenant quota question
+        storageClassName: managed-csi-premium   # AKS built-in Azure Disk Premium SSD
+
+  resolver:
+    enabled: true                   # built-in full resolver, not config.merge.accounts —
+                                     # see docs/nats-cluster/design.md §4 for why
+    dir: /data/resolver
+    pvc:
+      enabled: true
+      size: 1Gi
+      storageClassName: managed-csi   # small, low-IOPS JWT cache; Standard SSD is enough
+
+  monitor:
+    enabled: true                   # cluster-internal only; no Service port exposed
+                                     # (service.ports.monitor.enabled stays false, default)
+
+  # operator, system_account, resolver (extends config.resolver.dir above with
+  # type/allow_delete/interval/limit), and resolver_preload — pasted verbatim
+  # from `nsc generate config --nats-resolver --sys-account SYS -o resolver.conf`
+  # (docs/nats-cluster/design.md §4), minus its `listen` line and its
+  # `resolver.dir` line (both already set above). Run the bootstrap in §4 on the
+  # operator's own workstation, never in-cluster, then replace the two
+  # placeholders below before the first `helmfile apply`.
+  merge:
+    operator: "REPLACE_ME_OPERATOR_JWT"
+    system_account: "REPLACE_ME_SYS_ACCOUNT_PUBLIC_KEY"
+    resolver:
+      type: full
+      allow_delete: false
+      interval: "2m"
+      limit: 1000
+    resolver_preload:
+      "REPLACE_ME_SYS_ACCOUNT_PUBLIC_KEY": "REPLACE_ME_SYS_ACCOUNT_JWT"
+
+container:
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      memory: 2Gi          # no CPU limit: JetStream fsync/compaction bursts
+                            # should not be throttled mid-write
+
+service:
+  ports:
+    leafnodes:
+      enabled: false        # unused by docs/nats-tenant-queue-api/design.md
+    websocket:
+      enabled: false        # unused — clients only ever reach the REST API,
+    mqtt:                    # never NATS itself
+      enabled: false
+
+podDisruptionBudget:
+  enabled: true              # chart default: maxUnavailable: 1 (source:
+                              # files/pod-disruption-budget.yaml) — tolerates
+                              # exactly one voluntary disruption at a time
+                              # across the 3-node cluster
+
+podTemplate:
+  topologySpreadConstraints:
+    kubernetes.io/hostname:
+      maxSkew: 1
+      whenUnsatisfiable: DoNotSchedule   # 3 replicas across 3 distinct nodes;
+                                          # AKS's managed-csi* storage classes
+                                          # default to WaitForFirstConsumer, so
+                                          # each pod's PVCs bind in whichever
+                                          # zone/node it actually lands on
+
+natsBox:
+  enabled: true            # admin/debug pod; not part of any request path
+
+extraResources:
+  - apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      name:
+        $tplYaml: >
+          {{ include "nats.fullname" $ | quote }}
+      namespace:
+        $tplYaml: >
+          {{ include "nats.namespace" $ | quote }}
+      labels:
+        $tplYaml: |
+          {{ include "nats.labels" $ }}
+    spec:
+      podSelector:
+        $tplYaml: |
+          {{ include "nats.selectorLabels" $ | toYaml }}
+      policyTypes:
+        - Ingress
+      ingress:
+        - from:
+            - podSelector:
+                $tplYaml: |
+                  {{ include "nats.selectorLabels" $ | toYaml }}
+          ports:
+            - port: 6222   # cluster routes — NATS pods to each other only
+        - from:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: nats-saas-api   # REST API's namespace,
+                                                                 # docs/nats-tenant-queue-api/design.md
+              podSelector:
+                matchLabels:
+                  app: rest-api
+          ports:
+            - port: 4222   # client connections — REST API pods only
