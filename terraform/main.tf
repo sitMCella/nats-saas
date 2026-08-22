@@ -1,3 +1,5 @@
+# Phase 1 - terraform infra: docs/terraform-infra.design.md
+
 module "rg_network" {
   source   = "./modules/resource_group"
   name     = var.network_resource_group_name
@@ -108,4 +110,64 @@ resource "azurerm_key_vault_secret" "postgres_admin_password" {
   name         = "postgres-admin-password"
   value        = random_password.postgres_admin.result
   key_vault_id = module.key_vault.id
+}
+
+# Phase 2 — workload identities: docs/keycloak-operator/design.md §4.1,
+# docs/rest-api-workload/design.md §6.
+
+resource "azurerm_user_assigned_identity" "keycloak" {
+  name                = "id-keycloak"
+  resource_group_name = module.rg_platform.name
+  location            = var.location
+}
+
+resource "azurerm_federated_identity_credential" "keycloak" {
+  name                      = "keycloak-workload-identity"
+  user_assigned_identity_id = azurerm_user_assigned_identity.keycloak.id
+  issuer                    = module.aks.oidc_issuer_url
+  subject                   = "system:serviceaccount:keycloak:keycloak"
+  audience                  = ["api://AzureADTokenExchange"]
+}
+
+resource "azurerm_role_assignment" "keycloak_key_vault_secrets_user" {
+  scope                = module.key_vault.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_user_assigned_identity.keycloak.principal_id
+}
+
+resource "random_password" "keycloak_db" {
+  length  = 32
+  special = true
+}
+
+resource "azurerm_key_vault_secret" "keycloak_db_username" {
+  name         = "keycloak-db-username"
+  value        = "keycloak"
+  key_vault_id = module.key_vault.id
+}
+
+resource "azurerm_key_vault_secret" "keycloak_db_password" {
+  name         = "keycloak-db-password"
+  value        = random_password.keycloak_db.result
+  key_vault_id = module.key_vault.id
+}
+
+resource "azurerm_user_assigned_identity" "rest_api" {
+  name                = "id-rest-api"
+  resource_group_name = module.rg_platform.name
+  location            = var.location
+}
+
+resource "azurerm_federated_identity_credential" "rest_api" {
+  name                      = "rest-api-workload-identity"
+  user_assigned_identity_id = azurerm_user_assigned_identity.rest_api.id
+  issuer                    = module.aks.oidc_issuer_url
+  subject                   = "system:serviceaccount:nats-saas-api:rest-api"
+  audience                  = ["api://AzureADTokenExchange"]
+}
+
+resource "azurerm_role_assignment" "rest_api_key_vault_secrets_user" {
+  scope                = module.key_vault.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_user_assigned_identity.rest_api.principal_id
 }
