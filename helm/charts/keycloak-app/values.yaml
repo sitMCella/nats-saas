@@ -1,0 +1,25 @@
+# chart defaults; environment-specific values (secrets, real hostnames) are
+# supplied by values-keycloak-aks.yaml.gotmpl, never committed here
+namespace: keycloak
+
+serviceAccount:
+  name: keycloak
+  azureClientId: ""        # keycloak_identity_client_id, Terraform output, docs/keycloak-operator/design.md §4.1
+
+keyVault:
+  name: ""                  # key_vault_name, docs/terraform-infra/design.md
+  tenantId: ""               # azure_tenant_id
+
+postgres:
+  host: ""                   # postgres_fqdn, docs/terraform-infra/design.md output
+  port: 5432
+  database: keycloak
+  caBundle: ""                # PEM content, docs/keycloak-operator/design.md §6.3
+
+keycloak:
+  instances: 2
+  hostname: auth.natssaas.example.com
+
+hug:
+  gatewayName: hug-gateway
+  gatewayNamespace: haproxy-unified-gateway   # docs/haproxy-unified-gateway/design.md

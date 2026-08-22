@@ -3,6 +3,10 @@ repositories:
     url: https://nats-io.github.io/k8s/helm/charts/
 
 releases:
+  # Phase 3 — NATS cluster: docs/nats-cluster/design.md §5. Operator/SYS-account/
+  # resolver bootstrap runs via `nsc` on the operator's own workstation first
+  # (§4); values-nats-aks.yaml's REPLACE_ME_* placeholders must hold real JWTs
+  # before this release applies.
   - name: nats
     namespace: nats
     createNamespace: true
@@ -10,3 +14,15 @@ releases:
     version: 2.14.5
     values:
       - values-nats-aks.yaml
+
+  # Phase 4 — Keycloak: docs/keycloak-operator/design.md §6.4. Only the
+  # app-layer resources (ServiceAccount, SecretProviderClass, CA Secret,
+  # Keycloak CR, HTTPRoute) — the Operator itself (CRDs + controller) is
+  # installed separately via kustomize, §5, with no `needs:` dependency
+  # wired here since ordering between the two releases is manual (§13).
+  - name: keycloak-app
+    namespace: keycloak
+    createNamespace: true
+    chart: ./charts/keycloak-app
+    values:
+      - values-keycloak-aks.yaml.gotmpl

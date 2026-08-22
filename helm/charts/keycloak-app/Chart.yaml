@@ -1,0 +1,5 @@
+apiVersion: v2
+name: keycloak-app
+description: ServiceAccount, SecretProviderClass, Keycloak CR, and HUG HTTPRoute for this system's Keycloak instance
+type: application
+version: 0.1.0
