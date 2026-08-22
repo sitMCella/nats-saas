@@ -1,0 +1,33 @@
+# Example tfvars — fill in the required values before `terraform plan/apply`.
+# *.tfvars is gitignored; do not rely on this file to hold real secrets (none
+# of these variables are secrets — the PostgreSQL admin password is generated
+# by random_password, not passed in).
+
+# Required — no default in variables.tf
+tenant_id              = "00000000-0000-0000-0000-000000000000"
+aks_kubernetes_version = "1.36.7"
+
+# Optional — shown at their variables.tf defaults, edit as needed
+location                        = "westeurope"
+env                             = "prod"
+network_resource_group_name     = "rg-natssaas-network-prod"
+platform_resource_group_name    = "rg-natssaas-platform-prod"
+data_resource_group_name        = "rg-natssaas-data-prod"
+vnet_address_space              = "10.60.0.0/16"
+aks_subnet_cidr                 = "10.60.0.0/22"
+pe_subnet_cidr                  = "10.60.5.0/24"
+aks_system_node_vm_size         = "Standard_D2s_v5"
+aks_system_node_min_count       = 1
+aks_system_node_max_count       = 3
+key_vault_allowed_public_ip     = null
+acr_firewall_allowed_cidrs      = []
+postgres_version                = "16"
+postgres_sku_name               = "GP_Standard_D2ds_v5"
+postgres_storage_mb             = 32768
+postgres_backup_retention_days  = 7
+postgres_admin_username         = "psqladmin"
+postgres_firewall_allowed_cidrs = []
+
+tags = {
+  Project = "nats-saas"
+}
