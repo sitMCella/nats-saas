@@ -295,3 +295,86 @@ helmfile destroy   # tears down both hug-app (GatewayClass, Gateway) and hug
 Does not remove the CRDs the `hug` release's hook Jobs installed, or the
 Azure static public IP — that is Terraform-managed state, untouched by this
 Helm release.
+
+## REST API image (nats-auth-middleware)
+
+`nats-auth-middleware/` is the Go source for the REST API's AuthN/AuthZ
+middleware, per-tenant NATS connection pool, and JetStream KV operations,
+per `docs/nats-auth-middleware/design.md`. This is phase 6: it only needs
+phase 1 (the ACR from the Terraform project above) and does not depend on
+phases 3-5 — it can build in parallel with the NATS/Keycloak/HUG installs.
+
+### Prerequisites
+
+- Go `1.25+` (`nats-auth-middleware/go.mod`)
+- Docker, for the image build
+- Azure CLI (`az`), for `az acr login`
+
+### Run tests
+
+```bash
+cd nats-auth-middleware
+go build ./...
+go vet ./...
+go test ./... -race
+```
+
+Every package below `internal/` has real test coverage: `authmw` signs and
+verifies tokens against an in-memory JWKS set; `pool` and `kvstore` boot a
+real in-process, operator-mode `nats-server` (`internal/testnats`) with
+minted per-tenant Account/User JWTs, the same JWT+seed auth model production
+uses, and prove tenant isolation and concurrent-cache-miss collapsing under
+`-race` (`INV-3`, `AC-3`, `AC-4`); `httpapi` drives the full stack —
+`AuthMiddleware` + `Pool` + `KVStore` — through real HTTP requests and
+proves cross-tenant reads 404, never 403 or 200 (`AC-1`, `AC-2`, `AC-3` from
+`docs/nats-tenant-queue-api/design.md`).
+
+### Build and push the image
+
+```bash
+cd nats-auth-middleware
+az acr login --name <acr_name>   # exchanges the Azure AD token for registry auth, no password
+
+IMAGE="<acr_login_server>/nats-auth-middleware:$(git rev-parse --short HEAD)"
+docker build --platform linux/amd64 -t "$IMAGE" .
+docker push "$IMAGE"
+```
+
+`<acr_login_server>` is the `acr_login_server` output from the Terraform
+project above. The image is always tagged with the immutable short git
+commit SHA — never `latest` — and only pushes successfully when the
+runner's source IP is on `acr_firewall_allowed_cidrs` and its token carries
+`AcrPush` (`docs/terraform-infra/design.md` `INV-9`, `INV-11`).
+
+### Verify the image (`AC-6`)
+
+```bash
+docker inspect <image> --format '{{.Config.User}}'        # nonroot:nonroot
+docker inspect <image> --format '{{json .Config.Entrypoint}}'   # ["/nats-auth-middleware"], no shell
+```
+
+### Runtime configuration
+
+The binary (`cmd/nats-auth-middleware`) reads everything from environment
+variables (`internal/config`) — no flags, no config file:
+
+| Variable | Required | Default | Meaning |
+|---|---|---|---|
+| `LISTEN_ADDR` | no | `:8080` | HTTP listen address |
+| `KEYCLOAK_JWKS_URL` | yes | — | Keycloak realm's JWKS endpoint |
+| `KEYCLOAK_ISSUER` | yes | — | expected token `iss` claim |
+| `KEYCLOAK_AUDIENCE` | no | — | expected token `aud` claim; empty skips the check |
+| `NATS_URL` | yes | — | NATS cluster's in-cluster address |
+| `KEY_VAULT_URL` | yes | — | Key Vault URI (`key_vault_uri` Terraform output) |
+| `POOL_TTL` | no | `15m` | per-tenant NATS connection cache TTL |
+| `POOL_MAX_ENTRIES` | no | `500` | max cached NATS connections |
+| `SHUTDOWN_GRACE` | no | `10s` | drain window on `SIGTERM`/`SIGINT` |
+
+Azure Key Vault access uses `azidentity.NewWorkloadIdentityCredential` —
+no static Azure credential anywhere in this process; this only resolves
+inside a pod carrying the `id-rest-api` Workload Identity annotations
+(`docs/rest-api-workload/design.md`, a later phase).
+
+Deploying this image into the cluster (a Kubernetes Deployment referencing
+the pushed tag) is `docs/rest-api-workload/design.md`, a separate,
+out-of-scope step from this one.
