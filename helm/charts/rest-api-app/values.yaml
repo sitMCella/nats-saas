@@ -1,0 +1,34 @@
+# chart defaults; environment-specific values (identity, image tag, real
+# hostnames) are supplied by values-rest-api-aks.yaml, never committed here
+namespace: nats-saas-api
+
+serviceAccount:
+  name: rest-api
+  azureClientId: ""        # rest_api_identity_client_id, Terraform output, docs/rest-api-workload/design.md §6
+
+image:
+  repository: ""             # acr_login_server, docs/terraform-infra/design.md, plus /nats-auth-middleware
+  tag: ""                    # immutable short git commit SHA — never "latest"
+
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 128Mi
+  limits:
+    memory: 256Mi
+
+config:
+  keycloakIssuerURL: "https://auth.natssaas.example.com/auth/realms/natssaas"
+  keycloakJWKSURL: "http://keycloak-service.keycloak.svc.cluster.local:8080/auth/realms/natssaas/protocol/openid-connect/certs"
+  natsURL: "nats://nats.nats.svc.cluster.local:4222"
+  poolTTL: "15m"                 # docs/nats-auth-middleware/design.md §12's recommended default
+  poolMaxConns: "500"             # same section
+  jwksCacheTTL: "1h"               # matches docs/nats-tenant-queue-api/design.md §7
+
+hug:
+  gatewayName: hug-gateway
+  gatewayNamespace: haproxy-unified-gateway   # docs/haproxy-unified-gateway/design.md
+  hostname: api.natssaas.example.com
+  pathPrefix: /v1
