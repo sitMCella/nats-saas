@@ -1,0 +1,5 @@
+apiVersion: v2
+name: hug-app
+description: GatewayClass and Gateway for this system's HUG-fronted routing
+type: application
+version: 0.1.0

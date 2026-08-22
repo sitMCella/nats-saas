@@ -1,0 +1,14 @@
+# charts/hug-app/values.yaml — chart defaults; already match this document's single
+# AKS environment, so no separate values-hug-app-aks.yaml is needed for this POC —
+# add one only if a second environment needs a different hostname/backend
+gatewayClass:
+  name: haproxy
+  controllerName: gate.haproxy.org/hug   # chart default; matches
+                                          # controller.extraArgs "--controller-name"
+                                          # if that flag is ever overridden
+
+gateway:
+  name: hug-gateway
+  namespace: haproxy-unified-gateway
+  listenerName: http                     # POC: plain HTTP, no TLS — design doc §9
+  port: 80

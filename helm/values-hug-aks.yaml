@@ -1,0 +1,63 @@
+# values-hug-aks.yaml — docs/haproxy-unified-gateway/design.md §5
+controller:
+  kind: Deployment
+  replicaCount: 2          # 1 pod = one restart is a full outage; see design doc §8
+
+  image:
+    repository: docker.io/haproxytech/haproxy-unified-gateway
+    tag: ""                 # empty = chart's pinned appVersion (1.0.7)
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      memory: 2048Mi
+      cpu: 500m              # add a CPU request explicitly: HPA (design doc §8)
+    limits:                  # needs one to compute CPU utilization
+      memory: 2560Mi
+
+  service:
+    enabled: true
+    type: LoadBalancer
+    annotations:
+      # Pin the Service to the static public IP terraform/modules/aks
+      # provisions in the platform Resource Group, instead of letting AKS
+      # allocate a fresh dynamic IP on every LoadBalancer recreation.
+      service.beta.kubernetes.io/azure-pip-name: "pip-natssaas-prod"
+      service.beta.kubernetes.io/azure-load-balancer-resource-group: "rg-natssaas-platform-prod"
+    # loadBalancerSourceRanges: []   # set to restrict source CIDRs if needed
+
+  podDisruptionBudget:
+    enabled: true             # defaults to minAvailable: 1 when unset
+
+  autoscaling:
+    enabled: false            # see design doc §8 before enabling
+
+  strategy:
+    type: RollingUpdate
+
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: haproxy-unified-gateway
+
+  # Defaults (kube-rbac metrics auth, RuntimeDefault seccomp, unprivileged
+  # container, ServiceMonitor/PodMonitor disabled) are left as chart
+  # defaults; see design doc §10 to turn on Prometheus scraping.
+
+hugconf:
+  logging:
+    defaultLevel: Info
+
+# Both hooks stay enabled: crdjob installs HUG's own CRDs (HugConf, Global,
+# Defaults) and gwapijob installs the upstream Gateway API CRDs the chart
+# needs (GatewayClass, Gateway, HTTPRoute, ReferenceGrant). Leaving
+# gwapijob.version at the chart's default keeps HTTPRoute-only routing
+# (all this system needs, per docs/nats-tenant-queue-api/design.md); bump
+# it only if a later feature needs a newer Gateway API resource.
+crdjob:
+  enabled: true
+gwapijob:
+  enabled: true
