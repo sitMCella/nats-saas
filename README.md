@@ -13,6 +13,9 @@ Key Vault, Container Registry, and a PostgreSQL Flexible Server.
   `az account set --subscription <subscription-id>`
 - Contributor (or Owner) on the subscription — this project creates three
   Resource Groups and everything inside them
+- `Key Vault Secrets Officer` on the Subscription —
+  Contributor alone does not grant Key Vault data-plane access; Terraform
+  reads/writes secrets directly (e.g. checks for `postgres-admin-password`)
 - The Terraform state backend already bootstrapped (one-time, outside
   Terraform — see below); `terraform/versions.tf`'s `backend "azurerm"` block
   points at it
@@ -63,6 +66,14 @@ The three Resource Groups, Key Vault, Container Registry, and PostgreSQL
 server all carry `prevent_destroy` (`INV-4`); `destroy` fails on them until
 that guard is removed from code, by design.
 
+## Gateway API CRDs
+
+Install the Gateway API CRDs.
+
+```bash
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml
+```
+
 ## NATS cluster (Helm)
 
 `helm/helmfile.yaml` + `helm/values-nats-aks.yaml` install the
@@ -92,7 +103,7 @@ nsc add operator --generate-signing-key natssaas
 nsc add account SYS
 nsc edit operator --system-account SYS
 nsc add user -a SYS sys
-nsc generate config --nats-resolver --sys-account SYS -o resolver.conf
+nsc generate config --nats-resolver --sys-account SYS > resolver.conf
 ```
 
 Paste `resolver.conf`'s `operator`, `system_account`, `resolver`, and
@@ -163,7 +174,13 @@ psql "host=<postgres_fqdn> port=5432 dbname=postgres user=<postgres_admin_userna
 ```sql
 CREATE ROLE keycloak WITH LOGIN PASSWORD '<value of keycloak-db-password above>';
 CREATE DATABASE keycloak OWNER keycloak;
+\c keycloak
+ALTER SCHEMA public OWNER TO keycloak;
 ```
+
+The `keycloak` role must have `LOGIN` permission and own both the `keycloak`
+database and its `public` schema — Keycloak's own migrations create/alter
+objects in `public` at startup and fail without schema ownership.
 
 The role's password must match the `keycloak-db-password` secret exactly — this
 step only makes PostgreSQL match what Terraform already put in Key Vault.
@@ -207,6 +224,36 @@ after this step, since it creates instances of these CRDs, not the CRDs themselv
 Replace the `REPLACE_ME_*` placeholders in `values-keycloak-aks.yaml.gotmpl` with
 the `keycloak_identity_client_id`, `key_vault_name`, `postgres_fqdn` Terraform
 outputs and the Azure tenant ID.
+
+### Access Keycloak
+
+```bash
+kubectl get svc/hug-haproxy-unified-gateway -n haproxy-unified-gateway # Retrieve the external IP address
+
+echo "<address> auth.natssaas.example.com" | sudo tee -a /etc/hosts
+```
+
+Keycloak Web URI for natssaas realm: http://auth.natssaas.example.com/auth/realms/natssaas/account
+
+### Configure Keycloak
+
+Enable the Unmanaged Attributes in the Keycloak realm, required for setting the user attributes.
+
+Login as administrator.
+Keycloak custom administrator account credentials:
+ADMIN_USER=$(az keyvault secret show --vault-name <key_vault_name> --name keycloak-admin-username --query value -o tsv)
+ADMIN_PASSWORD=$(az keyvault secret show --vault-name <key_vault_name> --name keycloak-admin-password --query value -o tsv)
+
+If Keyclock has not been configured correctly with the custom administrator account, then retrieve the credentials for the temporary Keycloak account:
+
+kubectl get secret keycloak-initial-admin -n keycloak -o go-template='
+{{range $k,$v := .data}}{{printf "%s: " $k}}{{if not $v}}{{$v}}{{else}}{{$v | base64decode}}{{end}}{{"\n"}}{{end}}'
+
+From Keycloak natssaas realm access Realm Settings → General → Unmanaged Attributes = Enabled
+
+From Keycloak natssaas realm, open the page Clients > Settings. Enable "Client authentication" and "Direct access grants".
+
+From Keycloak natssaas realm, open the page Clients > rest-api > Roles. Create a role "user".
 
 ### Install the chart
 
@@ -424,6 +471,17 @@ reporting `ResolvedRefs: True`. Until a tenant is onboarded (next section),
 every request still fails with `503 tenant_not_provisioned` — `Pool.Get`
 finds no Key Vault entry for any `tenant_id` yet, by design.
 
+### Check the Application
+
+```bash
+# Get the IP Address
+kubectl get svc -n haproxy-unified-gateway hug-haproxy-unified-gateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+
+echo "<address> api.natssaas.example.com" | sudo tee -a /etc/hosts
+
+curl -v http://api.natssaas.example.com/healthz/ready
+```
+
 ### Tear down
 
 ```bash
@@ -444,13 +502,23 @@ already applied.
 
 ### Prerequisites
 
+- `kcadm.sh` (Keycloak's admin CLI) Installed in the Operator machine.
 - `kcadm.sh` (Keycloak's admin CLI), authenticated against the deployed
   Keycloak instance
 - `nsc` and the NATS CLI (`nats`), on the same operator workstation that
   holds the Operator's signing keys from the NATS cluster bootstrap above
 - Azure CLI (`az`), with an identity granted `Key Vault Secrets Officer`
-  (write) on the Key Vault — see `docs/tenant-provisioning/design.md` §8;
-  do not reuse the `id-rest-api`/`id-keycloak` read-only identities for this
+  (write) on the Key Vault — see `docs/tenant-provisioning/design.md` §8
+
+### Connect to Keycloak and NATS
+
+```bash
+## Connect to Keycloak
+kubectl port-forward -n keycloak svc/keycloak-service 8080:8080
+
+## Connect to NATS
+kubectl port-forward -n nats svc/nats 4222:4222
+```
 
 ### One-time: Keycloak realm, client, and protocol mapper
 
@@ -459,8 +527,17 @@ Run once, ever, before onboarding the first tenant (`docs/tenant-provisioning/de
 review it carefully before moving on:
 
 ```bash
-kcadm.sh config credentials --server <keycloak_url> --realm master \
-  --user <admin_user> --password <admin_password>
+# Keycloak custom administrator account credentials:
+ADMIN_USER=$(az keyvault secret show --vault-name <key_vault_name> --name keycloak-admin-username --query value -o tsv)
+ADMIN_PASSWORD=$(az keyvault secret show --vault-name <key_vault_name> --name keycloak-admin-password --query value -o tsv)
+
+# If Keyclock has not been configured correctly with the custom administrator account, then retrieve the credentials for the temporary Keycloak account:
+
+ADMIN_USER=$(kubectl get secret keycloak-initial-admin -n keycloak -o jsonpath='{.data.username}' | base64 -d)
+ADMIN_PASSWORD=$(kubectl get secret keycloak-initial-admin -n keycloak -o jsonpath='{.data.password}' | base64 -d)
+
+kcadm.sh config credentials --server http://auth.natssaas.example.com/auth --realm master \
+  --user "${ADMIN_USER}" --password "${ADMIN_PASSWORD}"
 
 kcadm.sh create realms -s realm=natssaas -s enabled=true
 
@@ -486,13 +563,19 @@ kcadm.sh update "clients/${REST_API_CLIENT_ID}/default-client-scopes/${TENANT_SC
 Verify: a decoded access token for any user with a `tenant_id` attribute
 carries a `tenant_id` claim.
 
+### Restart nats-saas-api
+
+```bash
+kubectl rollout restart deployment/rest-api -n nats-saas-api
+```
+
 ### Per-tenant: run the onboarding script
 
 ```bash
-export KEYCLOAK_URL=<keycloak_url>              # e.g. https://auth.natssaas.example.com/auth
-export KEYCLOAK_ADMIN_USER=<admin_user>
-export KEYCLOAK_ADMIN_PASSWORD=<admin_password>
-export NATS_URL=<nats_url>                        # reachable from this workstation
+export KEYCLOAK_URL=https://auth.natssaas.example.com/auth
+export KEYCLOAK_ADMIN_USER=$(az keyvault secret show --vault-name <key_vault_name> --name keycloak-admin-username --query value -o tsv)
+export KEYCLOAK_ADMIN_PASSWORD=$(az keyvault secret show --vault-name <key_vault_name> --name keycloak-admin-password --query value -o tsv)
+export NATS_URL=nats://localhost:4222
 export KEY_VAULT_NAME=<key_vault_name>            # Terraform output
 
 ./onboard-tenant.sh acme-corp admin@acme-corp.example
@@ -510,11 +593,73 @@ each component in isolation (`docs/implementation-plan.md` phase 9).
 
 ```bash
 # Onboard two tenants
+nsc push -a tenant-a -u nats://localhost:4222 --system-account SYS --system-user sys
 ./onboard-tenant.sh tenant-a admin@tenant-a.example
+
+nsc push -a tenant-b -u nats://localhost:4222 --system-account SYS --system-user sys
 ./onboard-tenant.sh tenant-b admin@tenant-b.example
+```
 
 # Each tenant's user resets their temporary password, logs in, and gets a
-# token. Then, with TOKEN_A / TOKEN_B set to each tenant's access token:
+# token.
+
+```bash
+# Reset the temporary password for the tenant's user
+kubectl exec -n keycloak keycloak-0 -- /opt/keycloak/bin/kcadm.sh set-password \
+  --server http://localhost:8080/auth --realm master --user "${ADMIN_USER}" \
+  --password "${ADMIN_PASSWORD}" -r natssaas \
+  --username admin@tenant-a.example --new-password <admin-tenant-a-password>
+
+  kubectl exec -n keycloak keycloak-0 -- /opt/keycloak/bin/kcadm.sh set-password \
+    --server http://localhost:8080/auth --realm master --user "${ADMIN_USER}" \
+    --password "${ADMIN_PASSWORD}" -r natssaas \
+    --username admin@tenant-b.example --new-password <admin-tenant-b-password>
+```
+
+# Each tenant's user login in Keycloak and complete the configuration.
+Keycloak Web URI: http://auth.natssaas.example.com/auth/realms/natssaas/account
+
+# Access Keycloak as administrator. From the natssaas realm, access the page Users > admin@tenant-a.example > Role mapping > Assign role > Client roles > user.
+# From the natssaas realm, access the page Users > admin@tenant-b.example > Role mapping > Assign role > Client roles > user.
+
+# Then, with TOKEN_A / TOKEN_B set to each tenant's access token:
+
+```bash
+export CLIENT_SECRET=$(kcadm.sh get "clients/${REST_API_CLIENT_ID}/client-secret" -r natssaas --fields value --format csv --noquotes)
+
+TOKEN_A=$(curl -s -X POST http://auth.natssaas.example.com/auth/realms/natssaas/protocol/openid-connect/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "client_id=rest-api" \
+  -d "client_secret=${CLIENT_SECRET}" \
+  -d "grant_type=password" \
+  -d "username=admin@tenant-a.example" \
+  -d "password=<admin-tenant-a-password>" | jq -r .access_token)
+
+# Verify that the account is active
+curl -s \
+-X POST \
+http://auth.natssaas.example.com/auth/realms/natssaas/protocol/openid-connect/token/introspect \
+-d "client_id=rest-api" \
+-d "client_secret=${CLIENT_SECRET}" \
+-d "token=${TOKEN_A}" \
+| jq
+
+TOKEN_B=$(curl -s -X POST http://auth.natssaas.example.com/auth/realms/natssaas/protocol/openid-connect/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "client_id=rest-api" \
+  -d "client_secret=${CLIENT_SECRET}" \
+  -d "grant_type=password" \
+  -d "username=admin@tenant-b.example" \
+  -d "password=<admin-tenant-b-password>" | jq -r .access_token)
+
+# Verify that the account is active
+curl -s \
+-X POST \
+http://auth.natssaas.example.com/auth/realms/natssaas/protocol/openid-connect/token/introspect \
+-d "client_id=rest-api" \
+-d "client_secret=${CLIENT_SECRET}" \
+-d "token=${TOKEN_B}" \
+| jq
 
 curl -s -X POST https://api.natssaas.example.com/v1/items \
   -H "Authorization: Bearer ${TOKEN_A}" -H 'Content-Type: application/json' \

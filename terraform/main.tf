@@ -45,16 +45,17 @@ module "key_vault" {
 }
 
 module "aks" {
-  source                = "./modules/aks"
-  resource_group_name   = module.rg_platform.name
-  location              = var.location
-  env                   = var.env
-  kubernetes_version    = var.aks_kubernetes_version
-  aks_subnet_id         = module.network.aks_subnet_id
-  system_node_vm_size   = var.aks_system_node_vm_size
-  system_node_min_count = var.aks_system_node_min_count
-  system_node_max_count = var.aks_system_node_max_count
-  tags                  = var.tags
+  source                          = "./modules/aks"
+  resource_group_name             = module.rg_platform.name
+  location                        = var.location
+  env                             = var.env
+  kubernetes_version              = var.aks_kubernetes_version
+  aks_subnet_id                   = module.network.aks_subnet_id
+  system_node_vm_size             = var.aks_system_node_vm_size
+  system_node_min_count           = var.aks_system_node_min_count
+  system_node_max_count           = var.aks_system_node_max_count
+  api_server_authorized_ip_ranges = var.aks_api_server_authorized_ip_ranges
+  tags                            = var.tags
 }
 
 resource "azurerm_role_assignment" "aks_network_contributor" {
@@ -63,6 +64,14 @@ resource "azurerm_role_assignment" "aks_network_contributor" {
   principal_id         = module.aks.kubelet_identity_object_id
 
   depends_on = [module.network, module.aks]
+}
+
+resource "azurerm_role_assignment" "aks_platform_network_contributor" {
+  scope                = module.rg_platform.id
+  role_definition_name = "Network Contributor"
+  principal_id         = module.aks.cluster_identity_principal_id
+
+  depends_on = [module.rg_platform, module.aks]
 }
 
 module "container_registry" {
@@ -149,6 +158,23 @@ resource "azurerm_key_vault_secret" "keycloak_db_username" {
 resource "azurerm_key_vault_secret" "keycloak_db_password" {
   name         = "keycloak-db-password"
   value        = random_password.keycloak_db.result
+  key_vault_id = module.key_vault.id
+}
+
+resource "random_password" "keycloak_admin" {
+  length  = 24
+  special = true
+}
+
+resource "azurerm_key_vault_secret" "keycloak_admin_username" {
+  name         = "keycloak-admin-username"
+  value        = "admin"
+  key_vault_id = module.key_vault.id
+}
+
+resource "azurerm_key_vault_secret" "keycloak_admin_password" {
+  name         = "keycloak-admin-password"
+  value        = random_password.keycloak_admin.result
   key_vault_id = module.key_vault.id
 }
 
