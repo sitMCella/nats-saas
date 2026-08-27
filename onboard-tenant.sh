@@ -65,12 +65,21 @@ fi
 # Required tooling and configuration
 # ---------------------------------------------------------------------------
 
-for bin in kcadm.sh nsc nats az; do
+for bin in nsc nats az kubectl; do
   if ! command -v "$bin" >/dev/null 2>&1; then
     echo "Required tool '${bin}' not found on PATH." >&2
     exit 1
   fi
 done
+
+# Check if kcadm.sh available locally or via kubectl exec to Keycloak pod
+if command -v kcadm.sh >/dev/null 2>&1; then
+  KCADM_EXEC="kcadm.sh"
+  KCADM_SERVER="${KEYCLOAK_URL}"
+else
+  KCADM_EXEC="kubectl exec -n keycloak keycloak-0 -- /opt/keycloak/bin/kcadm.sh"
+  KCADM_SERVER="http://localhost:8080/auth"
+fi
 
 : "${KEYCLOAK_URL:?KEYCLOAK_URL must be set}"
 : "${KEYCLOAK_ADMIN_USER:?KEYCLOAK_ADMIN_USER must be set}"
@@ -93,7 +102,7 @@ ok()   { echo "      -> $1"; }
 fail() { echo "      -> FAILED: $1" >&2; exit 1; }
 
 kcadm() {
-  kcadm.sh "$@" --server "${KEYCLOAK_URL}" --realm "${KEYCLOAK_ADMIN_REALM}" \
+  ${KCADM_EXEC} "$@" --server "${KCADM_SERVER}" --realm "${KEYCLOAK_ADMIN_REALM}" \
     --user "${KEYCLOAK_ADMIN_USER}" --password "${KEYCLOAK_ADMIN_PASSWORD}"
 }
 
@@ -135,7 +144,8 @@ if nsc describe account "${TENANT_ID}" >/dev/null 2>&1; then
   ok "Account '${TENANT_ID}' already exists, skipping"
 else
   nsc add account "${TENANT_ID}" >/dev/null || fail "nsc add account"
-  ok "Account '${TENANT_ID}' created"
+  nsc edit account "${TENANT_ID}" --js-disk-storage 10G --js-streams 100 --js-consumer 100 >/dev/null || fail "nsc edit account (enable JetStream)"
+  ok "Account '${TENANT_ID}' created with JetStream enabled"
 fi
 
 if nsc describe user -a "${TENANT_ID}" api >/dev/null 2>&1; then
@@ -158,7 +168,7 @@ if nats kv info "${TENANT_ID}" --server "${NATS_URL}" --creds "${TENANT_CREDS_FI
 else
   nats kv add "${TENANT_ID}" \
     --history=1 \
-    --max-bytes="${KV_MAX_BYTES}" \
+    --max-bucket-size="${KV_MAX_BYTES}" \
     --server "${NATS_URL}" \
     --creds "${TENANT_CREDS_FILE}" >/dev/null || fail "nats kv add"
   ok "bucket created (history=1, max-bytes=${KV_MAX_BYTES})"
@@ -170,7 +180,7 @@ fi
 
 step 4 "Push Account/User JWTs to the NATS resolver"
 
-nsc push -a "${TENANT_ID}" -u "${NATS_URL}" >/dev/null || \
+nsc push -a "${TENANT_ID}" -u "${NATS_URL}" --system-account SYS --system-user sys >/dev/null || \
   fail "nsc push (Account exists locally but is not yet accepted by the resolver — safe to re-run)"
 ok "pushed"
 

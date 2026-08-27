@@ -15,6 +15,7 @@ resource "azurerm_kubernetes_cluster" "this" {
   kubernetes_version        = var.kubernetes_version
   oidc_issuer_enabled       = true
   workload_identity_enabled = true
+  azure_policy_enabled      = true
 
   # azurerm 5.x requires this block explicitly; "Manual" keeps node pools
   # exactly as this project defines them (no Node Auto Provisioning/Karpenter).
@@ -29,10 +30,21 @@ resource "azurerm_kubernetes_cluster" "this" {
     auto_scaling_enabled = true
     min_count            = var.system_node_min_count
     max_count            = var.system_node_max_count
+
+    upgrade_settings {
+      drain_timeout_in_minutes      = 0
+      max_surge                     = "10%"
+      node_soak_duration_in_minutes = 0
+    }
   }
 
   identity {
     type = "SystemAssigned"
+  }
+
+  api_server_access_profile {
+    authorized_ip_ranges                = var.api_server_authorized_ip_ranges
+    virtual_network_integration_enabled = false
   }
 
   network_profile {

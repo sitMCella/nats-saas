@@ -2,6 +2,7 @@ resource "azurerm_postgresql_flexible_server" "this" {
   name                          = "psql-natssaas-${var.env}"
   resource_group_name           = var.resource_group_name
   location                      = var.location
+  zone                          = "1"
   version                       = var.postgres_version
   sku_name                      = var.sku_name
   storage_mb                    = var.storage_mb
@@ -19,7 +20,7 @@ resource "azurerm_postgresql_flexible_server" "this" {
 resource "azurerm_postgresql_flexible_server_firewall_rule" "allowed" {
   for_each = toset(var.firewall_allowed_cidrs) # INV-1: empty by default
 
-  name             = "allow-${replace(each.value, "/", "-")}"
+  name             = "allow-${replace(replace(each.value, "/", "-"), ".", "-")}"
   server_id        = azurerm_postgresql_flexible_server.this.id
   start_ip_address = cidrhost(each.value, 0)
   end_ip_address   = cidrhost(each.value, -1)

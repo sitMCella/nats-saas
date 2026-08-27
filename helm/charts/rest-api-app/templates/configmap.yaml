@@ -4,8 +4,9 @@ metadata:
   name: rest-api-config
   namespace: {{ .Values.namespace }}
 data:
-  KEYCLOAK_ISSUER_URL: {{ .Values.config.keycloakIssuerURL | quote }}
+  KEYCLOAK_ISSUER: {{ .Values.config.keycloakIssuerURL | quote }}
   KEYCLOAK_JWKS_URL: {{ .Values.config.keycloakJWKSURL | quote }}
+  KEY_VAULT_URL: {{ .Values.keyVault.url | quote }}
   NATS_URL: {{ .Values.config.natsURL | quote }}
   POOL_TTL: {{ .Values.config.poolTTL | quote }}
   POOL_MAX_CONNS: {{ .Values.config.poolMaxConns | quote }}

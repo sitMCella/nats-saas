@@ -1,7 +1,7 @@
 config:
   cluster:
     enabled: true
-    replicas: 3          # must be 2+ when jetstream is enabled; matches
+    replicas: 2           # must be 2+ when jetstream is enabled; matches
                           # docs/nats-tenant-queue-api/design.md's open-questions
                           # recommended default of 3 JetStream stream replicas —
                           # a stream cannot have more replicas than server nodes
@@ -59,7 +59,13 @@ container:
       memory: 1Gi
     limits:
       memory: 2Gi          # no CPU limit: JetStream fsync/compaction bursts
-                            # should not be throttled mid-write
+                           # should not be throttled mid-write
+  readinessProbe:
+    httpGet:
+      path: /healtz        # server-only healthcheck
+      port: monitor
+    initialDelaySeconds: 10
+    timeoutSeconds: 5
 
 service:
   ports:
@@ -76,15 +82,17 @@ podDisruptionBudget:
                               # exactly one voluntary disruption at a time
                               # across the 3-node cluster
 
-podTemplate:
-  topologySpreadConstraints:
-    kubernetes.io/hostname:
-      maxSkew: 1
-      whenUnsatisfiable: DoNotSchedule   # 3 replicas across 3 distinct nodes;
-                                          # AKS's managed-csi* storage classes
-                                          # default to WaitForFirstConsumer, so
-                                          # each pod's PVCs bind in whichever
-                                          # zone/node it actually lands on
+# POC: topology spread disabled, but constraint requires 3 distinct nodes for 3 replicas.
+# Production: scale node pool to 3+ and re-enable topology spread.
+# podTemplate:
+#   topologySpreadConstraints:
+#     kubernetes.io/hostname:
+#       maxSkew: 1
+#       whenUnsatisfiable: DoNotSchedule   # 3 replicas across 3 distinct nodes;
+#                                           # AKS's managed-csi* storage classes
+#                                           # default to WaitForFirstConsumer, so
+#                                           # each pod's PVCs bind in whichever
+#                                           # zone/node it actually lands on
 
 natsBox:
   enabled: true            # admin/debug pod; not part of any request path
@@ -104,15 +112,19 @@ extraResources:
           {{ include "nats.labels" $ }}
     spec:
       podSelector:
-        $tplYaml: |
-          {{ include "nats.selectorLabels" $ | toYaml }}
+        matchLabels:
+          app.kubernetes.io/name: nats
+          app.kubernetes.io/instance: nats
+          app.kubernetes.io/component: nats
       policyTypes:
         - Ingress
       ingress:
         - from:
             - podSelector:
-                $tplYaml: |
-                  {{ include "nats.selectorLabels" $ | toYaml }}
+                matchLabels:
+                  app.kubernetes.io/name: nats
+                  app.kubernetes.io/instance: nats
+                  app.kubernetes.io/component: nats
           ports:
             - port: 6222   # cluster routes — NATS pods to each other only
         - from:

@@ -6,6 +6,9 @@ metadata:
 spec:
   instances: {{ .Values.keycloak.instances }}   # matches docs/nats-tenant-queue-api/design.md's
                                                    # open-questions recommended default of 2
+  bootstrapAdmin:
+    user:
+      secret: keycloak-admin-credentials  # synced by the SecretProviderClass, keys: username, password
   db:
     vendor: postgres
     host: {{ .Values.postgres.host | quote }}          # Terraform output from docs/terraform-infra/design.md

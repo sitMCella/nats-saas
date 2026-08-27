@@ -54,7 +54,7 @@ flowchart TB
     PODB -- TLS, verify-server\nprivate endpoint --> PG
 ```
 
-Keycloak pods never receive a static database password in a pod spec, image, or hand-created Kubernetes Secret: the CSI driver mounts the Key Vault secret as a projected volume and, via its Secret-sync feature, materializes it into the `keycloak-db-credentials` Kubernetes Secret that the `Keycloak` CR's `db.usernameSecret`/`db.passwordSecret` fields reference — the same no-static-credential trust boundary `docs/terraform-infra/design.md` (`INV-3`, `AC-2`) already establishes for the REST API's own Key Vault access, just applied to a second workload identity.
+Keycloak pods never receive a static database password, or a static master-realm admin password, in a pod spec, image, or hand-created Kubernetes Secret: the CSI driver mounts the Key Vault secrets as a projected volume and, via its Secret-sync feature, materializes them into the `keycloak-db-credentials` and `keycloak-admin-credentials` Kubernetes Secrets that the `Keycloak` CR's `db.usernameSecret`/`db.passwordSecret` and `bootstrapAdmin.user.secret` fields reference — the same no-static-credential trust boundary `docs/terraform-infra/design.md` (`INV-3`, `AC-2`) already establishes for the REST API's own Key Vault access, just applied to a second workload identity.
 
 ## 4. Provision Keycloak's database, role, and Key Vault access
 
@@ -104,12 +104,29 @@ resource "azurerm_key_vault_secret" "keycloak_db_password" {
   key_vault_id = module.key_vault.id
 }
 
+resource "random_password" "keycloak_admin" {
+  length  = 24
+  special = true
+}
+
+resource "azurerm_key_vault_secret" "keycloak_admin_username" {
+  name         = "keycloak-admin-username"
+  value        = "admin"
+  key_vault_id = module.key_vault.id
+}
+
+resource "azurerm_key_vault_secret" "keycloak_admin_password" {
+  name         = "keycloak-admin-password"
+  value        = random_password.keycloak_admin.result
+  key_vault_id = module.key_vault.id
+}
+
 output "keycloak_identity_client_id" {
   value = azurerm_user_assigned_identity.keycloak.client_id
 }
 ```
 
-`terraform apply` creates all five resources in one graph: the role assignment and federated credential both depend on `azurerm_user_assigned_identity.keycloak`, and `azurerm_federated_identity_credential` additionally depends on `module.aks` for the OIDC issuer URL, so Terraform orders everything automatically — no `-target` flag, no second apply. `keycloak_identity_client_id` is the value `values-keycloak-aks.yaml.gotmpl`'s `serviceAccount.azureClientId` (section 6.4) needs. `random_password`, not a human, generates the database credential now — nobody invents or types a password.
+`terraform apply` creates all resources in one graph: the role assignment and federated credential both depend on `azurerm_user_assigned_identity.keycloak`, and `azurerm_federated_identity_credential` additionally depends on `module.aks` for the OIDC issuer URL, so Terraform orders everything automatically — no `-target` flag, no second apply. `keycloak_identity_client_id` is the value `values-keycloak-aks.yaml.gotmpl`'s `serviceAccount.azureClientId` (section 6.4) needs. `random_password`, not a human, generates the database credential now — nobody invents or types a password. The same applies to the master-realm bootstrap admin: `random_password.keycloak_admin` generates it, `keycloak-admin-username`/`keycloak-admin-password` are the two Key Vault secrets the SecretProviderClass (section 6.2) syncs into the `keycloak-admin-credentials` `Secret` that the `Keycloak` CR's `spec.bootstrapAdmin.user.secret` (section 6.4) references — nobody types or hands an operator a master-realm password either.
 
 **4.2 — Dedicated database and role, not the admin credential.** Keycloak must not run against the Flexible Server's admin login: that login is provisioned for Terraform's own use (`docs/terraform-infra/design.md` section 4) and is unnecessarily privileged for an application connection. From a host with network access to the server (in-VNet, or a workstation temporarily added to `postgres_firewall_allowed_cidrs`), read the credential Terraform generated in 4.1 back out of Key Vault:
 
@@ -279,6 +296,12 @@ spec:
         - |
           objectName: keycloak-db-password
           objectType: secret
+        - |
+          objectName: keycloak-admin-username
+          objectType: secret
+        - |
+          objectName: keycloak-admin-password
+          objectType: secret
   secretObjects:
     - secretName: keycloak-db-credentials
       type: Opaque
@@ -287,9 +310,16 @@ spec:
           key: username
         - objectName: keycloak-db-password
           key: password
+    - secretName: keycloak-admin-credentials
+      type: Opaque
+      data:
+        - objectName: keycloak-admin-username
+          key: username
+        - objectName: keycloak-admin-password
+          key: password
 ```
 
-`secretObjects` is what actually creates the `keycloak-db-credentials` Kubernetes `Secret` the `Keycloak` CR references (section 8) — a `SecretProviderClass` on its own only projects a volume, it does not sync a `Secret` by itself. The CSI driver only performs this sync when a pod mounting the `SecretProviderClass` as a volume actually starts, so the `Secret` does not exist until Keycloak's first pod starts (section 8), regardless of how early this template is applied.
+`secretObjects` is what actually creates the `keycloak-db-credentials` and `keycloak-admin-credentials` Kubernetes `Secret`s the `Keycloak` CR references (section 8) — a `SecretProviderClass` on its own only projects a volume, it does not sync a `Secret` by itself. The CSI driver only performs this sync when a pod mounting the `SecretProviderClass` as a volume actually starts, so neither `Secret` exists until Keycloak's first pod starts (section 8), regardless of how early this template is applied.
 
 **6.3 — CA trust bundle, as a chart-templated `Secret`:**
 
@@ -370,6 +400,9 @@ metadata:
 spec:
   instances: {{ .Values.keycloak.instances }}   # matches docs/nats-tenant-queue-api/design.md's
                                                    # open-questions recommended default of 2
+  bootstrapAdmin:
+    user:
+      secret: keycloak-admin-credentials  # synced by the SecretProviderClass, section 6.2; keys: username, password
   db:
     vendor: postgres
     host: {{ .Values.postgres.host | quote }}          # Terraform output from docs/terraform-infra/design.md

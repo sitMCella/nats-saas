@@ -5,7 +5,8 @@
 
 # Required — no default in variables.tf
 tenant_id              = "00000000-0000-0000-0000-000000000000"
-aks_kubernetes_version = "1.36.7"
+subscription_id        = "00000000-0000-0000-0000-000000000000"
+aks_kubernetes_version = "1.35.6"
 
 # Optional — shown at their variables.tf defaults, edit as needed
 location                        = "westeurope"
@@ -19,6 +20,7 @@ pe_subnet_cidr                  = "10.60.5.0/24"
 aks_system_node_vm_size         = "Standard_D2s_v5"
 aks_system_node_min_count       = 1
 aks_system_node_max_count       = 3
+aks_api_server_authorized_ip_ranges = []
 key_vault_allowed_public_ip     = null
 acr_firewall_allowed_cidrs      = []
 postgres_version                = "16"

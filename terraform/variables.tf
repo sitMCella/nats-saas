@@ -14,7 +14,12 @@ variable "env" {
 }
 
 variable "tenant_id" {
-  description = "Azure AD tenant ID, used by the Key Vault module."
+  description = "Azure AD tenant ID."
+  type        = string
+}
+
+variable "subscription_id" {
+  description = "Azure subscription ID every resource in this project deploys into."
   type        = string
 }
 
@@ -67,6 +72,12 @@ variable "aks_system_node_min_count" {
 variable "aks_system_node_max_count" {
   type    = number
   default = 3
+}
+
+variable "aks_api_server_authorized_ip_ranges" {
+  description = "CIDR ranges admitted to the AKS API server. Empty leaves it open to the public internet; set to office/VPN egress and CI runner ranges before GA (design doc open questions)."
+  type        = list(string)
+  default     = []
 }
 
 variable "key_vault_allowed_public_ip" {

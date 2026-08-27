@@ -43,16 +43,19 @@ resource "azurerm_private_dns_zone_virtual_network_link" "key_vault" {
   name                = "link-kv-natssaas-${var.env}"
   private_dns_zone_id = azurerm_private_dns_zone.key_vault.id
   virtual_network_id  = azurerm_virtual_network.this.id
+  tags                = var.tags
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "postgres" {
   name                = "link-psql-natssaas-${var.env}"
   private_dns_zone_id = azurerm_private_dns_zone.postgres.id
   virtual_network_id  = azurerm_virtual_network.this.id
+  tags                = var.tags
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "acr" {
   name                = "link-acr-natssaas-${var.env}"
   private_dns_zone_id = azurerm_private_dns_zone.acr.id
   virtual_network_id  = azurerm_virtual_network.this.id
+  tags                = var.tags
 }

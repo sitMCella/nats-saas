@@ -34,3 +34,8 @@ variable "system_node_max_count" {
 variable "tags" {
   type = map(string)
 }
+
+variable "api_server_authorized_ip_ranges" {
+  description = "CIDR ranges admitted to the AKS API server. Empty keeps it open to the public internet (see design doc open questions)."
+  type        = list(string)
+}

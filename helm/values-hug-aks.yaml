@@ -10,8 +10,8 @@ controller:
 
   resources:
     requests:
-      memory: 2048Mi
-      cpu: 500m              # add a CPU request explicitly: HPA (design doc §8)
+      memory: 1024Mi
+      cpu: 200m              # add a CPU request explicitly: HPA (design doc §8)
     limits:                  # needs one to compute CPU utilization
       memory: 2560Mi
 
